@@ -1,0 +1,46 @@
+#!/usr/bin/env coffee
+
+{ Board, BLACK, pos_array_from_str, pos_to_str } = require './board'
+{ readlines } = require './util'
+
+n_dump = 0
+
+replay_and_dump = (moves, score, out) ->
+  board = new Board
+  turn = BLACK
+  for move in moves
+    flips = board.move turn, move
+    unless flips.length
+      throw new Error 'invalid move', pos_to_str move
+    if board.any_moves -turn
+      turn = -turn
+    else
+      unless board.any_moves turn
+        turn = 0
+
+    out.write "#{board.dump false} #{turn} #{score}\n"
+    n_dump++
+
+  if board.any_moves(turn) or board.any_moves(-turn)
+    throw new Error 'game not finished'
+  if score != board.outcome()
+    throw new Error 'score invalid'
+
+
+do ->
+  args = process.argv.slice(2)
+  unless args.length
+    process.stderr.write "Usage: #{process.argv[1]} games...\n"
+    process.exit 1
+  for infile in args
+    process.stderr.write "loading #{infile}\n"
+    n = 0
+    out = process.stdout
+    await readlines infile, (line) ->
+      [moves, score] = line.split ' '
+      moves = pos_array_from_str moves
+      score = parseInt score
+      replay_and_dump moves, score, out
+      n += 1
+  process.stderr.write "loaded #{n} games\n"
+  process.stderr.write "dumped #{n_dump} nodes\n"

@@ -1,0 +1,97 @@
+#!/usr/bin/env coffee
+{ Board, BLACK, WHITE, EMPTY, pos_from_str, square_to_char, pos_to_str } = require './board'
+{ PatternBoard } = require './pattern'
+readline = require 'readline'
+
+input = (prompt) -> new Promise (resolve) ->
+  rl = readline.createInterface process.stdin, process.stdout
+  rl.question prompt, (answer) ->
+    resolve answer
+    rl.close()
+
+human = (board, turn) ->
+  prompt = square_to_char(turn) + '? '
+  while true
+    pos = await input(prompt)
+    if pos.toLowerCase() == 'undo'
+      return 'undo'
+    try
+      pos = pos_from_str(pos)
+    catch e
+      console.log 'invalid position'
+      continue
+    if board.can_move(turn, pos)
+      break
+    else
+      console.log 'illegal move'
+  pos
+
+DEPTH = 11
+
+simple = require('./minmax')(
+  max_depth: DEPTH
+  board_class: Board
+  solve_wld: 20
+  solve_full: 18
+)
+pattern = require('./minmax')(
+  evaluate: require('./pattern_eval')('scores')
+  max_depth: DEPTH
+  #shuffle: false
+  solve_wld: 20
+  solve_full: 18
+  #cache_size: 0
+)
+#invert = require('./minmax')(
+#  evaluate: require('./pattern_eval')('scores')
+#  max_depth: DEPTH
+#  invert: true
+#)
+#pattern2 = require('./minmax')(
+#  evaluate: require('./pattern_eval')('scores')
+#  max_depth: DEPTH
+#  shuffle: false
+#)
+
+do ->
+  board = new PatternBoard
+  turn = BLACK
+  pass = 0
+  undo_stack = []
+  while true
+    console.log board.dump true
+    console.log square_to_char(turn), 'to move'
+    console.log square_to_char(BLACK), board.count(BLACK), 'discs', board.list_moves(BLACK).length, 'moves'
+    console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
+    console.log "#{board.count(EMPTY)} empty squares"
+    switch turn
+      when BLACK then player = pattern
+      when WHITE then player = human
+    if board.any_moves(turn)
+      while true
+        pos = await player(board, turn)
+        if pos == 'undo'
+          undo_done = false
+          while undo_stack.length
+            [t, pos, flips]= undo_stack.pop()
+            board.undo t, pos, flips
+            if t == turn
+              undo_done = true
+              break
+          if not undo_done
+            console.log 'cannot undo'
+            continue
+          console.log board.dump true
+          continue
+        break
+      flips = board.move turn, pos
+      undo_stack.push [turn, pos, flips]
+      console.log "#{square_to_char turn} moved to #{pos_to_str pos}"
+    else
+      if board.any_moves(-turn)
+        console.log 'PASS'
+        if player == human
+          await input 'Press Enter'
+      else
+        break
+    turn = -turn

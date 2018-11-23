@@ -1,0 +1,94 @@
+#!/usr/bin/env coffee
+{ Board, BLACK, WHITE, EMPTY, pos_from_str, square_to_char, pos_to_str } = require './board'
+{ PatternBoard } = require './pattern'
+Book = require './book'
+
+VERBOSE = false
+DEPTH = 8
+WLD = 18
+FULL = 16
+
+simple = require('./minmax')(
+  max_depth: DEPTH
+  solve_wld: WLD
+  solve_full: FULL
+  verbose: VERBOSE
+)
+pattern = require('./minmax')(
+  evaluate: require('./pattern_eval')('scores')
+  max_depth: DEPTH
+  solve_wld: WLD
+  solve_full: FULL
+  verbose: VERBOSE
+)
+
+players = [pattern, simple]
+
+play = (board, black, white) ->
+  turn = if board.count(EMPTY) & 1 then WHITE else BLACK
+  while true
+    if VERBOSE
+      console.log board.dump true
+      console.log square_to_char(turn), 'to move'
+      console.log square_to_char(BLACK), board.count(BLACK), 'discs', board.list_moves(BLACK).length, 'moves'
+      console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
+      console.log square_to_char(EMPTY), board.count(EMPTY), 'squares'
+    if board.any_moves(turn)
+      switch turn
+        when BLACK then player = black
+        when WHITE then player = white
+      pos = player(board, turn)
+      process.stdout.write pos_to_str pos unless VERBOSE
+      flips = board.move turn, pos
+    else
+      if board.any_moves(-turn)
+        console.log 'PASS' if VERBOSE
+      else
+        process.stdout.write " #{ board.outcome()}\n" unless VERBOSE
+        return board.outcome()
+    turn = -turn
+
+wins = [0, 0]
+score = 0
+draws = 0
+
+do ->
+  s = ''
+  n_matches = 0
+  for b in await new Book('old/book.db').get_neutral_positions(7, 15)
+    board = new PatternBoard b
+    console.log board.dump true
+    outcome = play board, players[0], players[1]
+    score += outcome
+    if outcome > 0
+      wins[0]++
+      s += 'X'
+    else if outcome < 0
+      wins[1]++
+      s += 'O'
+    else
+      draws++
+      s += '-'
+    n_matches++
+
+    board = new PatternBoard b
+    outcome = play board, players[1], players[0]
+    score -= outcome
+    if outcome > 0
+      wins[1]++
+      s += 'X'
+    else if outcome < 0
+      wins[0]++
+      s += 'O'
+    else
+      draws++
+      s += '-'
+    n_matches++
+
+    console.log 'player[0]', wins[0], 'wins'
+    console.log 'player[1]', wins[1], 'wins'
+    console.log 'draws', draws
+    console.log 'win rate for player[0]', wins[0] / (n_matches - draws)
+    console.log 'avg score for player[0]', score / n_matches
+
+  console.log s

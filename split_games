@@ -1,0 +1,30 @@
+#!/usr/bin/env coffee
+
+{ readlines, gzwriter } = require './util'
+
+RATIO = 0.3
+
+unless process.argv.slice(2).length
+  console.log "Usage: #{process.argv[1]} game_files"
+  process.exit 1
+
+do ->
+  train_out = gzwriter 'train_games.gz'
+  test_out = gzwriter 'test_games.gz'
+
+  n_train = n_test = 0
+
+  for filename in process.argv.slice 2
+    console.log 'loading', filename
+    await readlines filename, (line) ->
+      if Math.random() > RATIO
+        out = train_out
+        n_train++
+      else
+        out = test_out
+        n_test++
+      out.write "#{line}\n"
+
+  train_out.end()
+  test_out.end()
+  console.log "#{n_train} train #{n_test} test"

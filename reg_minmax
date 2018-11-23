@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+if [ ! "$1" ]; then
+    echo "Usage: $0 games"
+    exit 1
+fi
+
+cat "$@" | ./games_to_minmax_nodes - nodes.gz
+./nodes_to_single_indexes nodes.gz
+for i in $(seq 0 9); do
+    ./regress indexes$i.gz coeffs$i
+done
+./coeffs_to_score

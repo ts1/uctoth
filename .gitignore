@@ -1,0 +1,8 @@
+/archives
+/tmp
+/memo
+/old
+/node_modules
+/scores
+.DS_Store
+.*.swp

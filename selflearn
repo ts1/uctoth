@@ -1,0 +1,76 @@
+#!/usr/bin/env coffee
+{ pos_array_to_str, pos_to_str, BLACK } = require './board'
+{ PatternBoard } = require './pattern'
+Book = require './book'
+fs = require 'fs'
+
+C = .1
+Cplay = C
+PLAY = true
+EVAL_DEPTH = 8
+PLAY_DEPTH = 8
+
+evaluator = do ->
+  minmax = require './minmax'
+  eval1 = minmax
+    evaluate: require('./pattern_eval')('scores')
+    return_score: true
+    verbose: false
+    max_depth: EVAL_DEPTH
+    solve_wld: 18
+    solve_full: 16
+  eval2 = minmax
+    evaluate: require('./pattern_eval')('scores')
+    return_score: true
+    verbose: false
+    max_depth: EVAL_DEPTH-1
+    solve_wld: 18
+    solve_full: 16
+  (board, me, moves) ->
+    move = eval1(board, me, moves)
+    if move.solved
+      return move
+    move2 = eval2(board, me, [move.move])
+    move.score = (move.score + move2.score) / 2
+    move
+
+player = do ->
+  minmax = require './minmax'
+  minmax
+    evaluate: require('./pattern_eval')('scores')
+    return_score: true
+    verbose: false
+    max_depth: PLAY_DEPTH
+    solve_wld: 18
+    solve_full: 16
+
+learn = ->
+  book = new Book 'book.db'
+  await book.init()
+  {board, moves, turn, value} = await book.find_opening(C)
+  console.log pos_array_to_str(move.move for move in moves), value
+  console.log board.dump true
+  await book.learn moves, evaluator
+  if PLAY
+    opening = await book.find_unplayed_opening(Cplay)
+    if opening
+      {board, moves, turn, value} = opening
+      console.log 'new opening:', pos_array_to_str(move.move for move in moves), value
+      console.log board.dump true
+      if C != Cplay
+        await book.learn moves, evaluator
+      loop
+        unless board.any_moves turn
+          turn = -turn
+          unless board.any_moves turn
+            break
+        {move, solved} = player board, turn
+        board.move turn, move
+        moves.push {move, solved}
+        process.stdout.write pos_to_str move
+        turn = -turn
+      console.log ':', board.outcome(BLACK)
+      fs.appendFileSync 'games', "#{pos_array_to_str(move.move for move in moves)} #{board.outcome(BLACK)}\n"
+      book.save_game moves
+
+do -> loop await learn()

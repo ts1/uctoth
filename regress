@@ -1,0 +1,156 @@
+#!/usr/bin/env coffee
+
+{ readlines, gzwriter } = require './util'
+{ get_single_index_size } = require './pattern'
+
+INTERCEPT = false
+AVERAGE = false
+WLD = false
+SPLIT = true
+
+index_size = get_single_index_size() + 1
+intercept_index = index_size - 1
+
+each_index = (row, cb) ->
+  for i in [1...row.length] by 2
+    cb row[i], row[i+1]
+
+predict = (coeffs, row) ->
+  result = 0
+  each_index row, (index, value) ->
+    result += coeffs[index] * value
+  result += coeffs[intercept_index]
+  result
+
+verify = (rows, coeffs, avg) ->
+  sum_sq_err = 0
+  n = 0
+  rows.forEach (row) ->
+    outcome = row[0] - avg
+    e = outcome - predict(coeffs, row)
+    sum_sq_err += e*e
+    n++
+  Math.sqrt(sum_sq_err / n)
+
+make_vector = (rows, coeffs, avg) ->
+  sum = 0
+  vector = (0 for i in [0...index_size] by 1)
+  rows.forEach (row) ->
+    outcome = row[0] - avg
+    e = outcome - predict(coeffs, row)
+    each_index row, (index, value) ->
+      u = vector[index] or 0
+      vector[index] = u + e * value
+      sum += Math.abs(value)
+    if INTERCEPT
+      vector[intercept_index] = e
+      sum += 1
+  for i in [0...index_size]
+    vector[i] /= sum
+  vector
+
+update_coeffs = (coeffs, vector, rate) ->
+  coeffs[i] + vector[i] * rate for i in [0...index_size] by 1
+
+read_rows = (filename, split) ->
+  console.log "loading #{filename}"
+  train_set = []
+  test_set = []
+  await readlines filename, (line) ->
+    row = JSON.parse line
+    if WLD
+      row[0] = if row[0] > 0 then 10 else if row[0] < 0 then -10 else 0
+    if split and Math.random() < split
+      test_set.push row
+    else
+      train_set.push row
+  if split
+    {train_set, test_set}
+  else
+    train_set
+
+average = (rows) ->
+  sum = 0
+  for row in rows
+    sum += row[0]
+  sum / rows.length
+
+regress = (train_file, test_file) ->
+  if test_file
+    train_set = await read_rows train_file
+    test_set = await read_rows test_file
+  else if SPLIT
+    {train_set, test_set} = await read_rows train_file, 0.3
+  else
+    train_set = test_set = await read_rows train_file
+  console.log "train set #{train_set.length}, test set #{test_set.length}"
+
+  if AVERAGE
+    train_avg = average train_set
+    console.log "train avg #{train_avg}"
+    test_avg = average test_set
+    console.log "test avg #{train_avg}"
+  else
+    train_avg = 0
+    test_avg = 0
+
+  coeffs = (0 for i in [0...index_size] by 1)
+
+  dev = verify test_set, coeffs, test_avg
+  last_e = dev
+  console.log 'deviation', last_e
+
+  n = 0
+  rate = 100
+  step = 1
+  finish = false
+  until finish
+    changed = false
+    if n >= 30
+      changed = true
+      rate *= 1000
+      console.log 'trying rate', rate
+      n = 0
+    updates = make_vector train_set, coeffs, train_avg
+    loop
+      new_coeffs = update_coeffs coeffs, updates, rate
+      e = verify test_set, new_coeffs, test_avg
+      if e > last_e
+        rate *= 0.7
+        console.log 'reduced rate to', rate
+        changed = true
+        if rate < 0.1
+          finish = true
+          break
+      else
+        break
+    coeffs = new_coeffs
+    console.log 'step', step++, 'loss', e
+    if Math.abs(e / last_e - 1) < 1e-7 and not changed
+      break
+    last_e = e
+    if not changed
+      n++
+
+  intercept = coeffs[intercept_index]
+  console.log 'intercept', intercept
+
+  r2 = 1 - last_e**2 / dev**2
+  console.log 'r2', r2
+
+  {coeffs, r2, step, intercept, loss:last_e}
+
+args = process.argv.slice 2
+
+if args.length == 3
+  [train_file, test_file, outfile] = args
+else if args.length == 2
+  [train_file, outfile] = args
+  test_file = null
+else
+  console.error "Usage: #{process.argv[1]} train_file test_file outfile"
+  process.exit 1
+
+do ->
+  coeffs = await regress train_file, test_file
+  gzwriter(outfile).end(JSON.stringify coeffs)

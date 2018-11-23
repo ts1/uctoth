@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "coffeescript": "^2.3.2",
+    "sqlite3": "^4.0.3"
+  }
+}

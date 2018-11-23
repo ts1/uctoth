@@ -1,0 +1,16 @@
+#!/bin/bash -e
+
+if [ ! "$1" ]; then
+    echo "Usage: $0 games"
+    exit 1
+fi
+
+./split_games "$@"
+./games_to_minmax_nodes train_games.gz train_nodes.gz
+./games_to_minmax_nodes test_games.gz test_nodes.gz
+./nodes_to_single_indexes train
+./nodes_to_single_indexes test
+for i in $(seq 0 9); do
+    ./regress train_indexes$i.gz test_indexes$i.gz coeffs$i
+done
+./coeffs_to_score

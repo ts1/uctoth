@@ -1,0 +1,57 @@
+#!/usr/bin/env coffee
+fs = require 'fs'
+{ N_PHASES, patterns, get_single_index, get_single_index_size } = require './pattern'
+{ int } = require './util'
+
+init_scores = ->
+  scores = {}
+  for p in patterns
+    scores[p.name] = []
+    for phase in [0...N_PHASES]
+      scores[p.name][phase] = []
+      for i in [0...(3**p.len+1)/2]
+        scores[p.name][phase][i] = 0
+  scores
+
+load_coeffs = (scores) ->
+  for phase in [0...N_PHASES]
+    {coeffs, step, intercept, r2, loss} = JSON.parse fs.readFileSync "tmp/coeffs#{phase}"
+    for i in [0...get_single_index_size()]
+      {pattern, index} = get_single_index(i)
+      scores[pattern][phase][index] = coeffs[i]
+    scores.properties or= []
+    scores.properties[phase] = {step, intercept, r2, loss}
+
+interpolate = (scores) ->
+  for p in patterns
+    tbl = scores[p.name]
+    for phase in [0...N_PHASES]
+      for i in [0...(3**p.len+1)/2]
+        if not tbl[phase][i]
+          for d in [0...N_PHASES]
+            if phase-d >= 0 and tbl[phase-d][i] != 0
+              tbl[phase][i] = tbl[phase-d][i]
+              #console.log "#{p.name} #{i} #{phase-d}-->#{phase}"
+              break
+            else if phase+d < N_PHASES and tbl[phase+d][i] != 0
+              tbl[phase][i] = tbl[phase+d][i]
+              #console.log "#{p.name} #{i} #{phase+d}-->#{phase}"
+              break
+
+denormalize = (scores) ->
+  for p in patterns
+    for phase in [0...N_PHASES]
+      tbl = scores[p.name][phase]
+      for i in [0...(3**p.len+1)/2]
+        r = p.normalize i
+        if r != i
+          if r >= 0
+            tbl[i] = tbl[r]
+          else
+            tbl[i] = -tbl[-r]
+
+scores = init_scores()
+load_coeffs scores
+interpolate scores
+denormalize scores
+fs.writeFileSync 'scores', JSON.stringify scores

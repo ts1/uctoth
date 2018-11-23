@@ -1,0 +1,111 @@
+#!/usr/bin/env coffee
+
+readline = require 'readline'
+{ Board, BLACK, WHITE, pos_array_from_str, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
+{ encode_normalized, decode } = require './encode'
+{ readlines, gzwriter } = require './util'
+
+root =
+  code: encode_normalized new Board
+  turn: BLACK
+  parents:[]
+  children:[]
+  score:0
+
+map = {}
+
+replay_and_minmax = (moves, score) ->
+  board = new Board
+  turn = BLACK
+  parent = root
+  for move in moves
+    flips = board.move turn, move
+    unless flips.length
+      throw new Error 'invalid move', pos_to_str move
+    if board.any_moves -turn
+      turn = -turn
+    code = encode_normalized board
+    node = map[code]
+    if node
+      if parent not in node.parents
+        node.parents.push parent
+    else
+      node = {code:code, turn:turn, parents:[parent], children:[], score:0}
+      map[code] = node
+    if node not in parent.children
+      parent.children.push node
+
+    parent = node
+
+  if board.any_moves(turn) or board.any_moves(-turn)
+    throw new Error 'game not finished'
+  if score != board.outcome()
+    throw new Error 'score invalid'
+
+  node.score = score
+  node.turn = 0
+
+  visited = {}
+
+  minmax = (node) ->
+    return if visited[node.code]
+    visited[node.code]= true
+    max = -Infinity
+    for child in node.children
+      value = child.score * node.turn
+      if value > max
+        max = value
+    node.score = max * node.turn
+    for parent in node.parents
+      minmax parent
+
+  for parent in node.parents
+    minmax parent
+
+if process.argv.slice(2).length != 2
+  console.log "Usage: #{process.argv[1]} games nodes"
+  process.exit 1
+
+[infile, outfile] = process.argv.slice(2)
+
+do ->
+  console.log "loading #{infile}"
+  n = 0
+  await readlines infile, (line) ->
+    [moves, score] = line.split ' '
+    moves = pos_array_from_str moves
+    score = parseInt score
+    replay_and_minmax moves, score
+    n += 1
+  console.log "loaded #{n} games"
+
+  console.log "dumping nodes to #{outfile}"
+  gz = gzwriter outfile
+  n = 0
+  for code, node of map
+    gz.write "#{decode(code)} #{node.turn} #{node.score}\n"
+    n += 1
+  gz.end()
+  console.log "dumped #{n} nodes"
+
+  if 1
+    board = new Board
+    board.move BLACK, pos_from_str('F5')
+    moves = [pos_from_str('f5')]
+
+    dump_score = (turn, depth) ->
+      if depth == 0
+        node = map[encode_normalized board]
+        if node
+          console.log pos_array_to_str(moves), node.score
+      else
+        for move in board.list_moves turn
+          flips = board.move turn, move
+          moves.push move
+          dump_score -turn, depth-1
+          board.undo turn, move, flips
+          moves.pop()
+
+    for depth in [0..2]
+      console.log "d=#{depth}"
+      dump_score WHITE, depth
