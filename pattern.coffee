@@ -3,7 +3,6 @@
 
 N_PHASES = 10
 N_MOVES_PER_PHASE = 60 / N_PHASES
-USE_TURN = false
 
 all_one = (len) -> (3 ** len - 1) / 2
 
@@ -73,8 +72,19 @@ flip_v_only = (positions) -> [
   flip_v positions,
 ]
 
+flip_hvxy  = (positions) -> [
+  positions
+  flip_v positions
+  flip_xy positions
+  flip_xy flip_v positions
+  flip_h positions
+  flip_h flip_v positions
+  flip_h flip_xy positions
+  flip_h flip_xy flip_v positions
+]
+
 patterns = [
-    name: 'corner9'
+    name: 'corner3x3'
     positions: do ->
       result = []
       for x in [0..2]
@@ -83,6 +93,16 @@ patterns = [
       result
     reverse: reverse_index_xy
     flip: flip_hv
+  ,
+    name: 'corner2x5'
+    positions: do ->
+      result = []
+      for x in [0..1]
+        for y in [0..4]
+          result.push [x, y]
+      result
+    reverse: (x) -> x
+    flip: flip_hvxy
   ,
     name: 'edge2x'
     positions: do ->
@@ -141,14 +161,6 @@ patterns = [
     reverse: (x) -> x
     flip: (x) -> [x]
 ]
-
-if USE_TURN
-  patterns.push
-    name: 'turn'
-    positions: []
-    len: 1
-    reverse: (x) -> x
-    flip: (x) -> [x]
 
 position_updates = []
 n_indexes = 0
@@ -217,8 +229,6 @@ init = ->
 init()
 
 parity_index = patterns.parity.indexes[0]
-if USE_TURN
-  turn_index = patterns.turn.indexes[0]
 
 
 class PatternBoard extends Board
@@ -265,8 +275,6 @@ class PatternBoard extends Board
 
   set_parity: (me) ->
     @indexes[parity_index] = if @parity then me else -me
-    if USE_TURN
-      @indexes[turn_index] = me
 
   dump_indexes: ->
     for p in patterns

@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+if [ ! "$1" ] ; then
+    echo "Usage: $0 gen"
+    exit 1
+fi
+
+dir=gen/$1
+
+mkdir $dir
+mv scores book.db games $dir
