@@ -4,11 +4,13 @@
 Book = require './book'
 fs = require 'fs'
 
-C = .1
+C = 1
 Cplay = C
 PLAY = true
-EVAL_DEPTH = 8
-PLAY_DEPTH = 8
+EVAL_DEPTH = 7
+PLAY_DEPTH = 7
+WLD = 17
+FULL = 15
 
 evaluator = do ->
   minmax = require './minmax'
@@ -17,15 +19,15 @@ evaluator = do ->
     return_score: true
     verbose: false
     max_depth: EVAL_DEPTH
-    solve_wld: 18
-    solve_full: 16
+    solve_wld: WLD
+    solve_full: FULL
   eval2 = minmax
     evaluate: require('./pattern_eval')('scores')
     return_score: true
     verbose: false
     max_depth: EVAL_DEPTH-1
-    solve_wld: 18
-    solve_full: 16
+    solve_wld: WLD
+    solve_full: FULL
   (board, me, moves) ->
     move = eval1(board, me, moves)
     if move.solved
@@ -41,11 +43,12 @@ player = do ->
     return_score: true
     verbose: false
     max_depth: PLAY_DEPTH
-    solve_wld: 18
-    solve_full: 16
+    solve_wld: WLD
+    solve_full: FULL
+
+book = new Book 'book.db'
 
 learn = ->
-  book = new Book 'book.db'
   await book.init()
   {board, moves, turn, value} = await book.find_opening(C)
   console.log pos_array_to_str(move.move for move in moves), value
@@ -69,8 +72,21 @@ learn = ->
         moves.push {move, solved}
         process.stdout.write pos_to_str move
         turn = -turn
-      console.log ':', board.outcome(BLACK)
-      fs.appendFileSync 'games', "#{pos_array_to_str(move.move for move in moves)} #{board.outcome(BLACK)}\n"
-      book.save_game moves
+      console.log ':', board.outcome()
+      fs.appendFileSync 'games', "#{pos_array_to_str(move.move for move in moves)} #{board.outcome()}\n"
+      book.save_game moves, board.outcome()
 
-do -> loop await learn()
+do ->
+  [arg] = process.argv.slice 2
+  if arg
+    max_games = parseInt arg
+  else
+    max_games = 0
+
+  loop
+    await learn()
+    if max_games
+      n_games = await book.count_games()
+      console.log 'played', n_games
+      if n_games >= max_games
+        break

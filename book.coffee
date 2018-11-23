@@ -1,6 +1,6 @@
 sqlite3 = require('sqlite3').verbose()
 { encode_normalized, decode } = require './encode'
-{ Board, BLACK, WHITE, pos_to_str, pos_from_str } = require './board'
+{ BLACK, WHITE, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
 { PatternBoard } = require './pattern'
 { shuffle } = require './util'
 
@@ -23,7 +23,12 @@ module.exports = class Book
           else
             resolve()
     new Promise (resolve, reject) =>
-      @db.run 'create table if not exists played (code text primary key)',
+      @db.run '''
+        create table if not exists games (
+          moves text primary key,
+          outcome integer
+        )
+        ''',
         (err) ->
           if err
             reject err
@@ -104,37 +109,40 @@ module.exports = class Book
 
   find_unplayed_opening: (c) ->
     opening = await @find_opening(c)
-    code = encode_normalized(opening.board)
+    moves = pos_array_to_str(move for {move} in opening.moves)
     data = await new Promise (resolve, reject) =>
-      @db.get 'select count(*) as played from played where code=?', [code],
+      @db.get 'select count(*) as played from games where moves like ?',
+        ["#{moves}%"],
         (err, data) ->
           if err
             reject err
           else
             resolve data
     if data.played
-      return null
-    opening
+      null
+    else
+      opening
 
-  save_game: (moves) ->
-    board = new PatternBoard
-    turn = BLACK
-    for {move, solved} in moves
-      flips = board.move turn, move
-      unless flips.length
-        turn = -turn
-        flips = board.move turn, move
-        unless flips.length
-          throw new Error 'invalid move'
-      code = encode_normalized(board)
-      await new Promise (resolve, reject) =>
-        @db.run 'insert or replace into played values (?)', [code],
-          (err) ->
-            if err
-              reject err
-            else
-              resolve()
+  save_game: (moves, outcome) ->
+    moves = pos_array_to_str(move for {move} in moves)
+    await new Promise (resolve, reject) =>
+      @db.run 'insert or replace into games values (?, ?)', [moves, outcome],
+        (err) ->
+          if err
+            reject err
+          else
+            resolve()
       turn = -turn
+
+  count_games: ->
+    data = await new Promise (resolve, reject) =>
+      @db.get 'select count(*) as played from games', [],
+        (err, data) ->
+          if err
+            reject err
+          else
+            resolve data
+    data.played
 
   get_neutral_positions: (n_moves, n) -> new Promise (resolve, reject) =>
     @db.all 'select code from book where empty=? order by n desc limit ?',

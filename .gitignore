@@ -1,4 +1,5 @@
 /archives
+/genesis
 /tmp
 /memo
 /old
@@ -6,3 +7,5 @@
 /scores
 .DS_Store
 .*.swp
+book.db
+games
