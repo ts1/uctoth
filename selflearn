@@ -7,8 +7,8 @@ fs = require 'fs'
 C = 1
 Cplay = C
 PLAY = true
-EVAL_DEPTH = 7
-PLAY_DEPTH = 7
+EVAL_DEPTH = 8
+PLAY_DEPTH = 8
 WLD = 18
 FULL = 16
 
