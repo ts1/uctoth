@@ -21,13 +21,13 @@ pattern = require('./minmax')(
   solve_full: FULL
   verbose: VERBOSE
 )
-#pattern_old = require('./minmax')(
-#  evaluate: require('./pattern_eval')('gen/3/scores')
-#  max_depth: DEPTH
-#  solve_wld: WLD
-#  solve_full: FULL
-#  verbose: VERBOSE
-#)
+pattern_old = require('./minmax')(
+  evaluate: require('./pattern_eval')('scores-normal')
+  max_depth: DEPTH
+  solve_wld: WLD
+  solve_full: FULL
+  verbose: VERBOSE
+)
 
 players = [pattern, simple]
 

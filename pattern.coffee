@@ -230,7 +230,6 @@ init()
 
 parity_index = patterns.parity.indexes[0]
 
-
 class PatternBoard extends Board
   constructor: (x) ->
     super x

@@ -4,7 +4,7 @@
 { get_single_index_size } = require './pattern'
 
 INTERCEPT = false
-AVERAGE = false
+AVERAGE = true
 WLD = false
 SPLIT = true
 
