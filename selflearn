@@ -9,8 +9,8 @@ Cplay = C
 PLAY = true
 EVAL_DEPTH = 7
 PLAY_DEPTH = 7
-WLD = 17
-FULL = 15
+WLD = 18
+FULL = 16
 
 evaluator = do ->
   minmax = require './minmax'

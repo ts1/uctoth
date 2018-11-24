@@ -241,13 +241,13 @@ class PatternBoard extends Board
     @init_indexes()
 
   init_indexes: ->
-    @parity = 0
+    @n_discs = 0
     @indexes = (0 for i in [0...n_indexes])
     for pos in ALL_POSITIONS
       if @board[pos]
         for [i, u] in position_updates[pos]
           @indexes[i] += @board[pos] * u
-        @parity ^= 1
+        @n_discs++
 
   move: (me, pos) ->
     flips = super(me, pos)
@@ -258,7 +258,7 @@ class PatternBoard extends Board
       for pos in flips
         for [i, u] in position_updates[pos]
           @indexes[i] += me2 * u
-      @parity ^= 1
+      @n_discs++
 
     flips
 
@@ -271,10 +271,11 @@ class PatternBoard extends Board
       for pos in flips
         for [i, u] in position_updates[pos]
           @indexes[i] -= me2 * u
-      @parity ^= 1
+      @n_discs--
 
   set_parity: (me) ->
-    @indexes[parity_index] = if @parity then me else -me
+    parity = @n_discs & 1
+    @indexes[parity_index] = if parity then me else -me
 
   dump_indexes: ->
     for p in patterns

@@ -42,5 +42,5 @@ do ->
       score = parseInt score
       replay_and_dump moves, score, out
       n += 1
-  process.stderr.write "loaded #{n} games\n"
+    process.stderr.write "loaded #{n} games\n"
   process.stderr.write "dumped #{n_dump} nodes\n"

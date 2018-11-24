@@ -122,9 +122,13 @@ module.exports = (options={}) ->
   if cache_size
     cache = require('./cache')(cache_size)
 
+    cache_depth = max_depth - 6
+    if cache_depth < 1
+      cache_depth = 1
+
     cached_minmax = (f) ->
       (board, me, lower, upper, pass, depth) ->
-        if depth <= 3
+        if depth < cache_depth
           return f board, me, lower, upper, pass, depth
 
         value = cache.get(board, me, depth, lower, upper)
@@ -140,6 +144,8 @@ module.exports = (options={}) ->
     minmax = cached_minmax minmax
 
   (board, me, moves=null) ->
+    #if cache_size
+    #  cache = require('./cache')(cache_size)
     F5 = pos_from_str('F5')
     if board.count(EMPTY) == 60 and board.can_move(me, F5)
       return F5
