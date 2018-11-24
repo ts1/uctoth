@@ -7,5 +7,6 @@
 .*.swp
 book.db
 /games
-/history
+/match.history
 /gen
+/genesis
