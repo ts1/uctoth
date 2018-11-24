@@ -48,14 +48,11 @@ ALL_POSITIONS = do ->
       result.push pos_from_xy x, y
   result
 
-ALL_BUT_X = do ->
-  result = []
-  for y in [0..7]
-    for x in [0..7]
-      if (x==1 or x==6) and (y==1 or y==6)
-        continue
-      result.push pos_from_xy x, y
-  result
+X_LIST = []
+X_LIST[pos_from_str('B2')] = true
+X_LIST[pos_from_str('G2')] = true
+X_LIST[pos_from_str('B7')] = true
+X_LIST[pos_from_str('G7')] = true
 
 UP = -9
 DOWN = +9
@@ -68,6 +65,31 @@ ALL_DIRECTIONS = [
   DOWN+LEFT, DOWN, DOWN+RIGHT
 ]
 
+SEARCH_ORDER = do ->
+  # Search order of moves in upper left quarter of board,
+  # possibly strongest first.
+  QUARTER_ORDER = [
+    'A1', # corner
+    'C1', 'A3',
+    'D1', 'A4',
+    'C3',
+    'D3', 'C4',
+    'D2', 'B4',
+    'B1', 'A2',
+    'C2', 'B3',
+    'B2' # X
+    'D4' # just in case
+  ]
+  order = []
+  for spos in QUARTER_ORDER
+    pos = pos_from_str(spos)
+    {x, y} = pos_to_xy(pos)
+    order.push pos_from_xy(x, y)
+    order.push pos_from_xy(7-x, y)
+    order.push pos_from_xy(x, 7-y)
+    order.push pos_from_xy(7-x, 7-y)
+  order
+
 class Board
   constructor: (s) ->
     if s
@@ -75,6 +97,7 @@ class Board
         @load s
       else
         @board = [s.board...]
+        @build_empty_list()
     else
       @load '''
         - - - - - - - -
@@ -115,6 +138,7 @@ class Board
           y++
     if y < 8
       throw new Error 'too few cells'
+    @build_empty_list()
 
   dump: (pretty=false) ->
     l = []
@@ -162,11 +186,28 @@ class Board
             return true
     false
 
-  any_moves: (me) -> ALL_POSITIONS.some (pos) => @can_move(me, pos)
+  any_moves: (me) ->
+    result = false
+    @each_empty (pos) =>
+      if @can_move(me, pos)
+        result = true
+        return false # stop iteration
+    result
 
-  list_moves: (me) -> ALL_POSITIONS.filter (pos) => @can_move(me, pos)
+  list_moves: (me) ->
+    moves = []
+    @each_empty (pos) =>
+      if @can_move(me, pos)
+        moves.push pos
+    moves
 
-  list_moves_but_x: (me) -> ALL_BUT_X.filter (pos) => @can_move(me, pos)
+  list_moves_but_x: (me) ->
+    moves = []
+    @each_empty (pos) =>
+      unless X_LIST[pos]
+        if @can_move(me, pos)
+          moves.push pos
+    moves
 
   move: (me, pos) ->
     flips = []
@@ -182,7 +223,9 @@ class Board
             while (p -= d) != pos
               @board[p] = me
               flips.push p
-      @board[pos] = me if flips.length
+      if flips.length
+        @board[pos] = me
+        @pop_empty_list pos
     flips
 
   undo: (me, pos, flips) ->
@@ -190,6 +233,7 @@ class Board
     for p in flips
       @board[p] = foe
     @board[pos] = EMPTY
+    @push_empty_list pos
 
   score: (me) ->
     foe = -me
@@ -215,6 +259,49 @@ class Board
       else if score < 0
         score -= empty
     score
+
+  build_empty_list: ->
+    @empty_next = [0]
+    @empty_prev = [0]
+    prev = 0
+    ALL_POSITIONS.forEach (pos) =>
+      if @board[pos] == EMPTY
+        @empty_next[prev] = pos
+        @empty_prev[pos] = prev
+        prev = pos
+    @empty_next[prev] = 0
+    #@validate_empty_list()
+
+  pop_empty_list: (pos) ->
+    @empty_next[@empty_prev[pos]] = @empty_next[pos]
+    @empty_prev[@empty_next[pos]] = @empty_prev[pos]
+    #@validate_empty_list()
+
+  push_empty_list: (pos) ->
+    @empty_next[@empty_prev[pos]] = pos
+    @empty_prev[@empty_next[pos]] = pos
+    #@validate_empty_list()
+
+  each_empty: (cb) ->
+    pos = 0
+    loop
+      pos = @empty_next[pos]
+      if pos == 0
+        break
+      if cb(pos) == false
+        break
+
+  validate_empty_list: ->
+    n = 0
+    @each_empty (pos) =>
+      console.assert @board[pos] == EMPTY
+      n++
+    m = 0
+    ALL_POSITIONS.forEach (pos) =>
+      if @board[pos] == EMPTY
+        m++
+    console.assert n == m
+
 
 module.exports = {
   EMPTY, BLACK, WHITE, GUARD,
