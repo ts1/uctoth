@@ -5,7 +5,7 @@ time ./selflearn 500
 ./mkgen 4
 time ./reg gen/*/games
 time ./match match.history
-time ./selflearn 500
+time ./selflearn 1000
 
 ./mkgen 5
 time ./reg gen/*/games
@@ -15,14 +15,9 @@ time ./selflearn 1000
 ./mkgen 6
 time ./reg gen/*/games
 time ./match match.history
-time ./selflearn 1000
-
-./mkgen 7
-time ./reg gen/*/games
-time ./match match.history
 time ./selflearn 2000
 
-./mkgen 8
+./mkgen 7
 time ./reg gen/*/games
 time ./match match.history
 time ./selflearn 2000
