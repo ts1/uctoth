@@ -1,6 +1,6 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy } = require './board'
 
-CACHE_SIZE = 100000
+CACHE_SIZE = 200000
 CACHE = true
 CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 9

@@ -26,23 +26,23 @@ human = (board, turn) ->
       console.log 'illegal move'
   pos
 
-DEPTH = 7
+DEPTH = 8
 
 simple = require('./minmax')(
   max_depth: DEPTH
   board_class: Board
-  solve_wld: 10
-  solve_full: 8
-  shuffle: false
+  solve_wld: 22
+  solve_full: 20
+  #shuffle: false
 )
-#pattern = require('./minmax')(
-#  evaluate: require('./pattern_eval')('scores')
-#  max_depth: DEPTH
-#  #shuffle: false
-#  solve_wld: 20
-#  solve_full: 18
-#  #cache_size: 0
-#)
+pattern = require('./minmax')(
+  evaluate: require('./pattern_eval')('scores')
+  max_depth: DEPTH
+  #shuffle: false
+  solve_wld: 22
+  solve_full: 20
+  #cache_size: 0
+)
 #invert = require('./minmax')(
 #  evaluate: require('./pattern_eval')('scores')
 #  max_depth: DEPTH
@@ -66,8 +66,8 @@ do ->
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
     switch turn
-      when BLACK then player = simple
-      when WHITE then player = simple
+      when BLACK then player = pattern
+      when WHITE then player = pattern
     if board.any_moves(turn)
       while true
         pos = await player(board, turn)

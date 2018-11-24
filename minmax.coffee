@@ -198,7 +198,12 @@ module.exports = (options={}) ->
 
     solved = null
 
-    evaluator = (board, me) -> minmax(board, me, -Infinity, Infinity, 0, 1)
+    evaluator = (board, me) ->
+      #if cache_size
+      #  value = cache.get_lower(board, me, 6)
+      #  if value != null
+      #    return value
+      minmax(board, me, -Infinity, Infinity, 0, 1)
 
     if (left <= solve_full or left <= solve_wld) and not invert
       if left <= solve_full
