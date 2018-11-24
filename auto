@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-./mkgen 3
-time ./reg gen/*/games
-time ./match match.history
 time ./selflearn 500
 
 ./mkgen 4

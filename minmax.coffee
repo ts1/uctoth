@@ -213,6 +213,7 @@ module.exports = (options={}) ->
         solved = 'wld'
       moves.sort (a, b) -> move_scores[b] - move_scores[a]
       best = 0
+      #solve.cache_clear()
       for pos from moves
         flips = board.move(me, pos)
         if flips.length
@@ -231,6 +232,7 @@ module.exports = (options={}) ->
             process.stdout.write "* " if verbose
       max = lower
       process.stdout.write '\n' if verbose
+      solve.cache_stats() if verbose
       if not best
         best = moves[0]
 

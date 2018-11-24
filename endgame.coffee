@@ -1,5 +1,9 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, ALL_POSITIONS } = require './board'
 
+CACHE_SIZE = 100000
+CACHE = true
+CACHE_THRESHOLD = 8
+
 SEARCH_ORDER = do ->
   # Search order of moves for upper left quarter of board,
   # possibly strongest first.
@@ -45,21 +49,24 @@ each_empty = (empty_list, fn) ->
     if result == false
       break
 
-cache = require('./cache')(100000)
+cache = require('./cache')(CACHE_SIZE)
 
-cached_solve = (f, board) ->
-  (me, lower, upper, score, pass, left) ->
-    if left <= 9
-      return f me, lower, upper, score, pass, left
+if CACHE
+  cached_solve = (f, board) ->
+    (me, lower, upper, score, pass, left) ->
+      if left <= CACHE_THRESHOLD
+        return f me, lower, upper, score, pass, left
 
-    value = cache.get(board, me, left, lower, upper)
-    if value != null
-      return value
+      value = cache.get(board, me, left, lower, upper)
+      if value != null
+        return value
 
-    value = f me, lower, upper, score, pass, left
+      value = f me, lower, upper, score, pass, left
 
-    cache.set board, me, left, lower, upper, value
-    value
+      cache.set board, me, left, lower, upper, value
+      value
+else
+  cached_solve = (f, board) -> f
 
 simple_solve = (board, me, lower, upper, base_score, left) ->
   board = new Board board
@@ -139,11 +146,16 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluator) ->
   solve = cached_solve solve, board
   solve(me, lower, upper, base_score, 0, left)
 
-module.exports = (board, me, lower, upper, evaluator) ->
-  #cache.stats()
+module.exports = solve = (board, me, lower, upper, evaluator) ->
   score = board.score(me)
   left = board.count(EMPTY)
   if evaluator
     ordered_solve(board, me, lower, upper, score, left, evaluator)
   else
     simple_solve(board, me, lower, upper, score, left)
+
+solve.cache_clear = ->
+  cache = require('./cache')(CACHE_SIZE)
+
+solve.cache_stats = ->
+  cache.stats()
