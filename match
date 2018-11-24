@@ -4,7 +4,7 @@
 Book = require './book'
 
 VERBOSE = false
-DEPTH = 7
+DEPTH = 8
 WLD = 18
 FULL = 16
 
@@ -21,13 +21,13 @@ pattern = require('./minmax')(
   solve_full: FULL
   verbose: VERBOSE
 )
-pattern_old = require('./minmax')(
-  evaluate: require('./pattern_eval')('gen/3/scores')
-  max_depth: DEPTH
-  solve_wld: WLD
-  solve_full: FULL
-  verbose: VERBOSE
-)
+#pattern_old = require('./minmax')(
+#  evaluate: require('./pattern_eval')('gen/3/scores')
+#  max_depth: DEPTH
+#  solve_wld: WLD
+#  solve_full: FULL
+#  verbose: VERBOSE
+#)
 
 players = [pattern, simple]
 
@@ -99,3 +99,7 @@ do ->
     console.log 'avg score for player[0]', score / n_matches
 
   console.log s
+
+  [arg] = process.argv.slice 2
+  if arg
+    require('fs').appendFileSync arg, "#{wins[0]} #{wins[1]} #{draws}\n"
