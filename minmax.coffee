@@ -1,4 +1,4 @@
-{ EMPTY, ALL_POSITIONS, pos_from_str, pos_to_str, Board } = require './board'
+{ EMPTY, pos_from_str, pos_to_str, Board } = require './board'
 { PatternBoard } = require './pattern'
 solve = require './endgame'
 
@@ -57,7 +57,7 @@ module.exports = (options={}) ->
       return evaluate(board, me)
 
     any_moves = false
-    for pos in ALL_POSITIONS
+    board.each_empty (pos) ->
       flips = board.move(me, pos)
       if flips.length
         any_moves = true
@@ -69,7 +69,7 @@ module.exports = (options={}) ->
         if score > lower
           lower = score
           if score >= upper
-            break
+            return false # stop iteration
     if any_moves
       lower
     else
@@ -85,7 +85,7 @@ module.exports = (options={}) ->
     moves = []
 
     any_moves = false
-    for pos in ALL_POSITIONS
+    board.each_empty (pos) ->
       flips = board.move(me, pos)
       if flips.length
         any_moves = true
