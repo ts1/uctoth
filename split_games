@@ -9,8 +9,8 @@ unless process.argv.slice(2).length
   process.exit 1
 
 do ->
-  train_out = gzwriter 'train_games.gz'
-  test_out = gzwriter 'test_games.gz'
+  train_out = gzwriter 'tmp/train_games.gz'
+  test_out = gzwriter 'tmp/test_games.gz'
 
   n_train = n_test = 0
 
