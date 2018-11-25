@@ -209,7 +209,7 @@ class Board
           moves.push pos
     moves
 
-  move: (me, pos) ->
+  move: (me, pos, update_empty=true) ->
     flips = []
     if @board[pos] == EMPTY
       foe = -me
@@ -225,15 +225,17 @@ class Board
               flips.push p
       if flips.length
         @board[pos] = me
-        @pop_empty_list pos
+        if update_empty
+          @pop_empty_list pos
     flips
 
-  undo: (me, pos, flips) ->
+  undo: (me, pos, flips, update_empty=true) ->
     foe = -me
     for p in flips
       @board[p] = foe
     @board[pos] = EMPTY
-    @push_empty_list pos
+    if update_empty
+      @push_empty_list pos
 
   score: (me) ->
     foe = -me
@@ -281,6 +283,8 @@ class Board
     @empty_next[@empty_prev[pos]] = pos
     @empty_prev[@empty_next[pos]] = pos
     #@validate_empty_list()
+
+  first_empty: -> @empty_next[0]
 
   each_empty: (cb) ->
     pos = 0

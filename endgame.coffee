@@ -27,9 +27,31 @@ else
 simple_solve = (board, me, lower, upper, base_score, left) ->
   board = new Board board
 
+  terminal_solve = (me, score) ->
+    pos = board.first_empty()
+    flips = board.move(me, pos, false)
+    n = flips.length
+    if n
+      board.undo(me, pos, flips, false)
+      score + 2*n + 1
+    else
+      flips = board.move(-me, pos)
+      n = flips.length
+      if n
+        board.undo(-me, pos, flips, false)
+        score - 2*n + 1
+      else
+        if score > 0
+          score + 1
+        else if score < 0
+          score - 1
+        else
+          score
+
   solve = (me, lower, upper, base_score, pass, left) =>
-    if left == 0
-      return base_score
+    if left == 1
+      return terminal_solve(me, base_score)
+
     any_moves = false
     board.each_empty (pos) =>
       flips = board.move(me, pos)
