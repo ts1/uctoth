@@ -4,7 +4,7 @@
 Book = require './book'
 fs = require 'fs'
 
-C = 0.3
+C = 1
 Cplay = C
 PLAY = true
 EVAL_DEPTH = 8
