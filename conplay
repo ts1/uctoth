@@ -26,7 +26,7 @@ human = (board, turn) ->
       console.log 'illegal move'
   pos
 
-DEPTH = 8
+DEPTH = 11
 
 simple = require('./minmax')(
   max_depth: DEPTH
@@ -38,9 +38,9 @@ simple = require('./minmax')(
 pattern = require('./minmax')(
   evaluate: require('./pattern_eval')('scores')
   max_depth: DEPTH
-  shuffle: false
-  solve_wld: 0#22
-  solve_full: 0#20
+  #shuffle: false
+  solve_wld: 22
+  solve_full: 20
   #cache_size: 0
 )
 #invert = require('./minmax')(
