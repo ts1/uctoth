@@ -1,12 +1,14 @@
 #!/usr/bin/env coffee
 
-{ readlines, gzwriter } = require './util'
+{ readlines, gzwriter, shuffle } = require './util'
 { get_single_index_size } = require './pattern'
 
 INTERCEPT = false
 AVERAGE = false
 WLD = false
 SPLIT = true
+MINI_BATCH = false
+BATCH_SIZE = 10000
 
 index_size = get_single_index_size() + 1
 intercept_index = index_size - 1
@@ -32,10 +34,11 @@ verify = (rows, coeffs, avg) ->
     n++
   Math.sqrt(sum_sq_err / n)
 
-make_vector = (rows, coeffs, avg) ->
+make_gradient = (rows, coeffs, avg, offset, stride) ->
   sum = 0
   vector = (0 for i in [0...index_size] by 1)
-  rows.forEach (row) ->
+  for i in [offset...rows.length] by stride
+    row = rows[i]
     outcome = row[0] - avg
     e = outcome - predict(coeffs, row)
     each_index row, (index, value) ->
@@ -100,40 +103,64 @@ regress = (train_file, test_file) ->
   last_e = dev
   console.log 'deviation', last_e
 
+  if MINI_BATCH
+    batch_size = BATCH_SIZE or Math.round(Math.sqrt(train_set.length))
+    n_batches = Math.ceil(train_set.length / batch_size)
+    console.log "#{n_batches} batches of #{batch_size}"
+  else
+    batch_size = train_set.length
+    n_batches = 1
+
   n = 0
-  rate = 100
   step = 1
-  finish = false
-  until finish
-    changed = false
-    if n >= 30
-      changed = true
-      rate *= 1000
-      console.log 'trying rate', rate
-      n = 0
-    updates = make_vector train_set, coeffs, train_avg
-    loop
-      new_coeffs = update_coeffs coeffs, updates, rate
-      e = verify test_set, new_coeffs, test_avg
-      if e > last_e
-        rate *= 0.7
-        console.log 'reduced rate to', rate
-        changed = true
-        if rate < 0.01
-          finish = true
+  epoch = 0
+  loop
+    all_finish = true
+    if MINI_BATCH
+      train_set = shuffle train_set
+    for batch in [0...n_batches]
+      console.log "epoch #{epoch} batch #{batch}" if MINI_BATCH
+      rate = 10000
+      finish = false
+      until finish
+        changed = false
+        if n >= 30
+          n = 0
+          if MINI_BATCH
+            all_finish = false
+            break
+          else
+            rate *= 1000
+            changed = true
+            #console.log 'trying rate', rate
+        updates = make_gradient train_set, coeffs, train_avg, batch, n_batches
+        loop
+          new_coeffs = update_coeffs coeffs, updates, rate
+          e = verify test_set, new_coeffs, test_avg
+          if e > last_e
+            rate *= 0.7
+            #console.log 'reduced rate to', rate
+            changed = true
+            if rate < 0.01
+              finish = true
+              unless MINI_BATCH
+                all_finish = true
+              break
+          else
+            break
+        unless finish
+          coeffs = new_coeffs
+          console.log 'step', step++, 'loss', e, 'rate', rate
+        if Math.abs(e / last_e - 1) < 1e-7 and not changed
           break
-      else
-        break
-    coeffs = new_coeffs
-    console.log 'step', step++, 'loss', e
-    if Math.abs(e / last_e - 1) < 1e-7 and not changed
-      break
-    last_e = e
-    if not changed
-      n++
+        last_e = e
+        if not changed
+          n++
+    break if all_finish
+    epoch++
 
   intercept = coeffs[intercept_index]
-  console.log 'intercept', intercept
+  console.log 'intercept', intercept if INTERCEPT
 
   r2 = 1 - last_e**2 / dev**2
   console.log 'r2', r2
