@@ -32,6 +32,7 @@ do ->
   unless args.length
     process.stderr.write "Usage: #{process.argv[1]} games...\n"
     process.exit 1
+  total = 0
   for infile in args
     process.stderr.write "loading #{infile}\n"
     n = 0
@@ -43,4 +44,6 @@ do ->
       replay_and_dump moves, score, out
       n += 1
     process.stderr.write "loaded #{n} games\n"
+    total += n
+  process.stderr.write "loaded #{total} games total\n"
   process.stderr.write "dumped #{n_dump} nodes\n"

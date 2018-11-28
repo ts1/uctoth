@@ -39,7 +39,7 @@ indexify = (filename, outfiles) ->
       if ph >= 0 and ph < N_PHASES
         outfiles[ph].write "#{row}\n"
     n++
-  console.log "indexed #{n} positions"
+  console.log "indexed #{n} nodes"
 
 do ->
   args = process.argv.slice 2
