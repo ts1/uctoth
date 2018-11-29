@@ -168,7 +168,7 @@ regress = (train_file, test_file) ->
         if e_history.length >= 10
           e_history.shift()
         e_history.push e
-        if e_history.length >= 10 and calc_deviation(e_history) < THRESHOLD
+        if e_history.length >= 10 and calc_deviation_rate(e_history) < THRESHOLD
           break
 
         last_e = e
