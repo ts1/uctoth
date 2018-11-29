@@ -6,9 +6,10 @@
 INTERCEPT = false
 AVERAGE = false
 WLD = false
-SPLIT = true
+SPLIT = false
 MINI_BATCH = false
 BATCH_SIZE = 10000
+THRESHOLD = 1e-7
 
 index_size = get_single_index_size() + 1
 intercept_index = index_size - 1
@@ -78,6 +79,17 @@ average = (rows) ->
     sum += row[0]
   sum / rows.length
 
+calc_deviation_rate = (array) ->
+  sum = 0
+  for x in array
+    sum += x
+  avg = sum / array.length
+
+  sum_sq = 0
+  for x in array
+    sum_sq += (x - avg) ** 2
+  Math.sqrt(sum_sq / array.length) / avg
+
 regress = (train_file, test_file) ->
   if test_file
     train_set = await read_rows train_file
@@ -114,6 +126,7 @@ regress = (train_file, test_file) ->
   n = 0
   step = 1
   epoch = 0
+  e_history = []
   loop
     all_finish = true
     if MINI_BATCH
@@ -148,11 +161,16 @@ regress = (train_file, test_file) ->
               break
           else
             break
-        unless finish
-          coeffs = new_coeffs
-          console.log 'step', step++, 'loss', e, 'rate', rate
-        if Math.abs(e / last_e - 1) < 1e-7 and not changed
+        break if finish
+        coeffs = new_coeffs
+        console.log 'step', step++, 'loss', e, 'rate', rate
+
+        if e_history.length >= 10
+          e_history.shift()
+        e_history.push e
+        if e_history.length >= 10 and calc_deviation(e_history) < THRESHOLD
           break
+
         last_e = e
         if not changed
           n++
