@@ -8,5 +8,5 @@ fi
 dir=gen/$1
 
 mkdir $dir
-mv scores games $dir
-cp book.db $dir
+mv games $dir
+cp scores book.db $dir
