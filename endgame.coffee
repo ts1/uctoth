@@ -1,4 +1,4 @@
-{ Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy } = require './board'
+{ Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
 
 CACHE_SIZE = 200000
 CACHE = true
@@ -35,7 +35,7 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
       board.undo(me, pos, flips, false)
       score + 2*n + 1
     else
-      flips = board.move(-me, pos)
+      flips = board.move(-me, pos, false)
       n = flips.length
       if n
         board.undo(-me, pos, flips, false)
@@ -48,7 +48,7 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
         else
           score
 
-  solve = (me, lower, upper, base_score, pass, left) =>
+  solve_sub = (me, lower, upper, base_score, pass, left) =>
     if left == 1
       return terminal_solve(me, base_score)
 
@@ -59,7 +59,7 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
       return true unless n
       any_moves = true
       score = base_score + 2*n + 1
-      score = -solve(-me, -upper, -lower, -score, 0, left-1)
+      score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
       board.undo me, pos, flips
       if score > lower
         lower = score
@@ -74,13 +74,18 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
         else if base_score < 0
           base_score - left
       else
-        -solve(-me, -upper, -lower, -base_score, 1, left)
+        -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
-  solve = cached_solve solve, board
-  solve(me, lower, upper, base_score, 0, left)
+  solve_sub = cached_solve solve_sub, board
+  solve_sub(me, lower, upper, base_score, 0, left)
 
-ordered_solve = (board, me, lower, upper, base_score, left, evaluator) ->
-  solve = (me, lower, upper, base_score, pass, left) ->
+pattern_eval = require('./pattern_eval')('scores')
+minmax = require('./minmax')(evaluator: pattern_eval, verbose: false)
+simple_minmax = minmax.simple_minmax
+evaluator = (board, me) -> simple_minmax(board, me, -Infinity, Infinity, 0, 1)
+
+ordered_solve = (board, me, lower, upper, base_score, left) ->
+  solve_sub = (me, lower, upper, base_score, pass, left) ->
     if left <= ORDER_THRESHOLD
       return simple_solve(board, me, lower, upper, base_score, left)
 
@@ -99,7 +104,7 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluator) ->
         else if base_score < 0
           return base_score - left
       else
-        return -solve(-me, -upper, -lower, -base_score, 1, left)
+        return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
     moves.sort (a, b) -> b[1] - a[1]
 
@@ -107,12 +112,12 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluator) ->
       flips = board.move me, pos
       score = base_score + 2*flips.length + 1
       if upper - lower > 1 and left >= 12
-        s = -solve(-me, -(lower+1), -lower, -score, 0, left-1)
+        s = -solve_sub(-me, -(lower+1), -lower, -score, 0, left-1)
         if s > lower and s < upper
-          s = -solve(-me, -upper, -s, -score, 0, left-1)
+          s = -solve_sub(-me, -upper, -s, -score, 0, left-1)
         score = s
       else
-        score = -solve(-me, -upper, -lower, -score, 0, left-1)
+        score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
       board.undo me, pos, flips
       if score > lower
         lower = score
@@ -120,19 +125,50 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluator) ->
           break
     lower
 
-  solve = cached_solve solve, board
-  solve(me, lower, upper, base_score, 0, left)
+  solve_sub = cached_solve solve_sub, board
+  solve_sub(me, lower, upper, base_score, 0, left)
 
-module.exports = solve = (board, me, lower, upper, evaluator) ->
+solve = (board, me, lower, upper) ->
   score = board.score(me)
   left = board.count(EMPTY)
-  if evaluator
-    ordered_solve(board, me, lower, upper, score, left, evaluator)
+  ordered_solve(board, me, lower, upper, score, left)
+
+module.exports = (board, me, wld, verbose, moves=null) ->
+  moves or= board.list_moves(me)
+
+  move_values = {}
+  for move in moves
+    move_values[move] = minmax.minmax(board, me, -Infinity, Infinity, 0, 9)
+  moves.sort (a, b) -> move_values[b] - move_values[a]
+
+  if wld
+    lower = -1
+    upper = 1
   else
-    simple_solve(board, me, lower, upper, score, left)
+    lower = -64
+    upper = 64
 
-solve.cache_clear = ->
-  cache = require('./cache')(CACHE_SIZE)
+  best = 0
+  for pos from moves
+    flips = board.move(me, pos)
+    console.assert flips.length
+    process.stdout.write "#{pos_to_str(pos)}:" if verbose
+    score = -solve(board, -me, -(lower+1), -lower)
+    if score > lower
+      score = -solve(board, -me, -upper, -score)
+    board.undo(me, pos, flips)
+    if score > lower
+      process.stdout.write "#{score} " if verbose
+      lower = score
+      best = pos
+      if score >= upper
+        break
+    else
+      process.stdout.write "* " if verbose
+  process.stdout.write '\n' if verbose
+  cache.stats() if verbose
 
-solve.cache_stats = ->
-  cache.stats()
+  if not best
+    best = moves[0]
+
+  {move:best, value:lower, solved:(if wld then 'wld' else 'full')}

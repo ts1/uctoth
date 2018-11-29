@@ -2,32 +2,46 @@
 { Board, BLACK, WHITE, EMPTY, pos_from_str, square_to_char, pos_to_str } = require './board'
 { PatternBoard } = require './pattern'
 Book = require './book'
+Player = require './player'
+minmax = require './minmax'
+pattern_eval = require './pattern_eval'
 
 VERBOSE = false
 DEPTH = 8
 WLD = 18
 FULL = 16
 
-simple = require('./minmax')(
-  max_depth: DEPTH
+simple = Player
+  book: null
+  searcher: minmax
+    max_depth: DEPTH
+    board_class: Board
+    shuffle: false
+    verbose: false
   solve_wld: WLD
   solve_full: FULL
-  verbose: VERBOSE
-)
-pattern = require('./minmax')(
-  evaluate: require('./pattern_eval')('scores')
-  max_depth: DEPTH
+  verbose: false
+
+pattern = Player
+  book: null
+  searcher: minmax
+    evaluate: pattern_eval('scores')
+    max_depth: DEPTH
+    shuffle: false
+    #cache_size: 0
+    verbose: false
   solve_wld: WLD
   solve_full: FULL
-  verbose: VERBOSE
-)
-#pattern_old = require('./minmax')(
-#  evaluate: require('./pattern_eval')('scores-normal')
-#  max_depth: DEPTH
-#  solve_wld: WLD
-#  solve_full: FULL
-#  verbose: VERBOSE
-#)
+  verbose: false
+
+uct = Player
+  book: null
+  searcher: require('./uct')
+    evaluate: pattern_eval('scores')
+    verbose: false
+  solve_wld: WLD
+  solve_full: FULL
+  verbose: false
 
 players = [pattern, simple]
 
@@ -44,9 +58,10 @@ play = (board, black, white) ->
       switch turn
         when BLACK then player = black
         when WHITE then player = white
-      pos = player(board, turn)
-      process.stdout.write pos_to_str pos unless VERBOSE
-      flips = board.move turn, pos
+      {move} = await player(board, turn)
+      process.stdout.write pos_to_str move unless VERBOSE
+      flips = board.move turn, move
+      console.assert flips.length
     else
       if board.any_moves(-turn)
         console.log 'PASS' if VERBOSE
@@ -65,7 +80,7 @@ do ->
   for b in await new Book('old/book.db').get_neutral_positions(7, 15)
     board = new PatternBoard b
     console.log board.dump true
-    outcome = play board, players[0], players[1]
+    outcome = await play board, players[0], players[1]
     score += outcome
     if outcome > 0
       wins[0]++
@@ -79,7 +94,7 @@ do ->
     n_matches++
 
     board = new PatternBoard b
-    outcome = play board, players[1], players[0]
+    outcome = await play board, players[1], players[0]
     score -= outcome
     if outcome > 0
       wins[1]++

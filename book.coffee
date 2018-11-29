@@ -169,8 +169,8 @@ module.exports = class Book
     if board.any_moves(BLACK) or board.any_moves(WHITE)
       unless board.any_moves(turn)
         turn = -turn
-      e = evaluator board, turn
-      value = e.score * turn
+      e = await evaluator board, turn
+      value = e.value * turn
       if e.solved
         if value == 0
           value = -100*turn
@@ -219,8 +219,8 @@ module.exports = class Book
           unchecked.push move
 
       if unchecked.length and not have_leaf and solved != 'full'
-        ev = evaluator board, turn, unchecked
-        value = ev.score
+        ev = await evaluator board, turn, unchecked
+        value = ev.value
         if value > max
           max = value
         value *= turn

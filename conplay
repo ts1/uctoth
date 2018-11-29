@@ -1,7 +1,18 @@
 #!/usr/bin/env coffee
-{ Board, BLACK, WHITE, EMPTY, pos_from_str, square_to_char, pos_to_str } = require './board'
-{ PatternBoard } = require './pattern'
 readline = require 'readline'
+{
+  Board
+  BLACK
+  WHITE
+  EMPTY
+  pos_from_str
+  square_to_char
+  pos_to_str
+} = require './board'
+{ PatternBoard } = require './pattern'
+Player = require './player'
+minmax = require './minmax'
+pattern_eval = require './pattern_eval'
 
 input = (prompt) -> new Promise (resolve) ->
   rl = readline.createInterface process.stdin, process.stdout
@@ -24,25 +35,35 @@ human = (board, turn) ->
       break
     else
       console.log 'illegal move'
-  pos
+  {move:pos}
 
-DEPTH = 11
+DEPTH = 10
+FULL = 18
+WLD = 20
 
-simple = require('./minmax')(
-  max_depth: DEPTH
-  board_class: Board
-  solve_wld: 22
-  solve_full: 20
-  #shuffle: false
-)
-pattern = require('./minmax')(
-  evaluate: require('./pattern_eval')('scores')
-  max_depth: DEPTH
-  #shuffle: false
-  solve_wld: 22
-  solve_full: 20
-  #cache_size: 0
-)
+simple = Player
+  searcher: minmax
+    max_depth: DEPTH
+    board_class: Board
+    shuffle: false
+  solve_wld: WLD
+  solve_full: FULL
+
+pattern = Player
+  searcher: minmax
+    evaluate: pattern_eval('scores')
+    max_depth: DEPTH
+    shuffle: false
+    #cache_size: 0
+  solve_wld: WLD
+  solve_full: FULL
+
+uct = Player
+  searcher: require('./uct')
+    evaluate: pattern_eval('scores')
+  solve_wld: WLD
+  solve_full: FULL
+
 #invert = require('./minmax')(
 #  evaluate: require('./pattern_eval')('scores')
 #  max_depth: DEPTH
@@ -66,16 +87,16 @@ do ->
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
     switch turn
-      when BLACK then player = pattern
+      when BLACK then player = uct
       when WHITE then player = pattern
     if board.any_moves(turn)
       while true
-        pos = await player(board, turn)
-        if pos == 'undo'
+        {move, value} = await player(board, turn)
+        if move == 'undo'
           undo_done = false
           while undo_stack.length
-            [t, pos, flips]= undo_stack.pop()
-            board.undo t, pos, flips
+            [t, move, flips]= undo_stack.pop()
+            board.undo t, move, flips
             if t == turn
               undo_done = true
               break
@@ -85,9 +106,11 @@ do ->
           console.log board.dump true
           continue
         break
-      flips = board.move turn, pos
-      undo_stack.push [turn, pos, flips]
-      console.log "#{square_to_char turn} moved to #{pos_to_str pos}"
+      flips = board.move turn, move
+      console.assert flips.length
+      undo_stack.push [turn, move, flips]
+      console.log "#{square_to_char turn} moved to #{pos_to_str move}"
+      console.log "estimated value #{value}" if value?
     else
       if board.any_moves(-turn)
         console.log 'PASS'

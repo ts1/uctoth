@@ -3,7 +3,7 @@
 
 defaults =
   C: 2
-  max_search: 1000000
+  max_search: 300000
   verbose: true
   evaluate: null
 
@@ -90,7 +90,7 @@ module.exports = (options={}) ->
       if child.n > max
         max = child.n
         best = child
-    console.log 'value', best.value if options.verbose
-    console.log 'nodes', n_nodes if options.verbose
+    #console.log 'value', best.value if options.verbose
+    #console.log 'nodes', n_nodes if options.verbose
 
-    return best.move
+    return {move:best.move, value:best.value}

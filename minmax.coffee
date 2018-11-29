@@ -17,12 +17,9 @@ corner_zone = do ->
   b
 
 defaults =
-  evaluate: null
+  evaluate: require './simple_eval'
   max_depth: 6
-  solve_wld: 19
-  solve_full: 17
   verbose: true
-  return_score: false
   invert: false
   cq: false
   board_class: PatternBoard
@@ -34,10 +31,7 @@ module.exports = (options={}) ->
   {
     evaluate
     max_depth
-    solve_wld
-    solve_full
     verbose
-    return_score
     invert
     cq
     board_class
@@ -45,8 +39,6 @@ module.exports = (options={}) ->
     zws
     shuffle
   } = {defaults..., options...}
-
-  evaluate or= require './simple_eval'
 
   if invert
     orig_evaluate = evaluate
@@ -143,12 +135,9 @@ module.exports = (options={}) ->
     simple_minmax = cached_minmax simple_minmax
     minmax = cached_minmax minmax
 
-  (board, me, moves=null) ->
+  main = (board, me, moves=null) ->
     #if cache_size
     #  cache = require('./cache')(cache_size)
-    F5 = pos_from_str('F5')
-    if board.count(EMPTY) == 60 and board.can_move(me, F5)
-      return F5
 
     board = new board_class board
 
@@ -196,52 +185,9 @@ module.exports = (options={}) ->
     #if verbose and cache_size
     #  cache.stats()
 
-    solved = null
+    {value: max, move: best, solved: null}
 
-    evaluator = (board, me) ->
-      #if cache_size
-      #  value = cache.get_lower(board, me, 6)
-      #  if value != null
-      #    return value
-      minmax(board, me, -Infinity, Infinity, 0, 1)
+  main.minmax = minmax
+  main.simple_minmax = simple_minmax
 
-    if (left <= solve_full or left <= solve_wld) and not invert
-      if left <= solve_full
-        lower = -64
-        upper = 64
-        console.log 'full solve' if verbose
-        solved = 'full'
-      else
-        lower = -1
-        upper = 1
-        console.log 'w-l-d solve' if verbose
-        solved = 'wld'
-      moves.sort (a, b) -> move_scores[b] - move_scores[a]
-      best = 0
-      #solve.cache_clear()
-      for pos from moves
-        flips = board.move(me, pos)
-        if flips.length
-          process.stdout.write "#{pos_to_str(pos)}:" if verbose
-          score = -solve(board, -me, -(lower+1), -lower, evaluator)
-          if score > lower
-            score = -solve(board, -me, -upper, -score, evaluator)
-          board.undo(me, pos, flips)
-          if score > lower
-            process.stdout.write "#{score} " if verbose
-            lower = score
-            best = pos
-            if score >= upper
-              break
-          else
-            process.stdout.write "* " if verbose
-      max = lower
-      process.stdout.write '\n' if verbose
-      solve.cache_stats() if verbose
-      if not best
-        best = moves[0]
-
-    if return_score
-      {score: max, move: best, solved: solved}
-    else
-      best
+  main
