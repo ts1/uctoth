@@ -27,19 +27,15 @@ else
 simple_solve = (board, me, lower, upper, base_score, left) ->
   board = new Board board
 
-  terminal_solve = (me, score) ->
+  final_move = (me, score) ->
     pos = board.first_empty()
-    flips = board.move(me, pos, false)
-    n = flips.length
+    n = board.count_flips(me, pos)
     if n
-      board.undo(me, pos, flips, false)
       score + 2*n + 1
     else
-      flips = board.move(-me, pos, false)
-      n = flips.length
+      n = board.count_flips(-me, pos)
       if n
-        board.undo(-me, pos, flips, false)
-        score - 2*n + 1
+        score - 2*n - 1
       else
         if score > 0
           score + 1
@@ -48,9 +44,11 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
         else
           score
 
-  solve_sub = (me, lower, upper, base_score, pass, left) =>
+  solve_sub = (me, lower, upper, base_score, pass, left) ->
     if left == 1
-      return terminal_solve(me, base_score)
+      return final_move(me, base_score)
+    #if left == 0
+    # return base_score
 
     any_moves = false
     board.each_empty (pos) =>

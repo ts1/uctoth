@@ -229,6 +229,20 @@ class Board
           @pop_empty_list pos
     flips
 
+  count_flips: (me, pos) ->
+    flips = 0
+    if @board[pos] == EMPTY
+      foe = -me
+      for d in ALL_DIRECTIONS
+        p = pos + d
+        n = 0
+        while @board[p] == foe
+          p += d
+          n++
+        if @board[p] == me
+          flips += n
+    flips
+
   undo: (me, pos, flips, update_empty=true) ->
     foe = -me
     for p in flips
