@@ -19,8 +19,8 @@ load_coeffs = (scores) ->
     for i in [0...get_single_index_size()]
       {pattern, index} = get_single_index(i)
       scores[pattern][phase][index] = coeffs[i]
-    scores.properties or= []
-    scores.properties[phase] = {step, intercept, r2, loss}
+    scores.meta or= []
+    scores.meta[phase] = {step, intercept, r2, loss}
 
 interpolate = (scores) ->
   for p in patterns
