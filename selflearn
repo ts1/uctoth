@@ -9,7 +9,6 @@ pattern_eval = require('./pattern_eval')('scores')
 
 C = 1
 Cplay = C
-PLAY = true
 EVAL_DEPTH = 8
 PLAY_DEPTH = 8
 WLD = 18
@@ -54,13 +53,13 @@ player = Player
 
 book = new Book 'book.db'
 
-learn = ->
+learn = (play) ->
   await book.init()
   {board, moves, turn, value} = await book.find_opening(C)
   console.log pos_array_to_str(move.move for move in moves), value
   console.log board.dump true
   await book.learn moves, await evaluator
-  if PLAY
+  if play
     opening = await book.find_unplayed_opening(Cplay)
     if opening
       {board, moves, turn, value} = opening
@@ -86,13 +85,15 @@ do ->
   [arg] = process.argv.slice 2
   if arg
     max_games = parseInt arg
+    play = true
   else
     max_games = 0
+    play = false
 
   loop
-    await learn()
     if max_games
       n_games = await book.count_games()
       console.log 'played', n_games
       if n_games >= max_games
         break
+    await learn(play)
