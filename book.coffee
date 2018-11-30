@@ -7,6 +7,8 @@ sqlite3 = require('sqlite3').verbose()
 module.exports = class Book
   constructor: (filename) ->
     @db = new sqlite3.Database filename
+    @db.run 'pragma busy_timeout=5000'
+    @db.run 'pragma journal_mode=WAL'
 
   init: ->
     await new Promise (resolve, reject) =>
