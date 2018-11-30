@@ -33,12 +33,12 @@ module.exports = (options={}) ->
     console.log 'book', max if opts.verbose
     best
 
-  (board, me, moves=null) ->
+  (board, me, force_moves=null) ->
     left = board.count(EMPTY)
     if left == 60 and board.can_move(me, F5)
       return {move:F5}
 
-    moves or= board.list_moves(me)
+    moves = force_moves or board.list_moves(me)
     codes = {}
     unique_moves = []
     for move in moves
@@ -49,7 +49,7 @@ module.exports = (options={}) ->
         codes[code] = true
         unique_moves.push move
 
-    if unique_moves.length == 1
+    if unique_moves.length == 1 and not force_moves
       return {move:unique_moves[0]}
 
     if left <= opts.solve_full

@@ -16,7 +16,6 @@ WLD = 18
 FULL = 16
 
 evaluator = do ->
-  minmax = require './minmax'
   eval1 = Player
     book: null
     searcher: minmax
@@ -36,11 +35,11 @@ evaluator = do ->
     solve_full: FULL
     verbose: false
   (board, me, moves) ->
-    move = eval1(board, me, moves)
+    move = await eval1(board, me, moves)
     if move.solved
       return move
-    move2 = eval2(board, me, [move.move])
-    move.score = (move.score + move2.score) / 2
+    move2 = await eval2(board, me, [move.move])
+    move.value = (move.value + move2.value) / 2
     move
 
 player = Player
@@ -60,7 +59,7 @@ learn = ->
   {board, moves, turn, value} = await book.find_opening(C)
   console.log pos_array_to_str(move.move for move in moves), value
   console.log board.dump true
-  await book.learn moves, evaluator
+  await book.learn moves, await evaluator
   if PLAY
     opening = await book.find_unplayed_opening(Cplay)
     if opening
@@ -68,7 +67,7 @@ learn = ->
       console.log 'new opening:', pos_array_to_str(move.move for move in moves), value
       console.log board.dump true
       if C != Cplay
-        await book.learn moves, evaluator
+        await book.learn moves, await evaluator
       loop
         unless board.any_moves turn
           turn = -turn
