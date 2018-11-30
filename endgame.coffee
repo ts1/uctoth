@@ -109,7 +109,7 @@ ordered_solve = (board, me, lower, upper, base_score, left) ->
     for [pos] in moves
       flips = board.move me, pos
       score = base_score + 2*flips.length + 1
-      if upper - lower > 1 and left >= 12
+      if lower > -64 and upper - lower > 1 and left >= 12
         s = -solve_sub(-me, -(lower+1), -lower, -score, 0, left-1)
         if s > lower and s < upper
           s = -solve_sub(-me, -upper, -s, -score, 0, left-1)
@@ -151,9 +151,12 @@ module.exports = (board, me, wld, verbose, moves=null) ->
     flips = board.move(me, pos)
     console.assert flips.length
     process.stdout.write "#{pos_to_str(pos)}:" if verbose
-    score = -solve(board, -me, -(lower+1), -lower)
-    if score > lower
-      score = -solve(board, -me, -upper, -score)
+    if lower > -64
+      score = -solve(board, -me, -(lower+1), -lower)
+      if score > lower and score < upper
+        score = -solve(board, -me, -upper, -score)
+    else
+      score = -solve(board, -me, -upper, -lower)
     board.undo(me, pos, flips)
     if score > lower
       process.stdout.write "#{score} " if verbose
