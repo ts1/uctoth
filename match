@@ -28,7 +28,6 @@ pattern = Player
     evaluate: pattern_eval('scores')
     max_depth: DEPTH
     shuffle: false
-    #cache_size: 0
     verbose: false
   solve_wld: WLD
   solve_full: FULL
