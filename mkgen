@@ -1,11 +1,6 @@
 #!/bin/bash -e
 
-if [ ! "$1" ] ; then
-    echo "Usage: $0 gen"
-    exit 1
-fi
-
-dir=gen/$1
+dir=gen/$(date +%Y%m%d-%H%M%S)
 
 mkdir $dir
 mv games $dir
