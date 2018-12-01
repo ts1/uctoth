@@ -42,7 +42,7 @@ FULL = 19
 WLD = 21
 
 simple = Player
-  searcher: minmax
+  strategy: minmax
     max_depth: DEPTH
     board_class: Board
     shuffle: false
@@ -50,7 +50,7 @@ simple = Player
   solve_full: FULL
 
 pattern = Player
-  searcher: minmax
+  strategy: minmax
     evaluate: pattern_eval('scores')
     max_depth: DEPTH
     shuffle: false
@@ -59,7 +59,7 @@ pattern = Player
   solve_full: FULL
 
 uct = Player
-  searcher: require('./uct')
+  strategy: require('./uct')
     evaluate: pattern_eval('scores')
   solve_wld: WLD
   solve_full: FULL

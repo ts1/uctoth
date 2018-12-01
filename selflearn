@@ -17,7 +17,7 @@ FULL = 16
 evaluator = do ->
   eval1 = Player
     book: null
-    searcher: minmax
+    strategy: minmax
       evaluate: pattern_eval
       verbose: false
       max_depth: EVAL_DEPTH
@@ -26,7 +26,7 @@ evaluator = do ->
     verbose: false
   eval2 = Player
     book: null
-    searcher: minmax
+    strategy: minmax
       evaluate: pattern_eval
       verbose: false
       max_depth: EVAL_DEPTH-1
@@ -43,7 +43,7 @@ evaluator = do ->
 
 player = Player
   book: null
-  searcher: minmax
+  strategy: minmax
     evaluate: pattern_eval
     verbose: false
     max_depth: PLAY_DEPTH

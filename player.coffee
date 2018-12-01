@@ -6,7 +6,7 @@ Book = require './book'
 defaults =
   book: 'book.db'
   book_min: 10
-  searcher: require('./minmax')()
+  strategy: require('./minmax')()
   solve_wld: 18
   solve_full: 20
   verbose: true
@@ -20,17 +20,20 @@ module.exports = (options={}) ->
     book = new Book opts.book
 
   book_move = (board, me, moves) ->
-    max = opts.book_min
+    max = -Infinity
     best = null
+    max_n = 0
     for move in moves
       flips = board.move me, move
       data = await book.get(board)
       board.undo me, move, flips
-      if data and data.n >= max
-        max = data.n
+      if data and data.value*me >= max
+        max = data.value*me
         best = {move, value:data.value*me, solved:data.solved}
+        max_n = data.n
+    return null if max_n < opts.book_min
     return null unless best
-    console.log 'book', max if opts.verbose
+    console.log 'book', max_n if opts.verbose
     best
 
   (board, me, force_moves=null) ->
@@ -65,4 +68,4 @@ module.exports = (options={}) ->
       if move
         return move
 
-    opts.searcher(board, me, unique_moves)
+    opts.strategy(board, me, unique_moves)

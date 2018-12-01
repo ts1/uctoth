@@ -13,7 +13,7 @@ FULL = 16
 
 simple = Player
   book: null
-  searcher: minmax
+  strategy: minmax
     max_depth: DEPTH
     board_class: Board
     shuffle: false
@@ -24,7 +24,7 @@ simple = Player
 
 pattern = Player
   book: null
-  searcher: minmax
+  strategy: minmax
     evaluate: pattern_eval('scores')
     max_depth: DEPTH
     shuffle: false
@@ -35,7 +35,7 @@ pattern = Player
 
 uct = Player
   book: null
-  searcher: require('./uct')
+  strategy: require('./uct')
     evaluate: pattern_eval('scores')
     verbose: false
   solve_wld: WLD
