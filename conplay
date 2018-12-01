@@ -37,9 +37,9 @@ human = (board, turn) ->
       console.log 'illegal move'
   {move:pos}
 
-DEPTH = 10
-FULL = 19
-WLD = 21
+DEPTH = 12
+FULL = 20
+WLD = 22
 
 simple = Player
   strategy: minmax

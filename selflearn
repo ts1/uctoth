@@ -54,7 +54,6 @@ player = Player
 book = new Book 'book.db'
 
 learn = (play) ->
-  await book.init()
   {board, moves, turn, value} = await book.find_opening(C)
   console.log pos_array_to_str(move.move for move in moves), value
   console.log board.dump true
@@ -90,6 +89,7 @@ do ->
     max_games = 0
     play = false
 
+  await book.init()
   loop
     if max_games
       n_games = await book.count_games()

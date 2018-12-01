@@ -24,7 +24,7 @@ module.exports = class Book
             reject err
           else
             resolve()
-    new Promise (resolve, reject) =>
+    await new Promise (resolve, reject) =>
       @db.run '''
         create table if not exists games (
           moves text primary key,
