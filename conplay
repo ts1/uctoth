@@ -50,6 +50,7 @@ simple = Player
   solve_full: FULL
 
 pattern = Player
+  #book: null
   strategy: minmax
     evaluate: pattern_eval('scores')
     max_depth: DEPTH
@@ -59,6 +60,7 @@ pattern = Player
   solve_full: FULL
 
 uct = Player
+  #book: null
   strategy: require('./uct')
     evaluate: pattern_eval('scores')
   solve_wld: WLD
@@ -74,6 +76,8 @@ uct = Player
 #  max_depth: DEPTH
 #  shuffle: false
 #)
+
+time_tbl = {}
 
 do ->
   board = new PatternBoard
@@ -91,7 +95,10 @@ do ->
       when WHITE then player = pattern
     if board.any_moves(turn)
       while true
+        t = Date.now()
         {move, value} = await player(board, turn)
+        t = Date.now() - t
+        time_tbl[turn] = (time_tbl[turn] or 0) + t
         if move == 'undo'
           undo_done = false
           while undo_stack.length
@@ -119,3 +126,5 @@ do ->
       else
         break
     turn = -turn
+  console.log "Time consumed by #{square_to_char(BLACK)}: #{time_tbl[BLACK]/1000} seconds"
+  console.log "Time consumed by #{square_to_char(WHITE)}: #{time_tbl[WHITE]/1000} seconds"
