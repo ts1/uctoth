@@ -37,7 +37,7 @@ human = (board, turn) ->
       console.log 'illegal move'
   {move:pos}
 
-DEPTH = 12
+DEPTH = 11
 FULL = 20
 WLD = 22
 

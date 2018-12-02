@@ -154,6 +154,7 @@ module.exports = (board, me, wld, verbose, moves=null) ->
     if lower > -64
       score = -solve(board, -me, -(lower+1), -lower)
       if score > lower and score < upper
+        process.stdout.write '!' if verbose
         score = -solve(board, -me, -upper, -score)
     else
       score = -solve(board, -me, -upper, -lower)

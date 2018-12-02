@@ -9,7 +9,7 @@ WLD = false
 SPLIT = false
 MINI_BATCH = false
 BATCH_SIZE = 10000
-THRESHOLD = 1e-5
+THRESHOLD = 1e-6
 
 index_size = get_single_index_size() + 1
 intercept_index = index_size - 1

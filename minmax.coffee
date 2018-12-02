@@ -164,6 +164,7 @@ module.exports = (options={}) ->
           if zws and isFinite(max)
             score = -minmax(board, -me, -(max+0.001), -max, 0, depth-1)
             if score > max
+              process.stdout.write('!') if verbose
               score = -minmax(board, -me, -Infinity, -score, 0, depth-1)
           else
             score = -minmax(board, -me, -Infinity, -max, 0, depth-1)
