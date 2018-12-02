@@ -2,8 +2,8 @@
 { pos_to_str } = require './board'
 
 defaults =
-  C: 2
-  max_search: 300000
+  C: 1.9
+  max_search: 14000
   verbose: true
   evaluate: null
 
@@ -18,18 +18,20 @@ module.exports = (options={}) ->
       node.n++
       if not node.children or node.children.length == 0
         node.children = []
-        if board.any_moves me
-          max = -Infinity
-          board.each_empty (move) ->
-            flips = board.move me, move, false
-            if flips.length
-              value = -options.evaluate(board, -me)
-              board.undo me, move, flips, false
-              node.children.push {move, value, n:1}
-              n_nodes++
-              #console.log pos_to_str(move), value
-              if value > max
-                max = value
+        max = -Infinity
+        any_moves = false
+        board.each_empty (move) ->
+          flips = board.move me, move, false
+          if flips.length
+            any_moves = true
+            value = -options.evaluate(board, -me)
+            board.undo me, move, flips, false
+            node.children.push {move, value, n:1}
+            n_nodes++
+            #console.log pos_to_str(move), value
+            if value > max
+              max = value
+        if any_moves
           #console.log 'best', max
           #process.stdout.write " #{max}\n" if options.verbose
           return max
