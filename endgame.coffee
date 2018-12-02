@@ -1,6 +1,6 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
 
-CACHE_SIZE = 200000
+CACHE_SIZE = 300000
 CACHE = true
 CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 9
@@ -136,7 +136,11 @@ module.exports = (board, me, wld, verbose, moves=null) ->
 
   move_values = {}
   for move in moves
-    move_values[move] = minmax.minmax(board, me, -Infinity, Infinity, 0, 9)
+    left = board.count(EMPTY)
+    depth = left - 10
+    if depth < 9
+      depth = 9
+    move_values[move] = minmax.minmax(board, me, -Infinity, Infinity, 0, depth)
   moves.sort (a, b) -> move_values[b] - move_values[a]
 
   if wld
