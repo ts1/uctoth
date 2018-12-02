@@ -5,6 +5,7 @@ Book = require './book'
 fs = require 'fs'
 Player = require './player'
 minmax = require './minmax'
+uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
 C = 1
@@ -43,10 +44,11 @@ evaluator = do ->
 
 player = Player
   book: null
-  strategy: minmax
+  strategy: uct
     evaluate: pattern_eval
     verbose: false
-    max_depth: PLAY_DEPTH
+    C: 1.9
+    max_search: 14000
   solve_wld: WLD
   solve_full: FULL
   verbose: false
