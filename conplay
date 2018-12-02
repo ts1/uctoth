@@ -38,8 +38,8 @@ human = (board, turn) ->
   {move:pos}
 
 DEPTH = 11
-FULL = 20
-WLD = 22
+FULL = 19
+WLD = 21
 
 simple = Player
   strategy: minmax
