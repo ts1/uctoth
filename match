@@ -109,7 +109,7 @@ do ->
     console.log 'player[0]', wins[0], 'wins'
     console.log 'player[1]', wins[1], 'wins'
     console.log 'draws', draws
-    console.log 'win rate for player[0]', wins[0] / (n_matches - draws)
+    console.log 'win rate for player[0]', (wins[0] + draws/2) / n_matches
     console.log 'avg score for player[0]', score / n_matches
 
   console.log s
