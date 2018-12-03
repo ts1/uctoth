@@ -3,5 +3,5 @@
 dir=gen/$(date +%Y%m%d-%H%M%S)
 
 mkdir $dir
-mv games $dir
-cp scores book.db $dir
+mv games book.db $dir
+cp scores $dir

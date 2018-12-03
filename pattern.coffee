@@ -160,6 +160,18 @@ patterns = [
     len: 1
     reverse: (x) -> x
     flip: (x) -> [x]
+  ,
+    name: 'turn'
+    positions: []
+    len: 1
+    reverse: (x) -> x
+    flip: (x) -> [x]
+  ,
+    name: 'offset'
+    positions: []
+    len: 1
+    reverse: (x) -> x
+    flip: (x) -> [x]
 ]
 
 position_updates = []
@@ -229,6 +241,7 @@ init = ->
 init()
 
 parity_index = patterns.parity.indexes[0]
+turn_index = patterns.turn.indexes[0]
 
 class PatternBoard extends Board
   constructor: (x) ->
@@ -275,6 +288,7 @@ class PatternBoard extends Board
   set_parity: (me) ->
     parity = @n_discs & 1
     @indexes[parity_index] = if parity then me else -me
+    @indexes[turn_index] = me
 
   dump_indexes: ->
     for p in patterns
