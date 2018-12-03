@@ -4,6 +4,8 @@ sqlite3 = require('sqlite3').verbose()
 { PatternBoard } = require './pattern'
 { shuffle } = require './util'
 
+default_first_move = [pos_from_str('F5')]
+
 module.exports = class Book
   constructor: (filename) ->
     @db = new sqlite3.Database filename
@@ -61,12 +63,16 @@ module.exports = class Book
   set: (board, value, solved, n) ->
     @set_by_code(encode_normalized(board), value, solved, n)
 
-  find_opening: (c) ->
+  find_opening: (c, first_moves=default_first_move) ->
     board = new PatternBoard
-    f5 = pos_from_str('f5')
-    moves = [{move:f5, solved:null}]
-    board.move BLACK, f5
-    turn = WHITE
+    moves = []
+    turn = BLACK
+    for move in first_moves
+      flips = board.move turn, move
+      unless flips.length
+        throw new Error 'invalid move'
+      moves.push move:move, solved:null
+      turn = -turn
     last_value = 0
     loop
       unless board.any_moves turn
@@ -109,8 +115,8 @@ module.exports = class Book
       turn = -turn
     {board, moves, turn, value: last_value}
 
-  find_unplayed_opening: (c) ->
-    opening = await @find_opening(c)
+  find_unplayed_opening: (c, first_moves=default_first_move) ->
+    opening = await @find_opening(c, first_moves)
     moves = pos_array_to_str(move for {move} in opening.moves)
     data = await new Promise (resolve, reject) =>
       @db.get 'select count(*) as played from games where moves like ?',

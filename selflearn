@@ -1,5 +1,5 @@
 #!/usr/bin/env coffee
-{ pos_array_to_str, pos_to_str, BLACK } = require './board'
+{ pos_array_to_str, pos_to_str, BLACK, pos_array_from_str } = require './board'
 { PatternBoard } = require './pattern'
 Book = require './book'
 fs = require 'fs'
@@ -8,12 +8,13 @@ minmax = require './minmax'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
-C = 1
+C = 0.5
 Cplay = C
 EVAL_DEPTH = 8
 PLAY_DEPTH = 8
 WLD = 18
 FULL = 16
+FIRST_MOVE = pos_array_from_str('F5')
 
 evaluator = do ->
   eval1 = Player
@@ -56,12 +57,12 @@ player = Player
 book = new Book 'book.db'
 
 learn = (play) ->
-  {board, moves, turn, value} = await book.find_opening(C)
+  {board, moves, turn, value} = await book.find_opening(C, FIRST_MOVE)
   console.log pos_array_to_str(move.move for move in moves), value
   console.log board.dump true
   await book.learn moves, await evaluator
   if play
-    opening = await book.find_unplayed_opening(Cplay)
+    opening = await book.find_unplayed_opening(Cplay, FIRST_MOVE)
     if opening
       {board, moves, turn, value} = opening
       console.log 'new opening:', pos_array_to_str(move.move for move in moves), value
