@@ -50,8 +50,16 @@ denormalize = (scores) ->
           else
             tbl[i] = -tbl[-r]
 
+round = (scores) ->
+  for p in patterns
+    for phase in [0...N_PHASES]
+      tbl = scores[p.name][phase]
+      for i in [0...(3**p.len+1)/2]
+        tbl[i] = Math.round(tbl[i] * 1e4) / 1e4
+
 scores = init_scores()
 load_coeffs scores
 interpolate scores
 denormalize scores
+round scores
 fs.writeFileSync 'scores', JSON.stringify scores
