@@ -62,31 +62,28 @@ replay_and_minmax = (moves, score) ->
   for parent in node.parents
     minmax parent
 
-if process.argv.slice(2).length != 2
-  console.log "Usage: #{process.argv[1]} games nodes"
+if process.argv.slice(2).length < 1
+  process.stderr.write "Usage: #{process.argv[1]} games\n"
   process.exit 1
 
-[infile, outfile] = process.argv.slice(2)
-
 do ->
-  console.log "loading #{infile}"
   n = 0
-  await readlines infile, (line) ->
-    [moves, score] = line.split ' '
-    moves = pos_array_from_str moves
-    score = parseInt score
-    replay_and_minmax moves, score
-    n += 1
-  console.log "loaded #{n} games"
+  for infile in process.argv.slice(2)
+    process.stderr.write "loading #{infile}\n"
+    await readlines infile, (line) ->
+      [moves, score] = line.split ' '
+      moves = pos_array_from_str moves
+      score = parseInt score
+      replay_and_minmax moves, score
+      n += 1
+  process.stderr.write "loaded #{n} games\n"
 
-  console.log "dumping nodes to #{outfile}"
-  gz = gzwriter outfile
+  process.stderr.write "dumping nodes to stdout\n"
   n = 0
   for code, node of map
-    gz.write "#{decode(code)} #{node.turn} #{node.score}\n"
+    process.stdout.write "#{decode(code)} #{node.turn} #{node.score}\n"
     n += 1
-  gz.end()
-  console.log "dumped #{n} nodes"
+  process.stderr.write "dumped #{n} nodes\n"
 
   if 1
     board = new Board
@@ -97,7 +94,7 @@ do ->
       if depth == 0
         node = map[encode_normalized board]
         if node
-          console.log pos_array_to_str(moves), node.score
+          process.stderr.write "#{pos_array_to_str(moves)} #{node.score}\n"
       else
         for move in board.list_moves turn
           flips = board.move turn, move
@@ -107,5 +104,5 @@ do ->
           moves.pop()
 
     for depth in [0..2]
-      console.log "d=#{depth}"
+      process.stderr.write "d=#{depth}\n"
       dump_score WHITE, depth

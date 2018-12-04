@@ -5,8 +5,7 @@ if [ ! "$1" ]; then
     exit 1
 fi
 
-cat "$@" | ./games_to_minmax_nodes - tmp/nodes.gz
-./nodes_to_single_indexes tmp/nodes.gz
+./games_to_minmax_nodes $@ | ./nodes_to_single_indexes -
 for i in $(seq 0 9); do
     ./regress tmp/indexes$i.gz tmp/coeffs$i
 done
