@@ -63,6 +63,7 @@ uct = Player
   #book: null
   strategy: require('./uct')
     evaluate: pattern_eval('scores')
+    max_search: 380000
   solve_wld: WLD
   solve_full: FULL
 
@@ -91,7 +92,7 @@ do ->
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
     switch turn
-      when BLACK then player = pattern
+      when BLACK then player = uct
       when WHITE then player = pattern
     if board.any_moves(turn)
       while true
