@@ -5,9 +5,6 @@ fs = require 'fs'
 module.exports = (score_filename) ->
   scores = JSON.parse fs.readFileSync score_filename
 
-  scores.offset or= ([0,0] for i in [0...N_PHASES])
-  scores.turn or= ([0,0] for i in [0...N_PHASES])
-
   index_to_scores = []
   for p in patterns
     for i in p.indexes
