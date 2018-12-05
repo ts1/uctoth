@@ -11,6 +11,8 @@ module.exports = class Book
     @db = new sqlite3.Database filename
     @db.run 'pragma busy_timeout=5000'
     @db.run 'pragma journal_mode=WAL'
+    process.on 'SIGINT', -> process.exit 1
+    process.on 'exit', => @db.close()
 
   init: ->
     await new Promise (resolve, reject) =>

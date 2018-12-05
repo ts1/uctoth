@@ -5,7 +5,7 @@ Book = require './book'
 
 defaults =
   book: 'book.db'
-  book_min: 10
+  book_min: 100
   strategy: require('./minmax')()
   solve_wld: 18
   solve_full: 20

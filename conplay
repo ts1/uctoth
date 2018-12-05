@@ -93,7 +93,7 @@ do ->
     console.log "#{board.count(EMPTY)} empty squares"
     switch turn
       when BLACK then player = uct
-      when WHITE then player = pattern
+      when WHITE then player = uct
     if board.any_moves(turn)
       while true
         t = Date.now()
