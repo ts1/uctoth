@@ -7,8 +7,9 @@ Player = require './player'
 minmax = require './minmax'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
+{ round_value } = require './util'
 
-C = 0.3
+C = 0.2
 Cplay = C
 EVAL_DEPTH = 8
 PLAY_DEPTH = 8
@@ -58,14 +59,14 @@ book = new Book 'book.db'
 
 learn = (play) ->
   {board, moves, turn, value} = await book.find_opening(C, FIRST_MOVE)
-  console.log pos_array_to_str(move.move for move in moves), value
+  console.log pos_array_to_str(move.move for move in moves), round_value(value)
   console.log board.dump true
   await book.learn moves, await evaluator
   if play
     opening = await book.find_unplayed_opening(Cplay, FIRST_MOVE)
     if opening
       {board, moves, turn, value} = opening
-      console.log 'new opening:', pos_array_to_str(move.move for move in moves), value
+      console.log 'new opening:', pos_array_to_str(move.move for move in moves), round_value(value)
       console.log board.dump true
       if C != Cplay
         await book.learn moves, await evaluator

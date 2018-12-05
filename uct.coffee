@@ -13,9 +13,12 @@ module.exports = (options={}) ->
   (board, me) ->
     board = new PatternBoard board
     n_nodes = 0
+    max_depth = 0
 
-    uct_search = (node, me, pass) ->
+    uct_search = (node, me, pass, depth) ->
       node.n++
+      if depth > max_depth
+        max_depth = depth
       if not node.children or node.children.length == 0
         node.children = []
         max = -Infinity
@@ -40,7 +43,7 @@ module.exports = (options={}) ->
             #process.stdout.write " #{board.outcome()}\n" if options.verbose
             return board.outcome(me)
           else
-            return -uct_search node, -me, true
+            return -uct_search node, -me, true, depth
       else
         max = -Infinity
         best = null
@@ -55,7 +58,7 @@ module.exports = (options={}) ->
 
         flips = board.move me, best.move
         #process.stdout.write "#{pos_to_str(best.move)}" if options.verbose
-        best.value = -uct_search best, -me
+        best.value = -uct_search best, -me, false, depth+1
         board.undo me, best.move, flips
         max = -Infinity
         for child in node.children
@@ -67,13 +70,12 @@ module.exports = (options={}) ->
 
     root = {value:0, n:0}
     while root.n < options.max_search
-      last_n = root.n
-      uct_search root, me
-      if root.n == last_n
+      last_n = n_nodes
+      uct_search root, me, false, 0
+      if n_nodes == last_n
         break
 
     node = root
-    n = 0
     while node.children?.length
       max = -Infinity
       best = null
@@ -81,10 +83,9 @@ module.exports = (options={}) ->
         if child.n > max
           max = child.n
           best = child
-      n++
       process.stdout.write pos_to_str(best.move) if options.verbose
       node = best
-    process.stdout.write " #{n}\n" if options.verbose
+    process.stdout.write " #{max_depth}\n" if options.verbose
 
     max = -Infinity
     best = null

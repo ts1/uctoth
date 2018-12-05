@@ -92,4 +92,6 @@ lru_cache = (max) ->
   stats: ->
     {n, hit, miss, evict}
 
-module.exports = { shuffle, memoize, int, readlines, gzwriter, lru_cache }
+round_value = (value) -> Math.round(value * 1e4) / 1e4
+
+module.exports = { shuffle, memoize, int, readlines, gzwriter, lru_cache, round_value }

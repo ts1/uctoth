@@ -1,7 +1,7 @@
 #!/usr/bin/env coffee
 fs = require 'fs'
 { N_PHASES, patterns, get_single_index, get_single_index_size } = require './pattern'
-{ int } = require './util'
+{ int, round_value } = require './util'
 
 init_scores = ->
   scores = {}
@@ -55,7 +55,7 @@ round = (scores) ->
     for phase in [0...N_PHASES]
       tbl = scores[p.name][phase]
       for i in [0...(3**p.len+1)/2]
-        tbl[i] = Math.round(tbl[i] * 1e4) / 1e4
+        tbl[i] = round_value(tbl[i])
 
 scores = init_scores()
 load_coeffs scores

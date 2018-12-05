@@ -1,6 +1,7 @@
 { EMPTY, pos_from_str, pos_to_str, Board } = require './board'
 { PatternBoard } = require './pattern'
 solve = require './endgame'
+{ round_value } = require './util'
 
 corner_zone = do ->
   b = new Board
@@ -170,7 +171,7 @@ module.exports = (options={}) ->
             score = -minmax(board, -me, -Infinity, -max, 0, depth-1)
           board.undo(me, pos, flips)
           if score > max
-            process.stdout.write "#{score} " if verbose
+            process.stdout.write "#{round_value(score)} " if verbose
             max = score
             best = pos
           else
@@ -178,7 +179,7 @@ module.exports = (options={}) ->
               process.stdout.write '* ' if verbose
               score = -99
             else
-              process.stdout.write "#{score} " if verbose
+              process.stdout.write "#{round_value(score)} " if verbose
           move_scores[pos] *= .001
           move_scores[pos] += score
       process.stdout.write '\n' if verbose

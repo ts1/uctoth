@@ -2,7 +2,7 @@ sqlite3 = require('sqlite3').verbose()
 { encode_normalized, decode } = require './encode'
 { BLACK, WHITE, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
 { PatternBoard } = require './pattern'
-{ shuffle } = require './util'
+{ shuffle, round_value } = require './util'
 
 default_first_move = [pos_from_str('F5')]
 
@@ -102,7 +102,7 @@ module.exports = class Book
         value = data.value * turn
 
         bias = c * Math.sqrt(log_n / (data.n + 1))
-        console.log pos_to_str(move), data.n, bias, value if c
+        console.log pos_to_str(move), data.n, round_value(bias), round_value(value) if c
         value += bias
 
         if value > max
@@ -110,7 +110,7 @@ module.exports = class Book
           best = {move, solved: data.solved}
           last_value = (value - bias) * turn
 
-      console.log 'best', pos_to_str(best.move), last_value if c
+      console.log 'best', pos_to_str(best.move), round_value(last_value) if c
       moves.push best
       board.move turn, best.move
       turn = -turn
@@ -188,7 +188,7 @@ module.exports = class Book
       flips = board.move turn, e.move
       unless flips.length
         throw new Error 'invalid move from evaluator'
-      console.log 'new move', pos_to_str(e.move), 'value', value
+      console.log 'new move', pos_to_str(e.move), 'value', round_value(value)
       await @set board, value, e.solved, 1
       history.push [turn, e.move, flips, e.solved]
       outcome = null
@@ -233,7 +233,7 @@ module.exports = class Book
         if value > max
           max = value
         value *= turn
-        console.log 'leaf', value, ev.solved or 'eval'
+        console.log 'leaf', round_value(value), ev.solved or 'eval'
         flips = board.move turn, ev.move
         if ev.solved
           if value == 0

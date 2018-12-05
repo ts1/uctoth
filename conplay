@@ -13,6 +13,7 @@ readline = require 'readline'
 Player = require './player'
 minmax = require './minmax'
 pattern_eval = require './pattern_eval'
+{ round_value } = require './util'
 
 input = (prompt) -> new Promise (resolve) ->
   rl = readline.createInterface process.stdin, process.stdout
@@ -92,7 +93,7 @@ do ->
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
     switch turn
-      when BLACK then player = uct
+      when BLACK then player = pattern
       when WHITE then player = uct
     if board.any_moves(turn)
       while true
@@ -118,7 +119,7 @@ do ->
       console.assert flips.length
       undo_stack.push [turn, move, flips]
       console.log "#{square_to_char turn} moved to #{pos_to_str move}"
-      console.log "estimated value #{value}" if value?
+      console.log "estimated value #{round_value(value)}" if value?
     else
       if board.any_moves(-turn)
         console.log 'PASS'
