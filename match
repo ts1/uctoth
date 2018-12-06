@@ -33,6 +33,17 @@ pattern = Player
   solve_full: FULL
   verbose: false
 
+pattern_old = Player
+  book: null
+  strategy: minmax
+    evaluate: pattern_eval('old/scores')
+    max_depth: DEPTH
+    shuffle: false
+    verbose: false
+  solve_wld: WLD
+  solve_full: FULL
+  verbose: false
+
 uct = Player
   book: null
   strategy: require('./uct')
