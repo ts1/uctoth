@@ -1,5 +1,4 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
-cache = require('./cache')(CACHE_SIZE)
 uct = require './uct'
 
 CACHE_SIZE = 300000
@@ -7,7 +6,9 @@ CACHE = true
 CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 9
 
+
 if CACHE
+  cache = require('./cache')(CACHE_SIZE)
   cached_solve = (f, board) ->
     (me, lower, upper, score, pass, left) ->
       if left <= CACHE_THRESHOLD
