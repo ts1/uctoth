@@ -96,4 +96,4 @@ module.exports = (options={}) ->
     #console.log 'value', best.value if options.verbose
     #console.log 'nodes', n_nodes if options.verbose
 
-    return {move:best.move, value:best.value}
+    return {move:best.move, value:best.value, moves:root.children}

@@ -1,11 +1,11 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
+cache = require('./cache')(CACHE_SIZE)
+uct = require './uct'
 
 CACHE_SIZE = 300000
 CACHE = true
 CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 9
-
-cache = require('./cache')(CACHE_SIZE)
 
 if CACHE
   cached_solve = (f, board) ->
@@ -134,13 +134,18 @@ solve = (board, me, lower, upper) ->
 module.exports = (board, me, wld, verbose, moves=null) ->
   moves or= board.list_moves(me)
 
+  left = board.count(EMPTY)
+  n_search = 10000 * 2**(left - 19)
+  if n_search > 400000
+    n_search = 400000
+  if n_search < 10000
+    n_search = 10000
+  console.log 'uct sort', n_search if verbose
+  uct_eval = uct max_search: n_search, evaluate: pattern_eval, verbose: false
+  uct_result = uct_eval(board, me)
   move_values = {}
-  for move in moves
-    left = board.count(EMPTY)
-    depth = left - 10
-    if depth < 9
-      depth = 9
-    move_values[move] = minmax.minmax(board, me, -Infinity, Infinity, 0, depth)
+  for move in uct_result.moves
+    move_values[move.move] = move.n
   moves.sort (a, b) -> move_values[b] - move_values[a]
 
   if wld
