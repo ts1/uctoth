@@ -24,7 +24,7 @@ evaluator = do ->
       evaluate: pattern_eval
       verbose: false
       max_depth: EVAL_DEPTH
-      cache_size: 10000
+      cache_size: 100000
     solve_wld: WLD
     solve_full: FULL
     verbose: false
@@ -34,7 +34,7 @@ evaluator = do ->
       evaluate: pattern_eval
       verbose: false
       max_depth: EVAL_DEPTH-1
-      cache_size: 10000
+      cache_size: 100000
     solve_wld: WLD
     solve_full: FULL
     verbose: false
@@ -103,3 +103,4 @@ do ->
       if n_games >= max_games
         break
     await learn(play)
+    #console.log 'heap used', process.memoryUsage().heapUsed/1024/1024, 'MB'
