@@ -24,6 +24,7 @@ evaluator = do ->
       evaluate: pattern_eval
       verbose: false
       max_depth: EVAL_DEPTH
+      cache_size: 10000
     solve_wld: WLD
     solve_full: FULL
     verbose: false
@@ -33,6 +34,7 @@ evaluator = do ->
       evaluate: pattern_eval
       verbose: false
       max_depth: EVAL_DEPTH-1
+      cache_size: 10000
     solve_wld: WLD
     solve_full: FULL
     verbose: false
