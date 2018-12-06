@@ -70,8 +70,7 @@ learn = (play) ->
       {board, moves, turn, value} = opening
       console.log 'new opening:', pos_array_to_str(move.move for move in moves), round_value(value)
       console.log board.dump true
-      if C != Cplay
-        await book.learn moves, await evaluator
+      await book.learn moves, await evaluator
       loop
         unless board.any_moves turn
           turn = -turn
