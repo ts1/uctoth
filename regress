@@ -143,7 +143,7 @@ regress = (train_file, test_file) ->
             all_finish = false
             break
           else
-            rate *= 1000
+            rate *= 10000
             changed = true
             #console.log 'trying rate', rate
         updates = make_gradient train_set, coeffs, train_avg, batch, n_batches
