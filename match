@@ -3,7 +3,6 @@
 { PatternBoard } = require './pattern'
 Book = require './book'
 Player = require './player'
-minmax = require './minmax'
 pattern_eval = require './pattern_eval'
 
 VERBOSE = false
@@ -13,30 +12,18 @@ FULL = 16
 
 simple = Player
   book: null
-  strategy: minmax
-    max_depth: DEPTH
+  strategy: require('./uct')
+    evaluate: require('./simple_eval')
+    verbose: false
     board_class: Board
-    shuffle: false
-    verbose: false
   solve_wld: WLD
   solve_full: FULL
   verbose: false
 
-pattern = Player
+minmax = Player
   book: null
-  strategy: minmax
+  strategy: require('./minmax')
     evaluate: pattern_eval('scores')
-    max_depth: DEPTH
-    shuffle: false
-    verbose: false
-  solve_wld: WLD
-  solve_full: FULL
-  verbose: false
-
-pattern_old = Player
-  book: null
-  strategy: minmax
-    evaluate: pattern_eval('old/scores')
     max_depth: DEPTH
     shuffle: false
     verbose: false
@@ -53,7 +40,16 @@ uct = Player
   solve_full: FULL
   verbose: false
 
-players = [pattern, simple]
+uct_old = Player
+  book: null
+  strategy: require('./uct')
+    evaluate: pattern_eval('old/scores')
+    verbose: false
+  solve_wld: WLD
+  solve_full: FULL
+  verbose: false
+
+players = [uct, uct_old]
 
 play = (board, black, white) ->
   turn = if board.count(EMPTY) & 1 then WHITE else BLACK
