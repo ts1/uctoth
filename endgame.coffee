@@ -4,8 +4,7 @@ uct = require './uct'
 CACHE_SIZE = 300000
 CACHE = true
 CACHE_THRESHOLD = 8
-ORDER_THRESHOLD = 9
-
+ORDER_THRESHOLD = 12
 
 if CACHE
   cache = require('./cache')(CACHE_SIZE)
@@ -79,22 +78,15 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
   solve_sub(me, lower, upper, base_score, 0, left)
 
 pattern_eval = require('./pattern_eval')('scores')
-minmax = require('./minmax')(evaluator: pattern_eval, verbose: false)
-simple_minmax = minmax.simple_minmax
-evaluator = (board, me) -> simple_minmax(board, me, -Infinity, Infinity, 0, 1)
 
 ordered_solve = (board, me, lower, upper, base_score, left) ->
+  uct_eval = uct max_search: 6, evaluate: pattern_eval, verbose: false
+
   solve_sub = (me, lower, upper, base_score, pass, left) ->
     if left <= ORDER_THRESHOLD
       return simple_solve(board, me, lower, upper, base_score, left)
 
-    moves = []
-    board.each_empty (pos) ->
-      flips = board.move me, pos
-      if flips.length
-        score = -evaluator(board, -me)
-        board.undo me, pos, flips
-        moves.push [pos, score]
+    {moves} = uct_eval board, me
 
     unless moves.length
       if pass
@@ -105,10 +97,10 @@ ordered_solve = (board, me, lower, upper, base_score, left) ->
       else
         return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
-    moves.sort (a, b) -> b[1] - a[1]
+    moves.sort (a, b) -> b.n - a.n
 
-    for [pos] in moves
-      flips = board.move me, pos
+    for {move} in moves
+      flips = board.move me, move
       score = base_score + 2*flips.length + 1
       if lower > -64 and upper - lower > 1 and left >= 12
         s = -solve_sub(-me, -(lower+1), -lower, -score, 0, left-1)
@@ -117,7 +109,7 @@ ordered_solve = (board, me, lower, upper, base_score, left) ->
         score = s
       else
         score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
-      board.undo me, pos, flips
+      board.undo me, move, flips
       if score > lower
         lower = score
         if score >= upper
@@ -178,7 +170,7 @@ module.exports = (board, me, wld, verbose, moves=null) ->
     else
       process.stdout.write "* " if verbose
   process.stdout.write '\n' if verbose
-  cache.stats() if verbose
+  cache.stats() if verbose and CACHE
 
   if not best
     best = moves[0]
