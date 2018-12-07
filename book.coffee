@@ -21,6 +21,7 @@ module.exports = class Book
           empty integer,
           value float,
           solved text,
+          is_leaf integer,
           n integer)
         ''', (err) ->
           if err
@@ -47,12 +48,14 @@ module.exports = class Book
       else
         resolve row
 
-  set_by_code: (code, value, solved, n) ->
+  set_by_code: (code, value, solved, n, is_leaf) ->
     new Promise (resolve, reject) =>
       empty = 0
       (empty += 1 if c == '1') for c from code
-      @db.run 'insert or replace into book (code, empty, value, solved, n)' +
-        ' values (?, ?, ?, ?, ?)', [code, empty,value, solved, n],
+      @db.run '''
+        insert or replace into book (code, empty, value, solved, n, is_leaf)
+        values (?, ?, ?, ?, ?, ?)
+        ''', [code, empty,value, solved, n, is_leaf],
         (err) ->
           if err
             reject err
@@ -61,8 +64,8 @@ module.exports = class Book
 
   get: (board) -> @get_by_code(encode_normalized(board))
 
-  set: (board, value, solved, n) ->
-    @set_by_code(encode_normalized(board), value, solved, n)
+  set: (board, value, solved, n, is_leaf) ->
+    @set_by_code(encode_normalized(board), value, solved, n, is_leaf or 0)
 
   find_opening: (c, first_moves=default_first_move) ->
     board = new PatternBoard
@@ -189,12 +192,12 @@ module.exports = class Book
       unless flips.length
         throw new Error 'invalid move from evaluator'
       console.log 'new move', pos_to_str(e.move), 'value', round_value(value)
-      await @set board, value, e.solved, 1
+      await @set board, value, e.solved, 1, 1
       history.push [turn, e.move, flips, e.solved]
       outcome = null
     else
       outcome = board.outcome(BLACK)
-      await @set board, outcome*100, 'full', 1
+      await @set board, outcome*100, 'full', 1, 1
 
     while (h = history.pop())
       [turn, move_, flips, solved] = h
@@ -202,7 +205,6 @@ module.exports = class Book
 
       max = -Infinity
       unchecked = []
-      n = 0
       have_leaf = false
       codes = {}
       for move in board.list_moves(turn)
@@ -216,9 +218,8 @@ module.exports = class Book
         data = await @get board
         board.undo turn, move, flips
         if data
-          if data.n == 1 and move != move_
+          if data.is_leaf and move != move_
             have_leaf = true
-          n += data.n
           value = data.value * turn
           if value > max
             max = value
@@ -240,11 +241,10 @@ module.exports = class Book
             value = -100*turn
           else
             value = 100*value
-        await @set board, value, ev.solved, 1
+        await @set board, value, ev.solved, 1, 1
         board.undo turn, ev.move, flips
         unless ev.solved
           solved = null
-        n += 1
 
       if max == -Infinity
         if outcome == null
@@ -256,4 +256,6 @@ module.exports = class Book
       else
         value = max * turn
 
-      await @set board, value, solved, n
+      data = await @get board
+      n = data?.n or 0
+      await @set board, value, solved, n+1, 0
