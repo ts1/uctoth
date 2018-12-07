@@ -6,12 +6,13 @@ defaults =
   max_search: 14000
   verbose: true
   evaluate: null
+  board_class: PatternBoard
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
 
   (board, me) ->
-    board = new PatternBoard board
+    board = new options.board_class board
     n_nodes = 0
     max_depth = 0
 
