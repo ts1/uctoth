@@ -17,6 +17,10 @@ WLD = 18
 FULL = 16
 FIRST_MOVE = pos_array_from_str('F5')
 
+process.on 'unhandledRejection', (reason) ->
+  console.trace reason
+  process.exit 1
+
 evaluator = do ->
   eval1 = Player
     book: null
