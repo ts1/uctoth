@@ -69,7 +69,7 @@ module.exports = (options={}) ->
         #console.log 'best', max
         return max
 
-    root = {value:0, n:0}
+    root = {value:0, n:0, children:[]}
     while root.n < options.max_search
       last_n = n_nodes
       uct_search root, me, false, 0
@@ -87,6 +87,9 @@ module.exports = (options={}) ->
       process.stdout.write pos_to_str(best.move) if options.verbose
       node = best
     process.stdout.write " #{max_depth}\n" if options.verbose
+
+    unless root.children.length
+      return {moves:[]}
 
     max = -Infinity
     best = null
