@@ -93,8 +93,8 @@ do ->
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
     switch turn
-      when BLACK then player = pattern
-      when WHITE then player = uct
+      when BLACK then player = uct
+      when WHITE then player = pattern
     if board.any_moves(turn)
       while true
         t = Date.now()

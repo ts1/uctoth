@@ -1,4 +1,5 @@
 #!/usr/bin/env coffee
+require './rejection_handler'
 { Board, BLACK, WHITE, EMPTY, pos_from_str, square_to_char, pos_to_str } = require './board'
 { PatternBoard } = require './pattern'
 Book = require './book'

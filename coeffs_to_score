@@ -1,4 +1,5 @@
 #!/usr/bin/env coffee
+require './rejection_handler'
 fs = require 'fs'
 { N_PHASES, patterns, get_single_index, get_single_index_size } = require './pattern'
 { int, round_value } = require './util'

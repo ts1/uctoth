@@ -1,5 +1,6 @@
 #!/usr/bin/env coffee
 
+require './rejection_handler'
 { Board, BLACK, pos_array_from_str, pos_to_str } = require './board'
 { readlines } = require './util'
 
