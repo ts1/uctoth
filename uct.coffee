@@ -18,8 +18,6 @@ module.exports = (options={}) ->
 
     uct_search = (node, me, pass, depth) ->
       node.n++
-      if depth > max_depth
-        max_depth = depth
       if not node.children or node.children.length == 0
         node.children = []
         max = -Infinity
@@ -36,6 +34,8 @@ module.exports = (options={}) ->
             if value > max
               max = value
         if any_moves
+          if depth > max_depth
+            max_depth = depth
           #console.log 'best', max
           #process.stdout.write " #{max}\n" if options.verbose
           return max
