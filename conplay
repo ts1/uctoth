@@ -11,7 +11,6 @@ readline = require 'readline'
 } = require './board'
 { PatternBoard } = require './pattern'
 Player = require './player'
-minmax = require './minmax'
 pattern_eval = require './pattern_eval'
 { round_value } = require './util'
 
@@ -43,16 +42,16 @@ FULL = 18
 WLD = 20
 
 simple = Player
-  strategy: minmax
-    max_depth: DEPTH
+  strategy: require('./uct')
+    evaluate: require('./simple_eval')
+    max_search: 380000
     board_class: Board
-    shuffle: false
   solve_wld: WLD
   solve_full: FULL
 
-pattern = Player
+minmax = Player
   #book: null
-  strategy: minmax
+  strategy: require('./minmax')
     evaluate: pattern_eval('scores')
     max_depth: DEPTH
     shuffle: false
@@ -67,17 +66,6 @@ uct = Player
     max_search: 380000
   solve_wld: WLD
   solve_full: FULL
-
-#invert = require('./minmax')(
-#  evaluate: require('./pattern_eval')('scores')
-#  max_depth: DEPTH
-#  invert: true
-#)
-#pattern2 = require('./minmax')(
-#  evaluate: require('./pattern_eval')('scores')
-#  max_depth: DEPTH
-#  shuffle: false
-#)
 
 time_tbl = {}
 
@@ -94,7 +82,7 @@ do ->
     console.log square_to_char(turn), 'to move'
     switch turn
       when BLACK then player = uct
-      when WHITE then player = pattern
+      when WHITE then player = minmax
     if board.any_moves(turn)
       while true
         t = Date.now()
