@@ -67,6 +67,14 @@ uct = Player
   solve_wld: WLD
   solve_full: FULL
 
+invert = Player
+  #book: null
+  strategy: require('./uct')
+    evaluate: pattern_eval('scores', true)
+    max_search: 38000
+  solve_wld: 0
+  solve_full: 0
+
 time_tbl = {}
 
 do ->
