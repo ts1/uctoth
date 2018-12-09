@@ -72,8 +72,6 @@ learn = (play) ->
       console.log 'new opening:', pos_array_to_str(move.move for move in moves), round_value(value)
       console.log board.dump true
       await book.learn moves, await evaluator
-      if Math.abs(value) > 2
-        return
       loop
         unless board.any_moves turn
           turn = -turn
