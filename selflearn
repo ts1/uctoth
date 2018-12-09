@@ -12,7 +12,7 @@ pattern_eval = require('./pattern_eval')('scores')
 
 C = 2
 Cplay = C
-EVAL_DEPTH = 8
+EVAL_DEPTH = 7
 PLAY_DEPTH = 8
 WLD = 18
 FULL = 16
