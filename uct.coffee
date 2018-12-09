@@ -71,10 +71,7 @@ module.exports = (options={}) ->
 
     root = {value:0, n:0, children:[]}
     while root.n < options.max_search
-      last_n = n_nodes
       uct_search root, me, false, 0
-      if n_nodes == last_n
-        break
 
     node = root
     while node.children?.length
@@ -97,8 +94,6 @@ module.exports = (options={}) ->
       if child.n > max
         max = child.n
         best = child
-    #console.log 'value', best.value if options.verbose
-    #console.log 'nodes', n_nodes if options.verbose
   
     moves = for child in root.children
       {move, n, value} = child
