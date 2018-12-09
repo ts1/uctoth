@@ -88,10 +88,10 @@ do ->
   undo_stack = []
   while true
     console.log board.dump true
-    console.log square_to_char(turn), 'to move'
     console.log square_to_char(BLACK), board.count(BLACK), 'discs', board.list_moves(BLACK).length, 'moves'
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
+    console.log square_to_char(turn), 'to move'
     switch turn
       when BLACK then player = uct
       when WHITE then player = pattern
