@@ -10,7 +10,7 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 { round_value } = require './util'
 
-C = 2
+C = 1
 Cplay = C
 EVAL_DEPTH = 7
 PLAY_DEPTH = 8
