@@ -94,11 +94,13 @@ module.exports = (options={}) ->
     unless root.children.length
       return {moves:[]}
 
-    max = -Infinity
+    max_n = -Infinity
+    max_value = -Infinity
     best = null
     for child in root.children
-      if child.n > max
-        max = child.n
+      if child.n > max_n or (child.n == max_n and child.value > max_value)
+        max_n = child.n
+        max_value = child.value
         best = child
   
     moves = for child in root.children
