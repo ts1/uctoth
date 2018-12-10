@@ -223,8 +223,8 @@ module.exports = class Book
           value = data.value * turn
           if value > max
             max = value
-          unless data.solved
-            solved = null
+          #unless data.solved
+          #  solved = null
         else
           unchecked.push move
 
