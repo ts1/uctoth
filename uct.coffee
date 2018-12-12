@@ -13,10 +13,8 @@ module.exports = (options={}) ->
 
   (board, me) ->
     board = new options.board_class board
-    n_nodes = 0
     max_depth = 0
-    n_eval = 0
-    n_outcome = 0
+    grew = false
 
     uct_search = (node, me, pass, depth) ->
       node.n++
@@ -31,12 +29,11 @@ module.exports = (options={}) ->
             value = -options.evaluate(board, -me)
             board.undo me, move, flips, false
             node.children.push {move, value, n:1}
-            n_nodes++
-            n_eval++
             #console.log pos_to_str(move), value
             if value > max
               max = value
         if any_moves
+          grew = true
           if depth > max_depth
             max_depth = depth
           #console.log 'best', max
@@ -45,8 +42,10 @@ module.exports = (options={}) ->
         else
           if pass
             #process.stdout.write " #{board.outcome()}\n" if options.verbose
-            n_outcome++
-            return board.outcome(me)
+            unless node.outcome?
+              node.outcome =  board.outcome(me)
+              grew = true
+            return node.outcome
           else
             return -uct_search node, -me, true, depth
       else
@@ -75,9 +74,9 @@ module.exports = (options={}) ->
 
     root = {value:0, n:0, children:[]}
     while root.n < options.max_search
+      grew = false
       uct_search root, me, false, 0
-      if n_eval == n_outcome
-        break
+      break unless grew
 
     node = root
     while node.children?.length
