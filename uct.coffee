@@ -18,6 +18,10 @@ module.exports = (options={}) ->
 
     uct_search = (node, me, pass, depth) ->
       node.n++
+
+      if node.pass?
+        return -uct_search node.pass, -me, true, depth
+
       if not node.children or node.children.length == 0
         node.children = []
         max = -Infinity
@@ -47,7 +51,8 @@ module.exports = (options={}) ->
               grew = true
             return node.outcome
           else
-            return -uct_search node, -me, true, depth
+            node.pass = {n:1}
+            return -uct_search node.pass, -me, true, depth
       else
         max = -Infinity
         best = null
@@ -62,6 +67,16 @@ module.exports = (options={}) ->
 
         flips = board.move me, best.move
         #process.stdout.write "#{pos_to_str(best.move)}" if options.verbose
+        ###
+        unless flips.length
+          console.trace 'invalid move'
+          console.log board.dump true
+          console.log pos_to_str(best.move)
+          console.log me
+          console.dir 'node', node
+          console.dir 'best', best
+          process.exit 1
+        ###
         best.value = -uct_search best, -me, false, depth+1
         board.undo me, best.move, flips
         max = -Infinity
@@ -88,7 +103,7 @@ module.exports = (options={}) ->
           best = child
       process.stdout.write pos_to_str(best.move) if options.verbose
       node = best
-    process.stdout.write " #{max_depth}\n" if options.verbose
+    process.stdout.write " #{max_depth+1}\n" if options.verbose
 
     unless root.children.length
       return {moves:[]}
