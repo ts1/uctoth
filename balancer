@@ -1,0 +1,66 @@
+#!/usr/bin/env coffee
+
+{ readlines, int, shuffle } = require './util'
+
+args = process.argv.slice 2
+unless args.length
+  console.log "Usage: #{process.argv[1]} games..."
+  process.exit 1
+
+stats = (games) ->
+  sum = black = white = 0
+  for {score} in games
+    sum += score
+    if score > 0
+      black++
+    if score < 0
+      white++
+  avg = sum / games.length
+  {avg, black, white}
+
+do ->
+  games = []
+  for filename in args
+    process.stderr.write "loading #{filename}\n"
+    await readlines filename, (line) ->
+      [moves, score] = line.split(' ')
+      score = int(score)
+      games.push {moves, score}
+  process.stderr.write "loaded #{games.length} games\n"
+  games = shuffle games
+  games.sort (a, b) -> a.score - b.score
+
+  {avg, black, white} = stats(games)
+  process.stderr.write "black #{black} white #{white} avg #{avg}\n"
+  n = 0
+  loop
+    break if black == white
+
+    {avg, black, white} = stats(games)
+    target = avg*games.length / Math.abs(black - white)
+
+    low = 0
+    high = games.length - 1
+    prev_mid = -1
+    while low < high
+      mid = int((low + high) / 2)
+      if mid == prev_mid
+        break
+      prev_mid = mid
+      game = games[mid]
+      if game.score < target
+        low = mid
+      else if game.score > target
+        high = mid
+      else
+        break
+    game = games[mid]
+    games.splice(mid, 1)
+    n++
+
+  process.stderr.write "removed #{n} games\n"
+  {avg, black, white} = stats(games)
+  process.stderr.write "black #{black} white #{white} avg #{avg}\n"
+
+  for game in games
+    console.log game.moves, game.score
