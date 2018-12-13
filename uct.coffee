@@ -4,7 +4,6 @@
 defaults =
   C: 1.9
   max_search: 14000
-  max_seconds: null
   verbose: true
   evaluate: null
   board_class: PatternBoard
@@ -74,18 +73,11 @@ module.exports = (options={}) ->
         #console.log 'best', max
         return max
 
-    t0 = Date.now()
-    n = 0
     root = {value:0, n:0, children:[]}
     while root.n < options.max_search
       uct_search root, me, false, 0
       if n_eval == n_outcome
         break
-      if options.max_seconds and ++n > 300
-        n = 0
-        if Date.now() - t0 >= options.max_seconds*1000
-          console.log Date.now() - t0
-          break
 
     node = root
     while node.children?.length
