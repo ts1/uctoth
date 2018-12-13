@@ -34,9 +34,9 @@ do ->
   process.stderr.write "black #{black} white #{white} avg #{avg}\n"
   n = 0
   loop
-    break if black == white
-
     {avg, black, white} = stats(games)
+    break if black == white or avg == 0
+
     target = avg*games.length / Math.abs(black - white)
 
     low = 0
