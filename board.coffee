@@ -18,9 +18,10 @@ pos_to_xy = (pos) ->
   x: pos % 9 - 1
   y: int(pos / 9) - 1
 
-pos_to_str = (pos) ->
+pos_to_str = (pos, me=BLACK) ->
   { x, y } = pos_to_xy(pos)
-  String.fromCharCode('A'.charCodeAt(0) + x) + (y + 1)
+  char = if me==BLACK then 'A' else 'a'
+  String.fromCharCode(char.charCodeAt(0) + x) + (y + 1)
 
 pos_array_from_str = (s) ->
   re = /([a-hA-H][1-8])/g

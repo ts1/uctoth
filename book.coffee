@@ -75,7 +75,7 @@ module.exports = class Book
       flips = board.move turn, move
       unless flips.length
         throw new Error 'invalid move'
-      moves.push move:move, solved:null
+      moves.push {move, solved:null, turn}
       turn = -turn
     last_value = 0
     loop
@@ -105,15 +105,15 @@ module.exports = class Book
         value = data.value * turn
 
         bias = c * Math.sqrt(log_n / (data.n + 1))
-        console.log pos_to_str(move), data.n, round_value(bias), round_value(value) if c
+        console.log pos_to_str(move, turn), data.n, round_value(bias), round_value(value) if c
         value += bias
 
         if value > max
           max = value
-          best = {move, solved: data.solved}
+          best = {move, solved: data.solved, turn}
           last_value = (value - bias) * turn
 
-      console.log 'best', pos_to_str(best.move), round_value(last_value) if c
+      console.log 'best', pos_to_str(best.move, turn), round_value(last_value) if c
       moves.push best
       board.move turn, best.move
       turn = -turn
