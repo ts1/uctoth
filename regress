@@ -154,7 +154,10 @@ regress = (train_file, test_file) ->
         break if finish
         coeffs = new_coeffs
 
-        d_avg = (d_avg * (D_FACTOR - 1) + (last_e - e)) / D_FACTOR
+        if d_avg
+          d_avg = (d_avg * (D_FACTOR - 1) + (last_e - e)) / D_FACTOR
+        else
+          d_avg = last_e - e
         console.log 'step', step++, 'loss', e, 'rate', round_value(rate), 'd', d_avg
 
         if step >= D_FACTOR and d_avg < THRESHOLD
