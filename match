@@ -117,11 +117,12 @@ do ->
     console.log 'player[0]', wins[0], 'wins'
     console.log 'player[1]', wins[1], 'wins'
     console.log 'draws', draws
-    console.log 'win rate for player[0]', (wins[0] + draws/2) / n_matches
+    winrate = (wins[0] + draws/2) / n_matches
+    console.log 'win rate for player[0]', winrate
     console.log 'avg score for player[0]', score / n_matches
 
   console.log s
 
   [arg] = process.argv.slice 2
   if arg
-    require('fs').appendFileSync arg, "#{wins[0]} #{wins[1]} #{draws}\n"
+    require('fs').appendFileSync arg, "#{wins[0]} #{wins[1]} #{draws} #{winrate}\n"
