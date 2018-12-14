@@ -32,7 +32,7 @@ pos_array_from_str = (s) ->
     else
       break
 
-pos_array_to_str = (array) -> array.map(pos_to_str).join('')
+pos_array_to_str = (array) -> array.map((pos) -> pos_to_str(pos)).join('')
 
 _char_to_square = { '-': EMPTY, 'X': BLACK, 'O': WHITE }
 

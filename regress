@@ -10,7 +10,7 @@ SPLIT = false
 MINI_BATCH = false
 BATCH_SIZE = 10000
 THRESHOLD = 1e-4
-D_FACTOR = 60
+D_FACTOR = 120
 
 index_size = get_single_index_size() + 1
 intercept_index = index_size - 1
@@ -154,10 +154,7 @@ regress = (train_file, test_file) ->
         break if finish
         coeffs = new_coeffs
 
-        if d_avg
-          d_avg = (d_avg * (D_FACTOR - 1) + (last_e - e)) / D_FACTOR
-        else
-          d_avg = last_e - e
+        d_avg = (d_avg * (D_FACTOR - 1) + (last_e - e)) / D_FACTOR
         console.log 'step', step++, 'loss', e, 'rate', round_value(rate), 'd', d_avg
 
         if step >= D_FACTOR and d_avg < THRESHOLD
