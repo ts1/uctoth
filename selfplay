@@ -59,7 +59,7 @@ player = Player
 book = new Book 'book.db'
 
 learn = ->
-  {board, moves, turn, value} = await book.find_unplayed_opening(C, OPENING)
+  {board, moves, turn, value} = await book.find_opening(C, OPENING)
   console.log board.dump true
   console.log pos_array_to_str(move.move for move in moves), round_value(value)
   loop

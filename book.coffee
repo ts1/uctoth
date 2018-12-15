@@ -75,7 +75,7 @@ module.exports = class Book
       flips = board.move turn, move
       unless flips.length
         throw new Error 'invalid move'
-      moves.push move:move, solved:null
+      moves.push {move, solved:null, turn}
       turn = -turn
     last_value = 0
     loop
@@ -105,15 +105,15 @@ module.exports = class Book
         value = data.value * turn
 
         bias = c * Math.sqrt(log_n / (data.n + 1))
-        console.log pos_to_str(move), data.n, round_value(bias), round_value(value) if c
+        console.log pos_to_str(move, turn), data.n, round_value(bias), round_value(value) if c
         value += bias
 
         if value > max
           max = value
-          best = {move, solved: data.solved}
+          best = {move, solved: data.solved, turn}
           last_value = (value - bias) * turn
 
-      console.log 'best', pos_to_str(best.move), round_value(last_value) if c
+      console.log 'best', pos_to_str(best.move, turn), round_value(last_value) if c
       moves.push best
       board.move turn, best.move
       turn = -turn
@@ -231,16 +231,16 @@ module.exports = class Book
       if unchecked.length and not have_leaf and solved != 'full'
         ev = await evaluator board, turn, unchecked
         value = ev.value
-        if value > max
-          max = value
-        value *= turn
-        console.log 'leaf', round_value(value), ev.solved or 'eval'
-        flips = board.move turn, ev.move
+        console.log 'leaf', round_value(value*turn), ev.solved or 'eval'
         if ev.solved
           if value == 0
             value = -100*turn
           else
             value = 100*value
+        value *= turn
+        if value > max
+          max = value
+        flips = board.move turn, ev.move
         await @set board, value, ev.solved, 1, 1
         board.undo turn, ev.move, flips
         unless ev.solved
