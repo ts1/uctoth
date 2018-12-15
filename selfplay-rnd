@@ -8,21 +8,11 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
 FILENAME = 'games'
-RANDOM = .4
+RANDOM = .2
 WLD = 18
 FULL = 16
 
-player0 = make_player
-  book: null
-  strategy: uct
-    evaluate: pattern_eval
-    verbose: false
-    random: 0
-  verbose: false
-  solve_wld: WLD
-  solve_full: FULL
-
-player1 = make_player
+player = make_player
   book: null
   strategy: uct
     evaluate: pattern_eval
@@ -39,7 +29,7 @@ read_games = ->
     games[moves] = true
   games
 
-play = (black, white) ->
+play = (player) ->
   board = new Board
   turn = BLACK
   moves = ''
@@ -48,7 +38,6 @@ play = (black, white) ->
       turn = -turn
       unless board.any_moves turn
         break
-    player = if turn==BLACK then black else white
     {move} = await player board, turn
     flips = board.move turn, move
     console.assert flips.length
@@ -73,12 +62,10 @@ do ->
     games = {}
   n_games = Object.keys(games).length
   console.log "#{n_games} games loaded"
-  black = player0
-  white = player1
   n_dup = 0
   n_play = 0
   while n_games < max_games
-    {moves, outcome} = await play black, white
+    {moves, outcome} = await play player
     n_play++
     if games[moves]
       n_dup++
@@ -87,5 +74,4 @@ do ->
     games[moves] = true
     fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
     n_games++
-    [black, white] = [white, black]
   console.log "#{n_dup} duplicated games"
