@@ -7,6 +7,7 @@ defaults =
   verbose: true
   evaluate: null
   board_class: PatternBoard
+  random: 0
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -108,14 +109,31 @@ module.exports = (options={}) ->
     unless root.children.length
       return {moves:[]}
 
-    max_n = -Infinity
-    max_value = -Infinity
-    best = null
-    for child in root.children
-      if child.n > max_n or (child.n == max_n and child.value > max_value)
-        max_n = child.n
-        max_value = child.value
-        best = child
+    if options.random == 0
+      max_n = -Infinity
+      max_value = -Infinity
+      best = null
+      for child in root.children
+        if child.n > max_n or (child.n == max_n and child.value > max_value)
+          max_n = child.n
+          max_value = child.value
+          best = child
+    else
+      sum = 0
+      for child in root.children
+        sum += child.n
+      t = 1 / options.random
+      sum_p = 0
+      for child in root.children
+        child.p = (child.n / sum) ** t
+        sum_p += child.p
+      r = Math.random() * sum_p
+      sum_p = 0
+      for child in root.children
+        sum_p += child.p
+        if sum_p >= r
+          best = child
+          break
   
     moves = for child in root.children
       {move, n, value} = child
