@@ -75,12 +75,15 @@ do ->
   console.log "#{n_games} games loaded"
   black = player0
   white = player1
+  n_dup = 0
   while n_games < max_games
     {moves, outcome} = await play black, white
     if games[moves]
+      n_dup++
       console.log 'DUPLICATED'
       continue
     games[moves] = true
     fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
     n_games++
     [black, white] = [white, black]
+  console.log "#{n_dup} duplicated games"
