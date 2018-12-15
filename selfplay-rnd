@@ -1,0 +1,86 @@
+#!/usr/bin/env coffee
+
+fs = require 'fs'
+{ Board, BLACK, pos_to_str } = require './board'
+{ readlines } = require './util'
+make_player = require './player'
+uct = require './uct'
+pattern_eval = require('./pattern_eval')('scores')
+
+FILENAME = 'games'
+RANDOM = .3
+WLD = 18
+FULL = 16
+
+player0 = make_player
+  book: null
+  strategy: uct
+    evaluate: pattern_eval
+    verbose: false
+    random: 0
+  verbose: false
+  solve_wld: WLD
+  solve_full: FULL
+
+player1 = make_player
+  book: null
+  strategy: uct
+    evaluate: pattern_eval
+    verbose: false
+    random: RANDOM
+  verbose: false
+  solve_wld: WLD
+  solve_full: FULL
+
+read_games = ->
+  games = {}
+  await readlines FILENAME, (line) ->
+    [moves] = line.split(' ')
+    games[moves] = true
+  games
+
+play = (black, white) ->
+  board = new Board
+  turn = BLACK
+  moves = ''
+  loop
+    unless board.any_moves turn
+      turn = -turn
+      unless board.any_moves turn
+        break
+    player = if turn==BLACK then black else white
+    {move} = await player board, turn
+    flips = board.move turn, move
+    console.assert flips.length
+    m = pos_to_str(move, turn)
+    moves += m
+    process.stdout.write m
+    turn = -turn
+  outcome = board.outcome()
+  process.stdout.write " #{outcome}\n"
+  {moves, outcome}
+
+do ->
+  args = process.argv.slice 2
+  if args.length == 1
+    max_games = parseInt args[0]
+  else
+    max_games = Infinity
+
+  if fs.existsSync FILENAME
+    games = await read_games()
+  else
+    games = {}
+  n_games = Object.keys(games).length
+  console.log "#{n_games} games loaded"
+  black = player0
+  white = player1
+  while n_games < max_games
+    {moves, outcome} = await play black, white
+    if games[moves]
+      console.log 'DUPLICATED'
+      continue
+    games[moves] = true
+    fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
+    n_games++
+    [black, white] = [white, black]
