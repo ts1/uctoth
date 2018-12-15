@@ -62,14 +62,14 @@ book = new Book 'book.db'
 
 learn = (play) ->
   {board, moves, turn, value} = await book.find_opening(C, FIRST_MOVE)
-  console.log pos_array_to_str(move.move for move in moves), round_value(value)
+  console.log (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
   console.log board.dump true
   await book.learn moves, await evaluator
   if play
     opening = await book.find_unplayed_opening(Cplay, FIRST_MOVE)
     if opening
       {board, moves, turn, value} = opening
-      console.log 'new opening:', pos_array_to_str(move.move for move in moves), round_value(value)
+      console.log 'new opening:', (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
       console.log board.dump true
       await book.learn moves, await evaluator
       loop
@@ -79,11 +79,11 @@ learn = (play) ->
             break
         {move, solved} = await player board, turn
         board.move turn, move
-        moves.push {move, solved}
-        process.stdout.write pos_to_str move
+        moves.push {move, solved, turn}
+        process.stdout.write pos_to_str move, turn
         turn = -turn
       console.log ':', board.outcome()
-      fs.appendFileSync 'games', "#{pos_array_to_str(move.move for move in moves)} #{board.outcome()}\n"
+      fs.appendFileSync 'games', "#{(pos_to_str(move, turn) for {move, turn} in moves).join('')} #{board.outcome()}\n"
       book.save_game moves, board.outcome()
 
 do ->

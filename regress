@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-{ readlines, gzwriter, shuffle } = require './util'
+{ readlines, gzwriter, shuffle, round_value } = require './util'
 { get_single_index_size } = require './pattern'
 
 INTERCEPT = false
@@ -9,7 +9,8 @@ WLD = false
 SPLIT = false
 MINI_BATCH = false
 BATCH_SIZE = 10000
-THRESHOLD = 1e-6
+THRESHOLD = 1e-4
+D_FACTOR = 120
 
 index_size = get_single_index_size() + 1
 intercept_index = index_size - 1
@@ -79,17 +80,6 @@ average = (rows) ->
     sum += row[0]
   sum / rows.length
 
-calc_deviation_rate = (array) ->
-  sum = 0
-  for x in array
-    sum += x
-  avg = sum / array.length
-
-  sum_sq = 0
-  for x in array
-    sum_sq += (x - avg) ** 2
-  Math.sqrt(sum_sq / array.length) / avg
-
 regress = (train_file, test_file) ->
   if test_file
     train_set = await read_rows train_file
@@ -126,7 +116,7 @@ regress = (train_file, test_file) ->
   n = 0
   step = 1
   epoch = 0
-  e_history = []
+  d_avg = 0
   loop
     all_finish = true
     if MINI_BATCH
@@ -163,12 +153,16 @@ regress = (train_file, test_file) ->
             break
         break if finish
         coeffs = new_coeffs
-        console.log 'step', step++, 'loss', e, 'rate', rate
 
-        if e_history.length >= 10
-          e_history.shift()
-        e_history.push e
-        if e_history.length >= 10 and calc_deviation_rate(e_history) < THRESHOLD
+        d = last_e - e
+        if step <= D_FACTOR
+          d_avg = (d_avg * (step - 1) + d) / step
+        else
+          d_avg = (d_avg * (D_FACTOR - 1) + d) / D_FACTOR
+        console.log 'step', step, 'loss', e, 'rate', round_value(rate), 'd', d_avg
+        step++
+
+        if step >= D_FACTOR and d_avg < THRESHOLD
           break
 
         last_e = e
