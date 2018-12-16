@@ -13,7 +13,6 @@ pattern_eval = require('./pattern_eval')('scores')
 C = 2
 Cplay = C
 EVAL_DEPTH = 7
-PLAY_DEPTH = 8
 WLD = 18
 FULL = 16
 FIRST_MOVE = pos_array_from_str('F5')
@@ -88,7 +87,12 @@ learn = (play) ->
 
 do ->
   [arg] = process.argv.slice 2
-  if arg
+  check_reload = false
+  if arg == 'loop'
+    play = true
+    max_games = 0
+    check_reload = true
+  else if arg
     max_games = parseInt arg
     play = true
   else
@@ -97,6 +101,8 @@ do ->
 
   await book.init()
   loop
+    if check_reload and fs.existsSync('.reload-selfplay')
+      break
     if max_games
       n_games = await book.count_games()
       console.log 'played', n_games

@@ -85,7 +85,7 @@ do ->
     max_games = 0
 
   await book.init()
-  loop
+  until fs.existsSync('.reload-selfplay')
     if max_games
       n_games = await book.count_games()
       console.log 'played', n_games

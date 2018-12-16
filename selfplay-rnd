@@ -8,7 +8,7 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
 FILENAME = 'games'
-RANDOM = .2
+RANDOM = 1
 WLD = 18
 FULL = 16
 
@@ -65,6 +65,8 @@ do ->
   n_dup = 0
   n_play = 0
   while n_games < max_games
+    if fs.existsSync('.reload-selfplay')
+      break
     {moves, outcome} = await play player
     n_play++
     if games[moves]
@@ -74,4 +76,4 @@ do ->
     games[moves] = true
     fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
     n_games++
-  console.log "#{n_dup} duplicated games"
+  console.log "#{n_games} games generated"
