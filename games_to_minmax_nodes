@@ -46,11 +46,7 @@ replay_and_minmax = (moves, score) ->
   node.score = score
   node.turn = 0
 
-  visited = {}
-
   minmax = (node) ->
-    return if visited[node.code]
-    visited[node.code]= true
     max = -Infinity
     for child in node.children
       value = child.score * node.turn
