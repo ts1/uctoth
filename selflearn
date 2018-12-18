@@ -10,7 +10,7 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 { round_value } = require './util'
 
-C = 2
+C = 1
 Cplay = C
 EVAL_DEPTH = 7
 WLD = 18
@@ -59,6 +59,9 @@ player = Player
 
 book = new Book 'book.db'
 
+score_avg = 0
+n_play = 0
+
 learn = (play) ->
   {board, moves, turn, value} = await book.find_opening(C, FIRST_MOVE)
   console.log (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
@@ -68,6 +71,11 @@ learn = (play) ->
     opening = await book.find_unplayed_opening(Cplay, FIRST_MOVE)
     if opening
       {board, moves, turn, value} = opening
+
+      if (value > 0 and score_avg > 0) or (value < 0 and score_avg < 0)
+        console.log 'skip to balance'
+        return
+
       console.log 'new opening:', (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
       console.log board.dump true
       await book.learn moves, await evaluator
@@ -84,6 +92,8 @@ learn = (play) ->
       console.log ':', board.outcome()
       fs.appendFileSync 'games', "#{(pos_to_str(move, turn) for {move, turn} in moves).join('')} #{board.outcome()}\n"
       book.save_game moves, board.outcome()
+      score_avg = (score_avg * n_play + board.outcome()) / ++n_play
+      console.log 'score avg', score_avg
 
 do ->
   [arg] = process.argv.slice 2
