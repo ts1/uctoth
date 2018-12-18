@@ -33,33 +33,33 @@ do ->
   {avg, black, white} = stats(games)
   process.stderr.write "black #{black} white #{white} avg #{avg}\n"
   n = 0
-  if (black > white and avg < 0) or (black < white and avg > 0)
-    process.stderr.write "can't balance\n"
-  else
-    loop
-      {avg, black, white} = stats(games)
-      break if black == white or avg == 0
+  loop
+    {avg, black, white} = stats(games)
+    break if black == white or avg == 0
+    if (black > white and avg < 0) or (black < white and avg > 0)
+      process.stderr.write "can't balance\n"
+      break
 
-      target = avg*games.length / Math.abs(black - white)
+    target = avg*games.length / Math.abs(black - white)
 
-      low = 0
-      high = games.length - 1
-      prev_mid = -1
-      while low < high
-        mid = int((low + high) / 2)
-        if mid == prev_mid
-          break
-        prev_mid = mid
-        game = games[mid]
-        if game.score < target
-          low = mid
-        else if game.score > target
-          high = mid
-        else
-          break
+    low = 0
+    high = games.length - 1
+    while low < high
+      mid = int((low + high) / 2)
       game = games[mid]
-      games.splice(mid, 1)
-      n++
+      if game.score < target
+        low = mid + 1
+      else if game.score > target
+        high = mid - 1
+      else
+        break
+    game = games[mid]
+    if game.score == 0
+      process.stderr.write "attempted to remove drawn game\n"
+      break
+
+    games.splice(mid, 1)
+    n++
 
   process.stderr.write "removed #{n} games\n"
   {avg, black, white} = stats(games)
