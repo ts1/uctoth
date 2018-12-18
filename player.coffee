@@ -4,7 +4,7 @@ Book = require './book'
 { encode_normalized } = require './encode'
 
 defaults =
-  book: 'book.db'
+  book: 'old/book.db'
   book_min: 100
   strategy: require('./minmax')()
   solve_wld: 18
