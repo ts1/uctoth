@@ -165,6 +165,16 @@ module.exports = class Book
             resolve data
     data.played
 
+  sum_outcome: (me=null) ->
+    data = await new Promise (resolve, reject) =>
+      @db.get 'select sum(outcome) as sum from games', [],
+        (err, data) ->
+          if err
+            reject err
+          else
+            resolve data
+    data.sum
+
   get_neutral_positions: (n_moves, n) -> new Promise (resolve, reject) =>
     @db.all 'select code from book where empty=? order by n desc limit ?',
       [60-n_moves, n], (err, rows) ->

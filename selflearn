@@ -59,7 +59,7 @@ player = Player
 
 book = new Book 'book.db'
 
-n_black = n_white = 0
+balance = 0
 
 learn = (play) ->
   {board, moves, turn, value} = await book.find_opening(C, OPENING)
@@ -71,8 +71,8 @@ learn = (play) ->
     if opening
       {board, moves, turn, value} = opening
 
-      if (value > 0 and n_black > n_white) or (value < 0 and n_black < n_white)
-        console.log 'skip this opening to balance'
+      if (value > 0 and balance > 0) or (value < 0 and balance < 0)
+        console.log 'skipping this opening for balance'
         return
 
       console.log 'new opening:', (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
@@ -92,9 +92,8 @@ learn = (play) ->
       console.log ':', outcome
       fs.appendFileSync 'games', "#{(pos_to_str(move, turn) for {move, turn} in moves).join('')} #{outcome}\n"
       book.save_game moves, outcome
-      n_black++ if outcome > 0
-      n_white++ if outcome < 0
-      console.log 'black', n_black, 'white', n_white
+      balance += outcome
+      console.log 'balance', balance
 
 do ->
   [arg] = process.argv.slice 2
@@ -111,8 +110,7 @@ do ->
     play = false
 
   await book.init()
-  n_black = await book.count_games(BLACK)
-  n_white = await book.count_games(WHITE)
+  balance = await book.sum_outcome()
   loop
     if check_reload and fs.existsSync('.reload-selfplay')
       break
