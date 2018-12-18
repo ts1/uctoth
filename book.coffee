@@ -146,9 +146,18 @@ module.exports = class Book
             resolve()
       turn = -turn
 
-  count_games: ->
+  count_games: (me=null) ->
     data = await new Promise (resolve, reject) =>
-      @db.get 'select count(*) as played from games', [],
+      sql = 'select count(*) as played from games'
+      if me?
+        if me > 0
+          sql += ' where outcome > 0'
+        else if me < 0
+          sql += ' where outcome < 0'
+        else
+          sql += ' where outcome = 0'
+
+      @db.get sql, [],
         (err, data) ->
           if err
             reject err

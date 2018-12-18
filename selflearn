@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 require './rejection_handler'
-{ pos_array_to_str, pos_to_str, BLACK, pos_array_from_str } = require './board'
+{ pos_array_to_str, pos_to_str, BLACK, WHITE, pos_array_from_str } = require './board'
 { PatternBoard } = require './pattern'
 Book = require './book'
 fs = require 'fs'
@@ -15,7 +15,7 @@ Cplay = C
 EVAL_DEPTH = 7
 WLD = 18
 FULL = 16
-FIRST_MOVE = pos_array_from_str('F5')
+OPENING = pos_array_from_str('F5')
 
 evaluator = do ->
   eval1 = Player
@@ -59,21 +59,20 @@ player = Player
 
 book = new Book 'book.db'
 
-score_avg = 0
-n_play = 0
+n_black = n_white = 0
 
 learn = (play) ->
-  {board, moves, turn, value} = await book.find_opening(C, FIRST_MOVE)
+  {board, moves, turn, value} = await book.find_opening(C, OPENING)
   console.log (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
   console.log board.dump true
   await book.learn moves, await evaluator
   if play
-    opening = await book.find_unplayed_opening(Cplay, FIRST_MOVE)
+    opening = await book.find_unplayed_opening(Cplay, OPENING)
     if opening
       {board, moves, turn, value} = opening
 
-      if (value > 0 and score_avg > 0) or (value < 0 and score_avg < 0)
-        console.log 'skip to balance'
+      if (value > 0 and n_black > n_white) or (value < 0 and n_black < n_white)
+        console.log 'skip this opening to balance'
         return
 
       console.log 'new opening:', (pos_to_str(move.move, move.turn) for move in moves).join(''), round_value(value)
@@ -89,11 +88,13 @@ learn = (play) ->
         moves.push {move, solved, turn}
         process.stdout.write pos_to_str move, turn
         turn = -turn
-      console.log ':', board.outcome()
-      fs.appendFileSync 'games', "#{(pos_to_str(move, turn) for {move, turn} in moves).join('')} #{board.outcome()}\n"
-      book.save_game moves, board.outcome()
-      score_avg = (score_avg * n_play + board.outcome()) / ++n_play
-      console.log 'score avg', score_avg
+      outcome = board.outcome()
+      console.log ':', outcome
+      fs.appendFileSync 'games', "#{(pos_to_str(move, turn) for {move, turn} in moves).join('')} #{outcome}\n"
+      book.save_game moves, outcome
+      n_black++ if outcome > 0
+      n_white++ if outcome < 0
+      console.log 'black', n_black, 'white', n_white
 
 do ->
   [arg] = process.argv.slice 2
@@ -110,6 +111,8 @@ do ->
     play = false
 
   await book.init()
+  n_black = await book.count_games(BLACK)
+  n_white = await book.count_games(WHITE)
   loop
     if check_reload and fs.existsSync('.reload-selfplay')
       break
