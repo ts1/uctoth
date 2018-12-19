@@ -2,7 +2,7 @@
 
 fs = require 'fs'
 { Board, BLACK, pos_to_str } = require './board'
-{ readlines } = require './util'
+{ readlines, int } = require './util'
 make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
@@ -11,6 +11,7 @@ FILENAME = 'games'
 RANDOM = .15
 WLD = 18
 FULL = 16
+BALANCE_MAX = 400
 
 player = make_player
   book: null
@@ -24,10 +25,12 @@ player = make_player
 
 read_games = ->
   games = {}
+  balance = 0
   await readlines FILENAME, (line) ->
-    [moves] = line.split(' ')
+    [moves, score] = line.split(' ')
     games[moves] = true
-  games
+    balance += int(score)
+  {games, balance}
 
 play = (player) ->
   board = new Board
@@ -57,11 +60,13 @@ do ->
     max_games = Infinity
 
   if fs.existsSync FILENAME
-    games = await read_games()
+    {games, balance} = await read_games()
   else
     games = {}
+    balance = 0
   n_games = Object.keys(games).length
   console.log "#{n_games} games loaded"
+  console.log "balance #{balance}"
   n_dup = 0
   n_play = 0
   while n_games < max_games
@@ -73,6 +78,11 @@ do ->
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play}"
       continue
+    b = balance + outcome
+    if b > BALANCE_MAX or b < -BALANCE_MAX
+      console.log "SKIP FOR BALANCE (current #{balance})"
+      continue
+    balance += outcome
     games[moves] = true
     fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
     n_games++
