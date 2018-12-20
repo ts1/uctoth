@@ -37,10 +37,12 @@ do ->
     {avg, black, white} = stats(games)
     break if black == white or avg == 0
     if (black > white and avg < 0) or (black < white and avg > 0)
-      process.stderr.write "can't balance\n"
+      process.stderr.write "can't balance twisted state\n"
       break
 
     target = avg*games.length / Math.abs(black - white)
+    target = Math.round(target / 2) * 2
+    #process.stderr.write "target #{target}\n"
 
     low = 0
     high = games.length - 1
@@ -53,7 +55,9 @@ do ->
         high = mid - 1
       else
         break
+    mid = int((low + high) / 2)
     game = games[mid]
+    #process.stderr.write "remove #{game.score}\n"
     if game.score == 0
       process.stderr.write "attempted to remove drawn game\n"
       break
