@@ -11,7 +11,7 @@ FILENAME = 'games'
 RANDOM = .15
 WLD = 18
 FULL = 16
-BALANCE_MAX = 400
+BALANCE_MAX = Infinity
 
 player = make_player
   book: null
@@ -69,6 +69,7 @@ do ->
   console.log "balance #{balance}"
   n_dup = 0
   n_play = 0
+  n_skip = 0
   while n_games < max_games
     if fs.existsSync('.reload-selfplay')
       break
@@ -81,9 +82,10 @@ do ->
     b = balance + outcome
     if b > BALANCE_MAX or b < -BALANCE_MAX
       console.log "SKIP FOR BALANCE (current #{balance})"
+      n_skip++
       continue
     balance += outcome
     games[moves] = true
     fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
     n_games++
-  console.log "#{n_games} games generated"
+  console.log "played #{n_play} duplicated #{n_dup} skipped #{n_skip}"

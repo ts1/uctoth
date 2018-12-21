@@ -12,10 +12,11 @@ pattern_eval = require('./pattern_eval')('scores')
 
 C = 1
 Cplay = C
-EVAL_DEPTH = 7
+EVAL_DEPTH = 8
 WLD = 18
 FULL = 16
 OPENING = pos_array_from_str('F5')
+BALANCE = false
 
 evaluator = do ->
   eval1 = Player
@@ -71,7 +72,7 @@ learn = (play) ->
     if opening
       {board, moves, turn, value} = opening
 
-      if (value > 0 and balance > 0) or (value < 0 and balance < 0)
+      if BALANCE and ((value > 0 and balance > 0) or (value < 0 and balance < 0))
         console.log 'skipping this opening for balance'
         return
 
