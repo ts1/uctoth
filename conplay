@@ -68,7 +68,7 @@ uct = Player
   solve_full: FULL
 
 invert = Player
-  #book: null
+  book: null
   strategy: require('./uct')
     evaluate: pattern_eval('scores', true)
     max_search: 38000
