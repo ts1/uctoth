@@ -8,10 +8,10 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
 FILENAME = 'games'
-RANDOM = .15
+RANDOM = .14
 WLD = 18
 FULL = 16
-BALANCE_MAX = Infinity
+BALANCE_MAX = 200
 
 player = make_player
   book: null
@@ -23,10 +23,10 @@ player = make_player
   solve_wld: WLD
   solve_full: FULL
 
-read_games = ->
+read_games = (filename) ->
   games = {}
   balance = 0
-  await readlines FILENAME, (line) ->
+  await readlines filename, (line) ->
     [moves, score] = line.split(' ')
     games[moves] = true
     balance += int(score)
@@ -54,18 +54,25 @@ play = (player) ->
 
 do ->
   args = process.argv.slice 2
-  if args.length == 1
-    max_games = parseInt args[0]
-  else
-    max_games = Infinity
+  unless args.length
+    process.stderr.write "Usage: #{process.argv[1]} number [games...]\n"
+    process.exit 1
+  max_games = parseInt args[0]
+
+  total = 0
+  for filename in args.slice 1
+    console.log 'loading', filename, 'for balance'
+    {balance} = await read_games filename
+    total += balance
 
   if fs.existsSync FILENAME
-    {games, balance} = await read_games()
+    console.log 'loading', FILENAME
+    {games, balance} = await read_games(FILENAME)
   else
     games = {}
     balance = 0
+  balance += total
   n_games = Object.keys(games).length
-  console.log "#{n_games} games loaded"
   console.log "balance #{balance}"
   n_dup = 0
   n_play = 0
@@ -80,7 +87,7 @@ do ->
       console.log "DUPLICATED #{n_dup}/#{n_play}"
       continue
     b = balance + outcome
-    if b > BALANCE_MAX or b < -BALANCE_MAX
+    if (b > BALANCE_MAX and outcome > 0) or (b < -BALANCE_MAX and outcome < 0)
       console.log "SKIP FOR BALANCE (current #{balance})"
       n_skip++
       continue
@@ -88,4 +95,4 @@ do ->
     games[moves] = true
     fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
     n_games++
-  console.log "played #{n_play} duplicated #{n_dup} skipped #{n_skip}"
+  console.log "played #{n_play} duplicated #{n_dup} skipped #{n_skip} balance #{balance}"
