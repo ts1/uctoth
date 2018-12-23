@@ -13,6 +13,7 @@ readline = require 'readline'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 { round_value } = require './util'
+book_player = require './book_player'
 
 input = (prompt) -> new Promise (resolve) ->
   rl = readline.createInterface process.stdin, process.stdout
@@ -42,6 +43,7 @@ FULL = 18
 WLD = 20
 
 simple = Player
+  book: book_player()
   strategy: require('./uct')
     evaluate: require('./simple_eval')
     max_search: 380000
@@ -50,7 +52,7 @@ simple = Player
   solve_full: FULL
 
 minmax = Player
-  #book: null
+  book: book_player()
   strategy: require('./minmax')
     evaluate: pattern_eval('scores')
     max_depth: DEPTH
@@ -60,7 +62,7 @@ minmax = Player
   solve_full: FULL
 
 uct = Player
-  #book: null
+  book: book_player()
   strategy: require('./uct')
     evaluate: pattern_eval('scores')
     max_search: 380000

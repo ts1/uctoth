@@ -8,10 +8,10 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
 FILENAME = 'games'
-RANDOM = .14
+RANDOM = .15
 WLD = 18
 FULL = 16
-BALANCE_MAX = 200
+BALANCE_MAX = 400
 
 player = make_player
   book: null
@@ -84,7 +84,7 @@ do ->
     n_play++
     if games[moves]
       n_dup++
-      console.log "DUPLICATED #{n_dup}/#{n_play}"
+      console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       continue
     b = balance + outcome
     if (b > BALANCE_MAX and outcome > 0) or (b < -BALANCE_MAX and outcome < 0)

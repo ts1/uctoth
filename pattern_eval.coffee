@@ -2,8 +2,11 @@ fs = require 'fs'
 { patterns, n_indexes, N_PHASES, N_MOVES_PER_PHASE } = require './pattern'
 { int } = require './util'
 
-module.exports = (score_filename, invert=false) ->
-  scores = JSON.parse fs.readFileSync score_filename
+module.exports = (arg, invert=false) ->
+  if typeof arg == 'string'
+    scores = JSON.parse fs.readFileSync arg
+  else
+    scores = arg
 
   index_to_scores = []
   for p in patterns
