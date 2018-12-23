@@ -12,6 +12,8 @@
   svg
     width 50px
     height 50px
+    max-width (100/8/60*50)vw
+    max-height (100/8/60*50)vw
   .black circle
     fill #111
   .white circle

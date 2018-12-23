@@ -1,7 +1,7 @@
 <template lang="pug">
-  table
-    tr(v-for='row in rows')
-      td(
+  .box
+    .row(v-for='row in rows')
+      .cell(
         v-for='{disc, can_move, is_hover, will_flip, move, enter, leave} in row'
         @mouseenter='enter'
         @mouseleave='leave'
@@ -10,7 +10,7 @@
         transition(name="flip" v-if="disc" mode='out-in' appear)
           Disc(color="black" :will_flip="will_flip" v-if="disc=='black'" key='black')
           Disc(color="white" :will_flip="will_flip" v-else key="white")
-        .move(v-if='can_move && !hover_at')
+        .move(v-if='guide && can_move && !hover_at')
         Disc(v-if="is_hover"
           :color='turn==BLACK ? "black" : "white"'
           class="hover"
@@ -24,18 +24,19 @@
   import Player from '../player.worker'
 
   worker = new Player
-  worker.postMessage type:'set_level', level:'hardest'
 
   export default
+    props: ['user', 'level', 'guide', 'message', 'back']
+
     data: ->
       board: new Board
       turn: BLACK
-      user: WHITE
       flips: []
       hover_at: null
       BLACK: BLACK
 
     mounted: ->
+      worker.postMessage type:'set_level', level:@level
       if @turn != @user
         @worker_move()
 
@@ -89,21 +90,27 @@
         return unless flips.length
         if @board.any_moves -@turn
           @turn = -@turn
+        else if -@turn == @user and @board.any_moves(@turn)
+          @message text: 'You have no moves', pass: => @worker_move()
+          return
         if @board.any_moves @turn
-          if @turn != @user
+          if @turn == @user
+            @message text: 'Your turn'
+            @$forceUpdate()
+          else
             @worker_move()
         else
-          console.log 'Game Over'
           outcome = @board.outcome(@user)
+          discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
           if outcome > 0
-            console.log 'You won by', outcome
+            @message text: "You won by #{discs}!", back: @back
           else if outcome < 0
-            console.log 'You lost by', outcome
+            @message text: "You lost by #{discs}", back: @back
           else
-            console.log 'Draw'
+            @message text: 'Draw', back: @back
 
       worker_move: ->
-        console.log 'Thinking...'
+        @message text:'Thinking...'
         worker.onmessage = (e) =>
           worker.onmessage = null
           {move, value} = e.data
@@ -115,16 +122,23 @@
 </script>
 
 <style lang="stylus" scoped>
-  td
+  .box
+    display flex
+    flex-direction column
+  .row
+    display flex
+  .cell
+    display flex
     background-color #444
-    padding 0
     width 60px
     height 60px
-    text-align center
-    vertical-align: middle
+    max-width (100/8)vw
+    max-height (100/8)vw
+    justify-content center
+    align-items center
 
-  tr:nth-child(odd) td:nth-child(odd),
-  tr:nth-child(even) td:nth-child(even)
+  .row:nth-child(odd) .cell:nth-child(odd),
+  .row:nth-child(even) .cell:nth-child(even)
     background-color #3e3e3e
 
   .move
@@ -132,7 +146,7 @@
     height 100%
     transition background-color .5s ease
 
-  table:hover .move
+  .box:hover .move
     background-color: rgba(255, 255, 0, .1)
 
   svg.hover
