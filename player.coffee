@@ -5,6 +5,7 @@ solve = require './endgame'
 defaults =
   book: null
   strategy: require('./minmax')()
+  endgame_eval: null
   solve_wld: 18
   solve_full: 20
   verbose: true
@@ -13,6 +14,8 @@ F5 = pos_from_str('F5')
 
 module.exports = (options={}) ->
   opts = {defaults..., options...}
+
+  opts.endgame_eval or= require('./pattern_eval')('scores')
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)
@@ -35,11 +38,11 @@ module.exports = (options={}) ->
 
     if left <= opts.solve_full
       console.log 'full solve' if opts.verbose
-      return solve(board, me, false, opts.verbose, unique_moves)
+      return solve(board, me, false, opts.verbose, opts.endgame_eval, unique_moves)
 
     if left <= opts.solve_wld
       console.log 'win-loss-draw solve' if opts.verbose
-      return solve(board, me, true, opts.verbose, unique_moves)
+      return solve(board, me, true, opts.verbose, opts.endgame_eval, unique_moves)
 
     if opts.book
       move = await opts.book(board, me, unique_moves)

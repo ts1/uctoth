@@ -78,10 +78,8 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
   solve_sub = cached_solve solve_sub, board
   solve_sub(me, lower, upper, base_score, 0, left)
 
-pattern_eval = require('./pattern_eval')('scores')
-
-ordered_solve = (board, me, lower, upper, base_score, left) ->
-  uct_eval = uct max_search: SHALLOW_SEARCH, evaluate: pattern_eval, verbose: false
+ordered_solve = (board, me, lower, upper, base_score, left, evaluate) ->
+  uct_eval = uct max_search: SHALLOW_SEARCH, evaluate: evaluate, verbose: false
 
   solve_sub = (me, lower, upper, base_score, pass, left) ->
     if left <= ORDER_THRESHOLD
@@ -120,12 +118,12 @@ ordered_solve = (board, me, lower, upper, base_score, left) ->
   solve_sub = cached_solve solve_sub, board
   solve_sub(me, lower, upper, base_score, 0, left)
 
-solve = (board, me, lower, upper) ->
+solve = (board, me, lower, upper, evaluate) ->
   score = board.score(me)
   left = board.count(EMPTY)
-  ordered_solve(board, me, lower, upper, score, left)
+  ordered_solve(board, me, lower, upper, score, left, evaluate)
 
-module.exports = (board, me, wld, verbose, moves=null) ->
+module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
   moves or= board.list_moves(me)
 
   left = board.count(EMPTY)
@@ -135,7 +133,7 @@ module.exports = (board, me, wld, verbose, moves=null) ->
   if n_search < 10000
     n_search = 10000
   console.log 'uct sort', n_search if verbose
-  uct_eval = uct max_search: n_search, evaluate: pattern_eval, verbose: false
+  uct_eval = uct max_search: n_search, evaluate: evaluate, verbose: false
   uct_result = uct_eval(board, me)
   move_values = {}
   for move in uct_result.moves
@@ -155,12 +153,12 @@ module.exports = (board, me, wld, verbose, moves=null) ->
     console.assert flips.length
     process.stdout.write "#{pos_to_str(pos)}:" if verbose
     if lower > -64
-      score = -solve(board, -me, -(lower+1), -lower)
+      score = -solve(board, -me, -(lower+1), -lower, evaluate)
       if score > lower and score < upper
         process.stdout.write '!' if verbose
-        score = -solve(board, -me, -upper, -score)
+        score = -solve(board, -me, -upper, -score, evaluate)
     else
-      score = -solve(board, -me, -upper, -lower)
+      score = -solve(board, -me, -upper, -lower, evaluate)
     board.undo(me, pos, flips)
     if score > lower
       process.stdout.write "#{score} " if verbose
