@@ -20,6 +20,8 @@ indexify = (filename, outfiles) ->
     board.set_parity turn
     row = [outcome]
     for p in patterns
+      if p.name == 'parity'
+        continue
       map = {}
       for i in p.indexes
         index = p.normalize(board.indexes[i])

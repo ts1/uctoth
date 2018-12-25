@@ -8,6 +8,8 @@ module.exports = (arg, invert=false) ->
   else
     scores = arg
 
+  scores.parity = ([0,0] for i in [0...10])
+
   index_to_scores = []
   for p in patterns
     for i in p.indexes
