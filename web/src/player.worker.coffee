@@ -4,7 +4,6 @@ import make_player from '@oth/player'
 import uct from '@oth/uct'
 import scores from './scores.json'
 
-evaluate = pattern_eval(scores)
 player = null
 
 make_player_with_params = () ->
@@ -17,13 +16,13 @@ param_table =
     wld: 14
     full: 16
   easy:
-    search: 10
+    search: 1
     random: 2
     wld: 0
     full: 0
   normal:
-    search: 10
-    random: .7
+    search: 1
+    random: 0
     wld: 0
     full: 0
   hard:
@@ -43,10 +42,12 @@ set_level = (level) ->
     throw new Error "invalid level #{level}"
   {search, wld, full, invert, random} = params
 
+  evaluate = if invert then pattern_eval(scores, true) else pattern_eval(scores)
+
   player = make_player
     book: null
     strategy: uct
-      evaluate: if invert then pattern_eval(scores, true) else evaluate
+      evaluate: evaluate
       max_search: search
       random: random
       verbose: false

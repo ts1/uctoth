@@ -20,7 +20,7 @@
     CheckboxBlankOutline(v-if="!guide")
     span.label Show guide
   
-  button(@click="submit") Start
+  Button(@click="submit") Start
 </template>
 
 <script lang="coffee">
@@ -29,6 +29,7 @@ import Disc from './Disc'
 import '@icons/styles.css'
 import CheckboxMarked from '@icons/CheckboxMarked'
 import CheckboxBlankOutline from '@icons/CheckboxBlankOutline'
+import Button from './Button'
 
 set_pref = (key, value) ->
   localStorage['_oth_'+key] = JSON.stringify(value)
@@ -55,7 +56,7 @@ export default
       set_pref 'level', @level
       set_pref 'guide', @guide
       @start @color, @level, @guide
-  components: { Disc, CheckboxMarked, CheckboxBlankOutline }
+  components: { Disc, CheckboxMarked, CheckboxBlankOutline, Button }
 </script>
 
 <style lang="stylus" scoped>
@@ -72,7 +73,7 @@ export default
     padding 10px
     span
       margin-top 5px
-  margin-bottom 20px
+  margin-bottom 25px
 
 .level
   padding 5px 10px
@@ -95,15 +96,5 @@ export default
   padding 5px
   .label
     margin-left 5px
-  margin-bottom 20px
-
-button
-  border 1px solid #ccc
-  border-radius 3px
-  background none
-  color #ccc
-  transition all .2s ease-in-out
-  &:hover
-    background rgba(255, 255, 255, 0.1)
-  padding 10px
+  margin-bottom 25px
 </style>

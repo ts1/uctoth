@@ -1,10 +1,10 @@
 <template lang="pug">
 .screen
   header
-    button.back(@click="back")
-      ArrowLeft
+    Button.back(@click="back" :border="false")
+      ArrowLeftThick
     .level {{ level_name }} mode
-    button.undo(:disabled="!undo_enabled" @click="undo") Undo
+    Button.undo(:disabled="!undo_enabled" @click="undo") Undo
   main
     Board.board(
       :user="user"
@@ -20,9 +20,10 @@
 </template>
 
 <script lang="coffee">
-import ArrowLeft from '@icons/ArrowLeft'
+import ArrowLeftThick from '@icons/ArrowLeftThick'
 import Board from './Board'
 import MessageBox from './MessageBox'
+import Button from './Button'
 
 export default
   props: ['user', 'level', 'guide', 'back']
@@ -40,7 +41,7 @@ export default
       @undo = undo
   computed:
     level_name: -> @level[0].toUpperCase() + @level.slice(1)
-  components: { ArrowLeft, Board, MessageBox }
+  components: { ArrowLeftThick, Board, MessageBox, Button }
 </script>
 
 <style lang="stylus" scoped>
@@ -55,29 +56,16 @@ export default
     display flex
     justify-content space-between
     align-items center
-    button
-      background: transparent
-      color: #ccc
-      outline: none
-      transition all .2s
-      border none
-      padding 5px 10px
-      border-radius 3px
-      &:hover
-        background rgba(255, 255, 255, .1)
-        border-color #ccc
-      &.back
-        font-size 24px
-      &.undo
-        font-size 14px
-        border 1px solid #ccc
-        margin-right 5px
-        &[disabled]
-          opacity .5
-          &:hover
-            background inherit
-            border-color inherit
     margin 5px 0
+
+    .back
+      font-size 20px
+      padding 5px 10px
+
+    .undo
+      font-size 14px
+      margin-right 5px
+
 
   main
     display flex

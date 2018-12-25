@@ -8,8 +8,7 @@
         @click='move'
       )
         transition(name="flip" v-if="disc" mode='out-in' appear)
-          Disc(color="black" :will_flip="will_flip" v-if="disc=='black'" key='black')
-          Disc(color="white" :will_flip="will_flip" v-else key="white")
+          Disc(:color="disc" :will_flip="will_flip" :key="disc")
         .move(v-if='guide && can_move && !hover_at')
         Disc(v-if="is_hover"
           :color='turn==BLACK ? "black" : "white"'
@@ -196,7 +195,7 @@
       opacity 0
 
     .flip-enter-active
-      transition all .3s cubic-bezier(.7, 0, .7, 1.5)
+      transition all .3s cubic-bezier(.0, 1, .7, 1.2)
     .flip-leave-active
-      transition all .3s cubic-bezier(.7, 0, .3, 1)
+      transition all .3s cubic-bezier(.7, 0, 1, .3)
 </style>

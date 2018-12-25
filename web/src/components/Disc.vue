@@ -21,5 +21,5 @@
   .gray circle
     fill #555
   circle
-    transition fill .3s
+    transition fill .2s cubic-bezier(.7, 0, .3, 1)
 </style>
