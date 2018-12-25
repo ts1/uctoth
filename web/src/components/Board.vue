@@ -26,7 +26,7 @@
   worker = new Player
 
   export default
-    props: ['user', 'level', 'guide', 'message', 'back']
+    props: ['user', 'level', 'guide', 'message', 'back', 'set_undo_btn']
 
     data: ->
       board: new Board
@@ -34,15 +34,23 @@
       flips: []
       hover_at: null
       BLACK: BLACK
+      undo_stack: []
+      thinking: false
+      user_moves: 0
+      gameover: false
 
     mounted: ->
       worker.postMessage type:'set_level', level:@level
-      if @turn != @user
+      if @turn == @user
+        @message text:'Your turn.'
+      else
         @worker_move()
 
     updated: -> @$el.classList.add 'animate'
 
     computed:
+      can_undo: -> not @thinking and @user_moves and not @gameover
+
       rows: ->
         for y in [0...8]
           row = []
@@ -88,35 +96,64 @@
         @hover_at = null
         flips = @board.move @turn, pos
         return unless flips.length
-        if @board.any_moves -@turn
-          @turn = -@turn
-        else if -@turn == @user and @board.any_moves(@turn)
-          @message text: 'You have no moves', pass: => @worker_move()
-          return
+        @undo_stack.push [@turn, pos, flips]
+        if @turn == @user
+          @user_moves++
+        @turn = -@turn
         if @board.any_moves @turn
           if @turn == @user
-            @message text: 'Your turn'
-            @$forceUpdate()
+            @message text: 'Your turn.'
           else
             @worker_move()
         else
-          outcome = @board.outcome(@user)
-          discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
-          if outcome > 0
-            @message text: "You won by #{discs}!", back: @back
-          else if outcome < 0
-            @message text: "You lost by #{discs}", back: @back
+          @turn = -@turn
+          if @board.any_moves(@turn)
+            if @turn == @user
+              @message text: 'I have no moves. Your turn.'
+            else
+              @message text: 'You have no moves.', pass: => @worker_move()
           else
-            @message text: 'Draw', back: @back
+            @gameover = true
+            outcome = @board.outcome(@user)
+            discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
+            if outcome > 0
+              @message text: "You won by #{discs}!", back: @back
+            else if outcome < 0
+              @message text: "You lost by #{discs}!", back: @back
+            else
+              @message text: 'Draw!', back: @back
 
       worker_move: ->
-        @message text:'Thinking...'
+        @message text:'Thinking...', spin: true
+        t = Date.now()
         worker.onmessage = (e) =>
           worker.onmessage = null
+          t = Date.now() - t
+          console.log "#{t} msec"
+
           {move, value} = e.data
-          console.log 'Estimated value', value if value?
-          @move move
+          console.log 'Estimated value', Math.round(100*value)/100 if value?
+          setTimeout (=>
+            @move move
+            @thinking = false
+          ), if t < 1000 then 1000 - t else 0
+        @thinking = true
         worker.postMessage type:'move', board:@board.dump(), turn:@turn
+
+      undo: ->
+        throw new Error 'cannot undo' unless @can_undo
+        loop
+          [turn, pos, flips] = @undo_stack.pop()
+          @board.undo turn, pos, flips
+          break if turn == @user
+        @user_moves--
+
+        # BLACK MAGIC TO LET VUE UPDATE
+        @board.board.push(0)
+        @board.board.pop()
+
+    watch:
+      can_undo: -> @set_undo_btn(@can_undo, @undo)
 
     components: { Disc }
 </script>

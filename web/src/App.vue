@@ -30,13 +30,14 @@
     }
 </script>
 <style lang="stylus">
+  body, html
+    background #333
   #app
     font-family -apple-system,BlinkMacSystemFont,Helvetica Neue,Segoe UI,sans-serif;
     font-size 16px
     line-height 1.5
     -webkit-font-smoothing antialiased
     -moz-osx-font-smoothing grayscale
-    background #333
     min-height 100vh
     display flex
     align-items center
