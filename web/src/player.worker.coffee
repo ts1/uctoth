@@ -12,24 +12,28 @@ make_player_with_params = () ->
 param_table =
   easiest:
     search: 10000
-    wld: 0
-    full: 0
+    random: 0
     invert: true
+    wld: 14
+    full: 16
   easy:
-    search: 1
+    search: 10
+    random: 2
     wld: 0
     full: 0
-    random: true
   normal:
-    search: 1
+    search: 10
+    random: .7
     wld: 0
     full: 0
   hard:
     search: 10000
+    random: 0
     wld: 14
     full: 16
   hardest:
-    search: 200000
+    search: 100000
+    random: 0
     wld: 15
     full: 17
 
@@ -42,16 +46,12 @@ set_level = (level) ->
   player = make_player
     book: null
     strategy: uct
-      evaluate:
-        if invert
-          pattern_eval(scores, true)
-        else if random
-          -> Math.random()
-        else
-          evaluate
+      evaluate: if invert pattern_eval(scores, true) else evaluate
       max_search: search
+      random: random
       verbose: false
     verbose: false
+    inverted: invert ? false
     endgame_eval: evaluate
     solve_wld: wld
     solve_full: full
