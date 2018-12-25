@@ -102,8 +102,6 @@ export default
   .msg-leave-to
     transform translateY(-80px)
     opacity 0
-  .msg-enter-active
-    transition all .4s ease-in-out
-  .msg-leave-active
-    transition all .4s ease-in-out
+  .msg-enter-active, .msg-leave-active
+    transition all .7s cubic-bezier(.7,0,.3,1)
 </style>

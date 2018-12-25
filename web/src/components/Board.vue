@@ -196,7 +196,7 @@
       opacity 0
 
     .flip-enter-active
-      transition all .2s cubic-bezier(.5, 0, .5, 1.5)
+      transition all .3s cubic-bezier(.7, 0, .7, 1.5)
     .flip-leave-active
-      transition all .1s ease
+      transition all .3s cubic-bezier(.7, 0, .3, 1)
 </style>

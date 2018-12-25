@@ -46,7 +46,7 @@ set_level = (level) ->
   player = make_player
     book: null
     strategy: uct
-      evaluate: if invert pattern_eval(scores, true) else evaluate
+      evaluate: if invert then pattern_eval(scores, true) else evaluate
       max_search: search
       random: random
       verbose: false
