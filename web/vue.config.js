@@ -1,7 +1,7 @@
 path = require('path')
 
 module.exports = {
-  baseUrl: '/utcoth/',
+  baseUrl: '/uctoth/',
   configureWebpack: {
     resolve: {
       alias: {
