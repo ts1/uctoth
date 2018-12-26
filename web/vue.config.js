@@ -1,6 +1,7 @@
 path = require('path')
 
 module.exports = {
+  baseUrl: '/utcoth/',
   configureWebpack: {
     resolve: {
       alias: {
@@ -9,7 +10,8 @@ module.exports = {
       }
     },
     node: {
-      readline: 'empty'
+      readline: 'empty',
+      zlib: 'empty'
     },
     devServer: {
       disableHostCheck: true
