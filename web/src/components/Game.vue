@@ -83,6 +83,8 @@ export default
 
   .msg-box
     position absolute
+    left: 0
+    top: 0
 
   .msg-enter
     transform translateY(80px)

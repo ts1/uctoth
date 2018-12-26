@@ -4,6 +4,7 @@ module.exports = {
   baseUrl: '/uctoth/',
   configureWebpack: {
     resolve: {
+      extensions: [ '.coffee' ],
       alias: {
         '@oth': path.resolve(__dirname, '..'),
         '@icons': path.resolve(__dirname, 'node_modules/vue-material-design-icons')
@@ -24,6 +25,23 @@ module.exports = {
       .use('worker-loader')
       .loader('worker-loader')
       .options({name: 'js/worker.[hash].js'})
+    config.module
+      .rule('coffeescript')
+      .test(/\.coffee$/)
+      .use('coffee-loader')
+        .loader('coffee-loader')
+        .options(
+          {
+            transpile: {
+              presets: [
+                [
+                  '@babel/preset-env',
+                  { useBuiltIns: 'usage' }
+                ]
+              ]
+            }
+          }
+        )
   }
 }
 

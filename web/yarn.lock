@@ -6232,10 +6232,6 @@ void-elements@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/void-elements/-/void-elements-2.0.1.tgz#c066afb582bb1cb4128d60ea92392e94d5e9dbec"
 
-vue-cli-plugin-coffee@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/vue-cli-plugin-coffee/-/vue-cli-plugin-coffee-0.1.0.tgz#9c11828db3756085dd9fb4a5dd165539ac4713dc"
-
 vue-cli-plugin-pug@^1.0.7:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/vue-cli-plugin-pug/-/vue-cli-plugin-pug-1.0.7.tgz#6ba0b3d402fdae80c0e788323df63fb9ea2e1598"
