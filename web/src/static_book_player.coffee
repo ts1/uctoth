@@ -1,18 +1,11 @@
-{EMPTY, pos_from_str} = require './board'
-Book = require './book'
-
+{ encode_normalized } = require '@oth/encode'
 defaults =
-  db: 'ref/book.db'
-  min: 100
+  book: null
   random: 0.8
   verbose: true
 
-F5 = pos_from_str('F5')
-
 module.exports = (options={}) ->
   opts = {defaults..., options...}
-
-  book = new Book opts.db
 
   (board, me, moves) ->
     nodes = []
@@ -21,10 +14,11 @@ module.exports = (options={}) ->
     best = null
     for move in moves or board.list_moves(me)
       flips = board.move me, move
-      data = await book.get(board)
+      code = encode_normalized(board)
+      data = opts.book[code]
       board.undo me, move, flips
-      if data and data.n >= opts.min
-        node = {move, n:data.n, value:data.value, solved:data.solved}
+      if data
+        node = {move, n:data.n, value:data.value}
         nodes.push node
         if data.n > max
           max = data.n

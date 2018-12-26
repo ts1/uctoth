@@ -21,16 +21,22 @@ param_table =
     wld: 0
     full: 0
   normal:
+    book: true
+    book_random: 2
     search: 1
     random: 0
     wld: 0
     full: 0
   hard:
+    book: true
+    book_random: 1
     search: 10000
     random: 0
     wld: 14
     full: 16
   hardest:
+    book: true
+    book_random: .1
     search: 100000
     random: 0
     wld: 15
@@ -40,12 +46,17 @@ set_level = (level) ->
   params = param_table[level]
   unless params
     throw new Error "invalid level #{level}"
-  {search, wld, full, invert, random} = params
+  {search, wld, full, invert, random, book, book_random} = params
 
   evaluate = if invert then pattern_eval(scores, true) else pattern_eval(scores)
+  if book
+    book = require('./static_book_player')
+      book: require('./book.json')
+      random: book_random
+      #verbose: false
 
   player = make_player
-    book: null
+    book: book
     strategy: uct
       evaluate: evaluate
       max_search: search

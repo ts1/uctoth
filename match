@@ -41,16 +41,16 @@ uct = Player
   solve_full: FULL
   verbose: false
 
-uct_old = Player
+uct_ref = Player
   book: null
   strategy: require('./uct')
-    evaluate: pattern_eval('old/scores')
+    evaluate: pattern_eval('ref/scores')
     verbose: false
   solve_wld: WLD
   solve_full: FULL
   verbose: false
 
-players = [uct, uct_old]
+players = [uct, uct_ref]
 
 play = (board, black, white) ->
   turn = if board.count(EMPTY) & 1 then WHITE else BLACK
@@ -84,7 +84,7 @@ draws = 0
 do ->
   s = ''
   n_matches = 0
-  for b in await new Book('old/book.db').get_neutral_positions(7, 15)
+  for b in await new Book('ref/book.db').get_neutral_positions(7, 15)
     board = new PatternBoard b
     console.log board.dump true
     outcome = await play board, players[0], players[1]
