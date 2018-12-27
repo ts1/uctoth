@@ -35,7 +35,7 @@ scan_dirs = [
     minor: UP
 ]
 
-encode = (board, dir=scan_dirs[0]) ->
+encode_to_array = (board, dir=scan_dirs[0], min=[Infinity]) ->
   { start, major, minor } = dir
   array = []
   pos = start
@@ -48,15 +48,20 @@ encode = (board, dir=scan_dirs[0]) ->
         p += minor
       array.push e+21
     pos += major
-  String.fromCharCode(array...).replace('\\', '~')
+    return min if array > min
+  array
+
+array_to_string = (array) -> String.fromCharCode(array...).replace('\\', '~')
+
+encode = (board) -> array_to_string encode_to_array board
 
 encode_normalized = (board) ->
-  min = '\x7f'
+  min = [Infinity]
   for dir in scan_dirs
-    code = encode board, dir
-    if code < min
-      min = code
-  min
+    array = encode_to_array board, dir, min
+    if array < min
+      min = array
+  array_to_string min
 
 decode = (code) ->
   array = []
