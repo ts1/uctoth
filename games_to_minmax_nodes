@@ -19,7 +19,9 @@ replay_and_minmax = (moves, score) ->
   board = new Board
   turn = BLACK
   parent = root
+  n_moves = 0
   for move in moves
+    n_moves++
     flips = board.move turn, move
     unless flips.length
       throw new Error 'invalid move', pos_to_str move
@@ -28,10 +30,18 @@ replay_and_minmax = (moves, score) ->
     code = encode_normalized board
     node = map[code]
     if node
+      node.n++
       if parent not in node.parents
         node.parents.push parent
     else
-      node = {code:code, turn:turn, parents:[parent], children:[], score:0}
+      node =
+        code: code
+        turn: turn
+        parents: [parent]
+        children: []
+        score: 0
+        n: 1
+        moves: n_moves
       map[code] = node
     if node not in parent.children
       parent.children.push node
@@ -78,7 +88,7 @@ do ->
   process.stderr.write "dumping nodes to stdout\n"
   n = 0
   for code, node of map
-    process.stdout.write "#{decode(code)} #{node.turn} #{node.score}\n"
+    process.stdout.write "#{decode(code)} #{node.turn} #{node.score} #{node.n} #{node.moves}\n"
     n += 1
   process.stderr.write "dumped #{n} nodes\n"
 

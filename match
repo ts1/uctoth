@@ -1,8 +1,8 @@
 #!/usr/bin/env coffee
+fs = require 'fs'
 require './rejection_handler'
 { Board, BLACK, WHITE, EMPTY, pos_from_str, square_to_char, pos_to_str } = require './board'
 { PatternBoard } = require './pattern'
-Book = require './book'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 
@@ -87,7 +87,7 @@ draws = 0
 do ->
   s = ''
   n_matches = 0
-  for b in await new Book('ref/book.db').get_neutral_positions(7, 15)
+  for b in fs.readFileSync('match.openings', 'utf8').trim().split('\n')
     board = new PatternBoard b
     console.log board.dump true
     outcome = await play board, players[0], players[1]
