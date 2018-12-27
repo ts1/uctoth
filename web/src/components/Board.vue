@@ -8,7 +8,7 @@
         @click='move'
       )
         transition(name="flip" v-if="disc" mode='out-in' appear)
-          Disc(:color="disc" :will_flip="will_flip" :key="disc")
+          Disc.disc(:color="disc" :will_flip="will_flip" :key="disc")
         .move(v-if='guide && can_move && !hover_at')
         Disc(v-if="is_hover"
           :color='turn==BLACK ? "black" : "white"'
@@ -164,6 +164,7 @@
   .row
     display flex
   .cell
+    position relative
     display flex
     background-color #444
     width 60px
@@ -178,16 +179,31 @@
     background-color #3e3e3e
 
   .move
+    position absolute
+    top 0
+    left 0
     width 100%
     height 100%
-    transition background-color .5s ease
 
   .box:hover .move
     background-color: rgba(255, 255, 0, .1)
+    animation flash 2s infinite
+
+  @keyframes flash
+    from
+      opacity 0
+    75%
+      opacity 1
+    to
+      opacity 0
 
   svg.hover
     opacity .5
     cursor pointer
+
+  .disc
+    transform scale(1)
+    transform-origin 50% 50%
 
   .animate
     .flip-enter, .flip-leave-to
