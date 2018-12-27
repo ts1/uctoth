@@ -1,4 +1,5 @@
-{ UP, DOWN, LEFT, RIGHT, pos_from_xy, Board, square_to_char } = require './board'
+{UP, DOWN, LEFT, RIGHT, pos_from_xy, Board, square_to_char} = require './board'
+{int} = require './util'
 
 scan_dirs = [
     start: pos_from_xy(0, 0)
@@ -34,33 +35,45 @@ scan_dirs = [
     minor: UP
 ]
 
-encode_to_array = (board, dir=scan_dirs[0], upper) ->
-  array = []
+encode = (board, dir=scan_dirs[0]) ->
   { start, major, minor } = dir
+  array = []
   pos = start
   for i in [0..7]
     p = pos
-    bits = 0
-    for j in [0..7]
-      array.push(board.get(p) + 1)
-      p += minor
+    for j in [0..1]
+      e = 0
+      for k in [0..3]
+        e = e*3 + (board.get(p) + 1)
+        p += minor
+      array.push e+21
     pos += major
-    if array > upper
-      break
-  array
-
-encode = (board, dir=scan_dirs[0]) -> encode_to_array(board, dir).join('')
+  String.fromCharCode(array...).replace('\\', '~')
 
 encode_normalized = (board) ->
-  min = [999]
+  min = '\x7f'
   for dir in scan_dirs
-    code = encode_to_array board, dir, min
+    code = encode board, dir
     if code < min
       min = code
-  min.join('')
+  min
 
 decode = (code) ->
-  code.split('').map((x) -> square_to_char(parseInt(x) - 1)).join('')
+  array = []
+
+  sub = (e, len) ->
+    if len
+      sub(int(e / 3), len-1)
+      array.push e % 3
+    else
+      array.push e
+
+  code = code.replace('~', '\\')
+  for i in [0..15]
+    e = code.charCodeAt(i) - 21
+    sub e, 3
+
+  array.map((x) -> square_to_char(parseInt(x) - 1)).join('')
 
 module.exports = { encode, encode_normalized, decode }
 
@@ -79,6 +92,8 @@ if 0
     '''
   console.log encode b
   code1 = encode_normalized b
+  console.log decode encode b
+  console.assert (decode encode b) == (decode encode new Board decode encode b)
 
   b = new Board
   b.load '''

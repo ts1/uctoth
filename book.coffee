@@ -1,6 +1,6 @@
 sqlite3 = require('sqlite3').verbose()
 { encode_normalized, decode } = require './encode'
-{ BLACK, WHITE, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
+{ BLACK, WHITE, EMPTY, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
 { PatternBoard } = require './pattern'
 { shuffle, round_value } = require './util'
 
@@ -49,23 +49,22 @@ module.exports = class Book
         resolve row
 
   set_by_code: (code, value, solved, n, is_leaf) ->
+
+  get: (board) -> @get_by_code(encode_normalized(board))
+
+  set: (board, value, solved, n, is_leaf=0) ->
+    code = encode_normalized(board)
+    empty = board.count(EMPTY)
     new Promise (resolve, reject) =>
-      empty = 0
-      (empty += 1 if c == '1') for c from code
       @db.run '''
         insert or replace into book (code, empty, value, solved, n, is_leaf)
         values (?, ?, ?, ?, ?, ?)
-        ''', [code, empty,value, solved, n, is_leaf],
+        ''', [code, empty, value, solved, n, is_leaf],
         (err) ->
           if err
             reject err
           else
             resolve()
-
-  get: (board) -> @get_by_code(encode_normalized(board))
-
-  set: (board, value, solved, n, is_leaf) ->
-    @set_by_code(encode_normalized(board), value, solved, n, is_leaf or 0)
 
   find_opening: (c, first_moves=default_first_move) ->
     board = new PatternBoard
