@@ -46,7 +46,7 @@ encode_to_array = (board, dir=scan_dirs[0], min=[Infinity]) ->
       for k in [0..3]
         e = e*3 + (board.get(p) + 1)
         p += minor
-      array.push e+21
+      array.push e+0x23
     pos += major
     return min if array > min
   array
@@ -75,7 +75,7 @@ decode = (code) ->
 
   code = code.replace('~', '\\')
   for i in [0..15]
-    e = code.charCodeAt(i) - 21
+    e = code.charCodeAt(i) - 0x23
     sub e, 3
 
   array.map((x) -> square_to_char(parseInt(x) - 1)).join('')
