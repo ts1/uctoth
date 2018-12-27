@@ -8,7 +8,7 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores')
 
 FILENAME = 'games'
-RANDOM = .15
+RANDOM = .14
 WLD = 18
 FULL = 16
 BALANCE_MAX = 400

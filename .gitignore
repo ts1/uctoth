@@ -5,8 +5,7 @@
 /scores
 .DS_Store
 .*.swp
-book.db
+/book.db*
 /games
-/match.history
+/match.log
 /gen
-/genesis
