@@ -4,15 +4,17 @@
     Spinner.spinner(v-if="spin")
     | {{ text }}
   .action(v-if="pass || back")
-    Button(v-if="pass" theme="light" @click="pass") Pass
-    Button(v-if="back" theme="light" @click="back") Play Again
+    Button(v-if="pass" theme="light" @click="pass") {{i18n.pass}}
+    Button(v-if="back" theme="light" @click="back") {{i18n.play_again}}
 </template>
 
 <script lang="coffee">
 import Spinner from './Spinner'
 import Button from './Button'
+import i18n from '../i18n'
 export default
   props: ['text', 'pass', 'back', 'spin']
+  data: -> { i18n }
   components: { Spinner, Button }
 </script>
 

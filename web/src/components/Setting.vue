@@ -3,10 +3,10 @@
   .colors
     .color.select(:class="color==BLACK && 'is-active'" @click="color = BLACK")
       Disc(color="black")
-      span First move
+      span {{ i18n.first_move }}
     .color.select(:class="color==WHITE && 'is-active'" @click="color = WHITE")
       Disc(color="white")
-      span Second move
+      span {{ i18n.second_move}}
 
   .levels
     .level.select(
@@ -18,9 +18,9 @@
   .guide.select(@click="guide = !guide")
     CheckboxMarked(v-if="guide")
     CheckboxBlankOutline(v-if="!guide")
-    span.label Show guide
+    span.label {{ i18n.show_guide }}
   
-  Button(@click="submit") Start
+  Button(@click="submit") {{ i18n.start }}
 </template>
 
 <script lang="coffee">
@@ -30,6 +30,7 @@ import '@icons/styles.css'
 import CheckboxMarked from '@icons/CheckboxMarked'
 import CheckboxBlankOutline from '@icons/CheckboxBlankOutline'
 import Button from './Button'
+import i18n from '../i18n'
 
 set_pref = (key, value) ->
   localStorage['_oth_'+key] = JSON.stringify(value)
@@ -43,13 +44,15 @@ get_pref = (key, fallback) ->
 
 export default
   props: ['start']
-  data: ->
+  data: -> {
     levels: ['Easiest', 'Easy', 'Normal', 'Hard', 'Hardest']
     color: get_pref('color', BLACK)
     level: get_pref('level', 'normal')
     guide: get_pref('guide', true)
-    BLACK: BLACK
-    WHITE: WHITE
+    BLACK
+    WHITE
+    i18n
+  }
   methods:
     submit: ->
       set_pref 'color', @color
@@ -66,6 +69,7 @@ export default
 
 .colors
   display flex
+  justify-content space-around
   .color
     display flex
     flex-direction column

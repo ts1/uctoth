@@ -21,13 +21,14 @@
   import { Board, pos_from_xy, pos_to_str, BLACK, WHITE } from '@oth/board'
   import Disc from './Disc'
   import Player from '../player.worker'
+  import i18n from '../i18n'
 
   worker = new Player
 
   export default
     props: ['user', 'level', 'guide', 'message', 'back', 'set_undo_btn']
 
-    data: ->
+    data: -> {
       board: new Board
       turn: BLACK
       flips: []
@@ -37,11 +38,13 @@
       thinking: false
       user_moves: 0
       gameover: false
+      i18n
+    }
 
     mounted: ->
       worker.postMessage type:'set_level', level:@level
       if @turn == @user
-        @message text:'Your turn.'
+        @message text: @i18n.your_turn
       else
         @worker_move()
 
@@ -101,29 +104,29 @@
         @turn = -@turn
         if @board.any_moves @turn
           if @turn == @user
-            @message text: 'Your turn.'
+            @message text:  @i18n.your_turn
           else
             @worker_move()
         else
           @turn = -@turn
           if @board.any_moves(@turn)
             if @turn == @user
-              @message text: 'I have no moves. Your turn.'
+              @message text: @i18n.i_pass
             else
-              @message text: 'You have no moves.', pass: => @worker_move()
+              @message text: @i18n.you_pass, pass: => @worker_move()
           else
             @gameover = true
             outcome = @board.outcome(@user)
             discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
             if outcome > 0
-              @message text: "You won by #{discs}!", back: @back
+              @message text: eval('`'+@i18n.win+'`'), back: @back
             else if outcome < 0
-              @message text: "You lost by #{discs}!", back: @back
+              @message text: eval('`'+@i18n.lose+'`'), back: @back
             else
-              @message text: 'Draw!', back: @back
+              @message text: @i18n.draw, back: @back
 
       worker_move: ->
-        @message text:'Thinking...', spin: true
+        @message text: @i18n.thinking, spin: true
         t = Date.now()
         worker.onmessage = (e) =>
           worker.onmessage = null

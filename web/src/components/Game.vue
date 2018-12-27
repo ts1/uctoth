@@ -4,7 +4,7 @@
     Button.back(@click="back" :border="false")
       ArrowLeftThick
     .level {{ level_name }} mode
-    Button.undo(:disabled="!undo_enabled" @click="undo") Undo
+    Button.undo(:disabled="!undo_enabled" @click="undo") {{ i18n.undo }}
   main
     Board.board(
       :user="user"
@@ -24,14 +24,17 @@ import ArrowLeftThick from '@icons/ArrowLeftThick'
 import Board from './Board'
 import MessageBox from './MessageBox'
 import Button from './Button'
+import i18n from '../i18n'
 
 export default
   props: ['user', 'level', 'guide', 'back']
-  data: ->
+  data: -> {
     msg: null
     msg_key: 0
     undo_enabled: false
     undo: ->
+    i18n
+  }
   methods:
     show_message: (params) ->
       @msg_key++
