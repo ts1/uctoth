@@ -8,8 +8,6 @@ module.exports = (arg, invert=false) ->
   else
     scores = arg
 
-  scores.parity = ([0,0] for i in [0...10])
-
   index_to_scores = []
   for p in patterns
     for i in p.indexes
@@ -18,7 +16,6 @@ module.exports = (arg, invert=false) ->
   pattern_eval = (board, me) ->
     phase = int((board.n_discs - 5) / N_MOVES_PER_PHASE)
     phase = N_PHASES - 1 if phase >= N_PHASES
-    board.set_parity me
     sum = 0
     for i in [0...n_indexes]
       index = board.indexes[i]

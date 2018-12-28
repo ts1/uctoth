@@ -17,7 +17,6 @@ each_board = (filename, cb) ->
 indexify = (filename, outfiles) ->
   n = 0
   await each_board filename, (board, turn, outcome) ->
-    board.set_parity turn
     row = [outcome]
     for p in patterns
       map = {}

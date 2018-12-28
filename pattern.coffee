@@ -154,12 +154,6 @@ patterns = [
     positions: [x, 7-x] for x in [0..7]
     reverse: reverse_index
     flip: flip_v_only
-  ,
-    name: 'parity'
-    positions: []
-    len: 1
-    reverse: (x) -> x
-    flip: (x) -> [x]
 ]
 
 position_updates = []
@@ -228,8 +222,6 @@ init = ->
 
 init()
 
-parity_index = patterns.parity.indexes[0]
-
 class PatternBoard extends Board
   constructor: (x) ->
     super x
@@ -272,10 +264,6 @@ class PatternBoard extends Board
           @indexes[i] -= me2 * u
       @n_discs--
 
-  set_parity: (me) ->
-    parity = @n_discs & 1
-    @indexes[parity_index] = if parity then me else -me
-
   dump_indexes: ->
     for p in patterns
       process.stdout.write "#{p.name}:"
@@ -287,8 +275,7 @@ class PatternBoard extends Board
     @indexes = []
     @init_indexes()
     for i in [0...@indexes.length]
-      if i != parity_index
-        console.assert @indexes[i] == saved[i]
+      console.assert @indexes[i] == saved[i]
     console.log 'ok'
     @indexes = saved
 
@@ -351,7 +338,6 @@ if 0
     - - - - - - - -
     - - - - - - - -
     '''
-  b.set_parity BLACK
   b.dump_indexes()
   i2 = b.indexes[0]
   p = patterns[0]
