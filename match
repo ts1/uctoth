@@ -7,9 +7,10 @@ Player = require './player'
 pattern_eval = require './pattern_eval'
 
 VERBOSE = false
-DEPTH = 8
+DEPTH = 9
 WLD = 18
 FULL = 16
+SEARCH = 40000
 
 simple = Player
   book: null
@@ -37,6 +38,7 @@ uct = Player
   strategy: require('./uct')
     evaluate: pattern_eval('scores.json')
     verbose: false
+    max_search: SEARCH
   solve_wld: WLD
   solve_full: FULL
   verbose: false
@@ -46,6 +48,7 @@ uct_ref = Player
   strategy: require('./uct')
     evaluate: pattern_eval('ref/scores.json')
     verbose: false
+    max_search: SEARCH
   solve_wld: WLD
   solve_full: FULL
   verbose: false
