@@ -2,7 +2,7 @@ import { Board } from '@oth/board'
 import pattern_eval from '@oth/pattern_eval'
 import make_player from '@oth/player'
 import uct from '@oth/uct'
-import scores from '@oth/scores.json'
+import scores from '@oth/ref/scores.json'
 
 player = null
 
