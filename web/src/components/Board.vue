@@ -33,11 +33,12 @@
       turn: BLACK
       flips: []
       hover_at: null
-      BLACK: BLACK
       undo_stack: []
       thinking: false
       user_moves: 0
       gameover: false
+      will_flip_enabled: false
+      BLACK
       i18n
     }
 
@@ -54,7 +55,7 @@
       can_undo: -> not @thinking and @user_moves and not @gameover
 
       rows: ->
-        for y in [0...8]
+        rows = for y in [0...8]
           row = []
           [0...8].forEach (x) =>
             pos = pos_from_xy x, y
@@ -77,7 +78,7 @@
                   @hover_at == pos and @board.can_move(@turn, pos)
                 else
                   false
-              will_flip: @flips.indexOf(pos) >= 0
+              will_flip: @will_flip_enabled and @flips.indexOf(pos) >= 0
               move: =>
                 if @turn == @user
                   @move pos
@@ -87,10 +88,16 @@
                   if @flips.length
                     @board.undo @turn, pos, @flips
                     @hover_at = pos
+                  @will_flip_enabled = false
               leave: =>
                 @hover_at = null
                 @flips = []
+                @will_flip_enabled = false
           row
+
+        setTimeout (=> @will_flip_enabled = true), 50 # XXX
+
+        rows
 
     methods:
       move: (pos) ->
