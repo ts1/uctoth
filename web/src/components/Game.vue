@@ -3,7 +3,7 @@
   header
     Button.back(@click="back" :border="false")
       ArrowLeftThick
-    .level {{ level_name }} mode
+    .level {{ level_title }}
     Button.undo(:disabled="!undo_enabled" @click="undo") {{ i18n.undo }}
   main
     Board.board(
@@ -35,6 +35,10 @@ export default
     undo: ->
     i18n
   }
+  computed:
+    level_title: ->
+      mode = i18n[@level]
+      eval '`' + i18n.mode + '`'
   methods:
     show_message: (params) ->
       @msg_key++
@@ -42,8 +46,6 @@ export default
     set_undo_btn: (enabled, undo) ->
       @undo_enabled = enabled
       @undo = undo
-  computed:
-    level_name: -> @level[0].toUpperCase() + @level.slice(1)
   components: { ArrowLeftThick, Board, MessageBox, Button }
 </script>
 

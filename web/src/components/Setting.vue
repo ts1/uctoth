@@ -13,12 +13,18 @@
       v-for="l in levels"
       :class="level==l.toLowerCase() && 'is-active'"
       @click="level = l.toLowerCase()"
-    ) {{ l }}
+    ) {{ i18n[l] }}
 
   .guide.select(@click="guide = !guide")
     CheckboxMarked(v-if="guide")
     CheckboxBlankOutline(v-if="!guide")
     span.label {{ i18n.show_guide }}
+
+  .langs
+    a.lang.select(href="?lang=en" :class="i18n.lang=='en' && 'is-active'")
+      | English
+    a.lang.select(href="?lang=ja" :class="i18n.lang=='ja' && 'is-active'")
+      | 日本語
   
   Button(@click="submit") {{ i18n.start }}
 </template>
@@ -45,7 +51,7 @@ get_pref = (key, fallback) ->
 export default
   props: ['start']
   data: -> {
-    levels: ['Easiest', 'Easy', 'Normal', 'Hard', 'Hardest']
+    levels: ['easiest', 'easy', 'normal', 'hard', 'hardest']
     color: get_pref('color', BLACK)
     level: get_pref('level', 'normal')
     guide: get_pref('guide', true)
@@ -84,6 +90,15 @@ export default
 
 .levels
   margin-bottom 20px
+
+.langs
+  display flex
+  justify-content space-around
+  margin-bottom 20px
+  .lang
+    text-decoration none
+    color #ccc
+    padding 5px 10px
 
 .select
   border 1px solid transparent
