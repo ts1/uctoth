@@ -2,6 +2,8 @@
   #app
     Setting(v-if="mode=='setting'" :start="start")
     Game(v-if="mode=='game'" :user="color" :level="level" :guide="guide" :back="back")
+    .link
+      a(href="https://github.com/ts1/uctoth" target="_blank") Source code
 </template>
 
 <script lang="coffee">
@@ -43,4 +45,14 @@
     align-items center
     justify-content center
     color #ccc
+  .link
+    position fixed
+    bottom 0
+    display flex
+    justify-content center
+    font-size 12px
+    a
+      color #ccc
+      text-decoration none
+      padding 10px
 </style>
