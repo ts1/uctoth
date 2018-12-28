@@ -9,7 +9,7 @@ WLD = false
 SPLIT = false
 MINI_BATCH = false
 BATCH_SIZE = 10000
-THRESHOLD = 1e-5
+THRESHOLD = 1e-4
 D_FACTOR = 120
 
 index_size = get_single_index_size() + 1
