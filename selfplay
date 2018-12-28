@@ -2,7 +2,7 @@
 require './rejection_handler'
 { pos_array_to_str, pos_to_str, BLACK, pos_array_from_str } = require './board'
 { PatternBoard } = require './pattern'
-Book = require './book'
+Book = require './book.coffee'
 fs = require 'fs'
 Player = require './player'
 minmax = require './minmax'
