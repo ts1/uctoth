@@ -2,6 +2,7 @@ path = require('path')
 
 module.exports = {
   baseUrl: '/uctoth/',
+  outputDir: path.resolve(__dirname, '..', 'docs'),
   configureWebpack: {
     resolve: {
       extensions: [ '.coffee' ],
