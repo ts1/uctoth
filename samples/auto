@@ -1,0 +1,12 @@
+#!/bin/bash -e
+while true; do
+    time ./selflearn 1000
+    ./mkgen
+    time ./reg_minmax gen/*/games
+    time ./match match.log
+
+    time ./selfplay-rnd 1000 gen/*/games
+    ./mkgen
+    time ./reg_minmax gen/*/games
+    time ./match match.log
+done
