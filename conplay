@@ -54,7 +54,7 @@ simple = Player
 minmax = Player
   book: book_player()
   strategy: require('./minmax')
-    evaluate: pattern_eval('scores')
+    evaluate: pattern_eval('scores.json')
     max_depth: DEPTH
     shuffle: false
     #cache_size: 0
@@ -64,7 +64,7 @@ minmax = Player
 uct = Player
   book: book_player()
   strategy: require('./uct')
-    evaluate: pattern_eval('scores')
+    evaluate: pattern_eval('scores.json')
     max_search: 380000
   solve_wld: WLD
   solve_full: FULL
@@ -72,7 +72,7 @@ uct = Player
 invert = Player
   book: null
   strategy: require('./uct')
-    evaluate: pattern_eval('scores', true)
+    evaluate: pattern_eval('scores.json', true)
     max_search: 38000
   solve_wld: 0
   solve_full: 0

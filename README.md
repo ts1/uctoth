@@ -20,7 +20,7 @@ Works both on Node.js with ES6+ features and on [browsers](https://ts1.github.io
 Starting from random plays, strengthens itself by a loop of self playing and machine learning.
 Uses no existing records of games.
 
-Included `scores` file is a result of 30 iterations of 1,000 self-plays and learnings.
+Included `scores.json` file is a result of 30 iterations of 1,000 self-plays and learnings.
 10 days work of a MacBook Pro.
 
 ### Search algorithm
@@ -33,10 +33,19 @@ Beats minimax by 70-80% win rate in my tests.
 
 Classic pattern-based evaluation method described in publications by Michael Buro, who is the god of computer othello for me.
 
+## Usage
+
+Most scripts needs `scores.json` file in this directory.
+Copy from `ref` directory or build your own.
+
+```
+cp ref/scores.json .
+```
+
+TODO: Write more description here.
+
 ## License
 
 MIT
 
-## TODO
-
-Write description of scripts here.
+Copyright © 2018 by Takeshi Sone

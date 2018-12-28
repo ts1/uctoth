@@ -2,7 +2,7 @@
 /memo
 /old
 /node_modules
-/scores
+/scores.json
 .DS_Store
 .*.swp
 /book.db*

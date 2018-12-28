@@ -63,4 +63,4 @@ load_coeffs scores
 interpolate scores
 denormalize scores
 round scores
-fs.writeFileSync 'scores', JSON.stringify scores
+fs.writeFileSync 'scores.json', JSON.stringify scores

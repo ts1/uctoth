@@ -7,7 +7,7 @@ fs = require 'fs'
 Player = require './player'
 minmax = require './minmax'
 uct = require './uct'
-pattern_eval = require('./pattern_eval')('scores')
+pattern_eval = require('./pattern_eval')('scores.json')
 { round_value } = require './util'
 
 C = .5

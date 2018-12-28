@@ -5,7 +5,7 @@ fs = require 'fs'
 { readlines, int } = require './util'
 make_player = require './player'
 uct = require './uct'
-pattern_eval = require('./pattern_eval')('scores')
+pattern_eval = require('./pattern_eval')('scores.json')
 
 FILENAME = 'games'
 RANDOM = .14

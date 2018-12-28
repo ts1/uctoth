@@ -19,7 +19,7 @@ module.exports = (options={}) ->
 
   #if opts.inverted
   #  solve = inverted_solve
-  opts.endgame_eval or= require('./pattern_eval')('scores')
+  opts.endgame_eval or= require('./pattern_eval')('scores.json')
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)
