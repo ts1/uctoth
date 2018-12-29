@@ -45,6 +45,10 @@ cp ref/scores.json .
 
 TODO: Write more description here.
 
+## Acknowledgement
+
+Sound created by Nobuyuki Honda.
+
 ## License
 
 MIT
