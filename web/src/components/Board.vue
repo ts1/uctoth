@@ -22,6 +22,7 @@
   import Disc from './Disc'
   import Player from '../player.worker'
   import i18n from '../i18n'
+  import sound from '../sound'
 
   worker = new Player
 
@@ -105,6 +106,7 @@
         @hover_at = null
         flips = @board.move @turn, pos
         return unless flips.length
+        sound 'move'
         @undo_stack.push [@turn, pos, flips]
         if @turn == @user
           @user_moves++
