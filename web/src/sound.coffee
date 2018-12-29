@@ -1,6 +1,8 @@
 sounds = {}
 context = null
 
+muted = false
+
 AudioContext = window.AudioContext or window.webkitAudioContext
 
 if AudioContext
@@ -23,6 +25,7 @@ if AudioContext
 
 export default (name) ->
   return unless context
+  return if muted
   p = sounds[name]
   throw new Error "sound #{name} is not loaded" unless p
   source = context.createBufferSource()
@@ -30,3 +33,7 @@ export default (name) ->
   source.buffer = await p
   source.connect context.destination
   source.start 0
+
+export is_supported = -> context?
+export is_muted = -> muted
+export mute = (mute) -> muted = mute

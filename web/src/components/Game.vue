@@ -1,8 +1,12 @@
 <template lang="pug">
 .screen
   header
-    Button.back(@click="back" :border="false")
-      ArrowLeftThick
+    .icons
+      Button(@click="back" :border="false")
+        BackIcon
+      Button(v-if="sound_supported" @click="mute" :border="false")
+        SoundIcon(v-if="!muted")
+        MuteIcon(v-if="muted")
     .level {{ level_title }}
     Button.undo(:disabled="!undo_enabled" @click="undo") {{ i18n.undo }}
   main
@@ -20,11 +24,14 @@
 </template>
 
 <script lang="coffee">
-import ArrowLeftThick from '@icons/ArrowLeftThick'
+import BackIcon from '@icons/ArrowLeftThick'
+import SoundIcon from '@icons/VolumeHigh'
+import MuteIcon from '@icons/VolumeOff'
 import Board from './Board'
 import MessageBox from './MessageBox'
 import Button from './Button'
 import i18n from '../i18n'
+import * as sound from '../sound.coffee'
 
 export default
   props: ['user', 'level', 'guide', 'back']
@@ -33,6 +40,8 @@ export default
     msg_key: 0
     undo_enabled: false
     undo: ->
+    muted: sound.is_muted()
+    sound_supported: sound.is_supported()
     i18n
   }
   computed:
@@ -46,7 +55,10 @@ export default
     set_undo_btn: (enabled, undo) ->
       @undo_enabled = enabled
       @undo = undo
-  components: { ArrowLeftThick, Board, MessageBox, Button }
+    mute: ->
+      @muted = not @muted
+      sound.mute(@muted)
+  components: { BackIcon, SoundIcon, MuteIcon, Board, MessageBox, Button }
 </script>
 
 <style lang="stylus" scoped>
@@ -63,14 +75,14 @@ export default
     align-items center
     margin 5px 0
 
-    .back
+    .icons button
       font-size 20px
-      padding 5px 10px
+      line-height 20px
+      padding 10px
 
     .undo
       font-size 14px
       margin-right 5px
-
 
   main
     display flex
