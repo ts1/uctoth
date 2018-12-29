@@ -38,7 +38,7 @@ export default
   computed:
     level_title: ->
       mode = i18n[@level]
-      eval '`' + i18n.mode + '`'
+      i18n.expand('mode', {mode})
   methods:
     show_message: (params) ->
       @msg_key++

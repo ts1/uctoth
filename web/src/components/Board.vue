@@ -126,9 +126,9 @@
             outcome = @board.outcome(@user)
             discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
             if outcome > 0
-              @message text: eval('`'+@i18n.win+'`'), back: @back
+              @message text: i18n.expand('win', {discs}), back: @back
             else if outcome < 0
-              @message text: eval('`'+@i18n.lose+'`'), back: @back
+              @message text: i18n.expand('lose', {discs}), back: @back
             else
               @message text: @i18n.draw, back: @back
 

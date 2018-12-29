@@ -1,4 +1,4 @@
-table =
+translations =
   en:
     first_move: 'First move'
     second_move: 'Second move'
@@ -64,7 +64,13 @@ else
       window.navigator.userLanguage or
       window.navigator.browserLanguage
 
-lang = 'en' unless table[lang]
+lang = 'en' unless translations[lang]
 
-module.exports = table[lang]
+expand = (name, params) ->
+  text = translations[lang][name]
+  throw new Error 'no translation' unless text
+  text.replace /\$\{(\w+)\}/g, (match, key) -> params[key]
+
+module.exports = translations[lang]
 module.exports.lang = lang
+module.exports.expand = expand
