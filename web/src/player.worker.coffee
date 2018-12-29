@@ -10,30 +10,30 @@ make_player_with_params = () ->
 
 param_table =
   easiest:
-    search: 10000
+    search: 1000
     random: 0
     invert: true
-    wld: 14
-    full: 16
+    wld: 12
+    full: 14
   easy:
     search: 1
-    random: 2
+    random: .1
     wld: 0
     full: 0
   normal:
     book: true
-    book_random: 2
-    search: 1
-    random: 0
+    book_random: 1
+    search: 3
+    random: .2
     wld: 0
     full: 0
   hard:
     book: true
     book_random: 1
-    search: 10000
+    search: 5
     random: 0
-    wld: 14
-    full: 16
+    wld: 8
+    full: 10
   hardest:
     book: true
     book_random: .1
