@@ -1,7 +1,7 @@
 {EMPTY, pos_from_str} = require './board'
 { encode_normalized } = require './encode'
-solve = require './endgame'
-#inverted_solve = require './inverted_endgame'
+normal_solve = require './endgame'
+inverted_solve = require './inverted_endgame'
 
 defaults =
   book: null
@@ -16,10 +16,9 @@ F5 = pos_from_str('F5')
 
 module.exports = (options={}) ->
   opts = {defaults..., options...}
-
-  #if opts.inverted
-  #  solve = inverted_solve
   opts.endgame_eval or= require('./pattern_eval')('scores.json')
+
+  solve = if opts.inverted then inverted_solve else normal_solve
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)

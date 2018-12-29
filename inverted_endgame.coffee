@@ -90,9 +90,9 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluate) ->
     unless moves.length
       if pass
         if base_score > 0
-          return base_score + left
+          return -(base_score + left)
         else if base_score < 0
-          return base_score - left
+          return -(base_score - left)
       else
         return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
