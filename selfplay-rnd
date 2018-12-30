@@ -1,11 +1,12 @@
 #!/usr/bin/env coffee
 
 fs = require 'fs'
-{ Board, BLACK, pos_to_str } = require './board'
+{ Board, BLACK, pos_to_str, pos_array_to_str } = require './board'
 { readlines, int } = require './util'
 make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
+Book = require './book'
 
 FILENAME = 'games'
 RANDOM = .14
@@ -35,7 +36,7 @@ read_games = (filename) ->
 play = (player) ->
   board = new Board
   turn = BLACK
-  moves = ''
+  moves = []
   loop
     unless board.any_moves turn
       turn = -turn
@@ -45,7 +46,7 @@ play = (player) ->
     flips = board.move turn, move
     console.assert flips.length
     m = pos_to_str(move, turn)
-    moves += m
+    moves.push {move, turn}
     process.stdout.write m
     turn = -turn
   outcome = board.outcome()
@@ -58,6 +59,9 @@ do ->
     process.stderr.write "Usage: #{process.argv[1]} number [games...]\n"
     process.exit 1
   max_games = parseInt args[0]
+
+  book = new Book 'book.db'
+  book.init()
 
   total = 0
   for filename in args.slice 1
@@ -81,8 +85,9 @@ do ->
     if fs.existsSync('.reload-selfplay')
       break
     {moves, outcome} = await play player
+    moves_str = pos_array_to_str(moves)
     n_play++
-    if games[moves]
+    if games[moves_str]
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       continue
@@ -92,7 +97,8 @@ do ->
       n_skip++
       continue
     balance += outcome
-    games[moves] = true
-    fs.appendFileSync FILENAME, "#{moves} #{outcome}\n"
+    games[moves_str] = true
+    await book.add_game moves
+    fs.appendFileSync FILENAME, "#{moves_str} #{outcome}\n"
     n_games++
   console.log "played #{n_play} duplicated #{n_dup} skipped #{n_skip} balance #{balance}"

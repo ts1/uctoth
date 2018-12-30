@@ -4,5 +4,5 @@ dir=gen/$(date +%Y%m%d-%H%M%S)
 
 mkdir $dir
 mv games $dir
-mv book.db* $dir || true
+#mv book.db* $dir || true
 cp scores.json $dir
