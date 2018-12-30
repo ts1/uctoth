@@ -26,11 +26,11 @@ translations =
     show_guide: 'ガイドを表示する'
     start: 'スタート'
     undo: '待った'
-    your_turn: 'あなたの番です'
+    your_turn: 'あなたの番です。'
     thinking: '考えています...'
-    you_pass: 'あなたの打てるところがありません'
+    you_pass: 'あなたの打てるところがありません。'
     pass: 'パス'
-    i_pass: '私の打てるところがありません。あなたの番です'
+    i_pass: '私の打てるところがありません。あなたの番です。'
     win: '${discs}であなたの勝ちです!'
     lose: '${discs}であなたの負けです!'
     draw: '引き分け!'
@@ -41,6 +41,7 @@ translations =
     hard: 'ハード'
     hardest: '超ハード'
     mode: '${mode}モード'
+    description: 'UctothはWebブラウザで遊べるシンプルなオセロ(リバーシ)ゲームです。'
 
 parse_qs = (qs=window.location.search)->
   if qs[0] == '?'
@@ -65,12 +66,18 @@ else
       window.navigator.browserLanguage
 
 lang = 'en' unless translations[lang]
+translation = translations[lang]
+
+if lang != 'en'
+  document.querySelector('html').setAttribute('lang', lang)
+  document.querySelector('meta[name="description"]')
+    .setAttribute('content', translation.description)
 
 expand = (name, params) ->
-  text = translations[lang][name]
+  text = translation[name]
   throw new Error 'no translation' unless text
   text.replace /\$\{(\w+)\}/g, (match, key) -> params[key]
 
-module.exports = translations[lang]
+module.exports = translation
 module.exports.lang = lang
 module.exports.expand = expand

@@ -44,6 +44,7 @@ export default
     sound_supported: sound.is_supported()
     i18n
   }
+  mounted: -> window.scrollTo 0, 0
   computed:
     level_title: ->
       mode = i18n[@level]

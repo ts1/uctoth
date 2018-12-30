@@ -1,5 +1,6 @@
 <template lang="pug">
   #app
+    h1(v-if="mode=='setting'") UCTOTH
     Setting(v-if="mode=='setting'" :start="start")
     Game(v-if="mode=='game'" :user="color" :level="level" :guide="guide" :back="back")
     .link
@@ -31,6 +32,7 @@
       Game
     }
 </script>
+
 <style lang="stylus">
   body, html
     background #333
@@ -40,19 +42,27 @@
     line-height 1.5
     -webkit-font-smoothing antialiased
     -moz-osx-font-smoothing grayscale
+    font-feature-settings "palt"
     min-height 100vh
     display flex
     align-items center
-    justify-content center
+    justify-content space-between
+    flex-direction column
     color #ccc
+
+  h1
+    font-weight lighter
+    letter-spacing .25em
+    font-family 'Montserrat', sans-serif
+
   .link
-    position fixed
-    bottom 0
     display flex
     justify-content center
     font-size 12px
+    line-height 1
+    margin-top 10px
     a
       color #ccc
       text-decoration none
-      padding 10px
+      padding 15px
 </style>

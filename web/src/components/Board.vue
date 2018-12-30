@@ -49,6 +49,9 @@
         @message text: @i18n.your_turn
       else
         @worker_move()
+      gtag 'event', 'start',
+        event_category: 'game'
+        event_label: @level
 
     updated: -> @$el.classList.add 'animate'
 
@@ -129,10 +132,22 @@
             discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
             if outcome > 0
               @message text: i18n.expand('win', {discs}), back: @back
+              gtag 'event', 'win',
+                event_category: 'game'
+                event_label: @level
+                value: outcome
             else if outcome < 0
               @message text: i18n.expand('lose', {discs}), back: @back
+              gtag 'event', 'lose',
+                event_category: 'game'
+                event_label: @level
+                value: outcome
             else
               @message text: @i18n.draw, back: @back
+              gtag 'event', 'draw',
+                event_category: 'game'
+                event_label: @level
+                value: outcome
 
       worker_move: ->
         @message text: @i18n.thinking, spin: true
