@@ -10,8 +10,8 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 { round_value } = require './util'
 
-C = 2
-DEPTH = 6
+SCOPE = 1
+EVAL_DEPTH = 8
 WLD = 18
 FULL = 16
 OPENING = pos_array_from_str('F5')
@@ -22,7 +22,7 @@ evaluator = do ->
     strategy: minmax
       evaluate: pattern_eval
       verbose: false
-      max_depth: DEPTH
+      max_depth: EVAL_DEPTH
       cache_size: 100000
     solve_wld: WLD
     solve_full: FULL
@@ -32,7 +32,7 @@ evaluator = do ->
     strategy: minmax
       evaluate: pattern_eval
       verbose: false
-      max_depth: DEPTH-1
+      max_depth: EVAL_DEPTH-1
       cache_size: 100000
     solve_wld: WLD
     solve_full: FULL
@@ -50,8 +50,6 @@ player = Player
   strategy: uct
     evaluate: pattern_eval
     verbose: false
-    C: 1.9
-    max_search: 14000
   solve_wld: WLD
   solve_full: FULL
   verbose: false
@@ -59,23 +57,22 @@ player = Player
 book = new Book 'book.db'
 
 learn = ->
-  {board, moves, turn, value} = await book.find_opening(C, OPENING)
+  {board, moves, turn, value} = await book.find_opening(SCOPE, evaluator, OPENING)
   console.log board.dump true
-  console.log pos_array_to_str(move.move for move in moves), round_value(value)
+  console.log pos_array_to_str(moves), round_value(value)
   loop
     unless board.any_moves turn
       turn = -turn
       unless board.any_moves turn
         break
-    {move, solved} = await player board, turn
+    {move} = await player board, turn
     board.move turn, move
-    moves.push {move, solved}
-    process.stdout.write pos_to_str move
+    moves.push {move, turn}
+    process.stdout.write pos_to_str move, turn
     turn = -turn
   console.log ':', board.outcome()
-  await book.save_game moves, board.outcome()
-  fs.appendFileSync 'games', "#{pos_array_to_str(move.move for move in moves)} #{board.outcome()}\n"
-  await book.learn moves, evaluator
+  await book.add_game moves
+  fs.appendFileSync 'games', "#{pos_array_to_str(moves)} #{board.outcome()}\n"
 
 do ->
   [arg] = process.argv.slice 2
@@ -86,10 +83,9 @@ do ->
 
   await book.init()
   until fs.existsSync('.reload-selfplay')
-    if max_games
-      n_games = await book.count_games()
-      console.log 'played', n_games
-      if n_games >= max_games
-        break
     await learn()
-    #console.log 'heap used', process.memoryUsage().heapUsed/1024/1024, 'MB'
+    if max_games
+      n_games = (await book.count_games()) % max_games
+      n_games or= max_games
+      console.log 'played', n_games
+      break if n_games >= max_games

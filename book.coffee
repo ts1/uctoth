@@ -1,80 +1,92 @@
 sqlite3 = require('sqlite3').verbose()
-{ encode_normalized, decode } = require './encode'
+{ encode_normalized } = require './encode'
 { BLACK, WHITE, EMPTY, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
 { PatternBoard } = require './pattern'
 { shuffle, round_value } = require './util'
 
-default_first_move = [pos_from_str('F5')]
+DEFAULT_OPENING = [pos_from_str('F5')]
+
+class Database
+  constructor: (filename, readonly) ->
+    mode = if readonly then sqlite3.OPEN_READONLY else undefined
+    @db = new sqlite3.Database filename, mode
+    process.on 'exit', => @db.close()
+  run: (sql, params) ->
+    new Promise (resolve, reject) =>
+      @db.run sql, params, (err, result) ->
+        if err
+          reject err
+        else
+          resolve result
+  get: (sql, params) ->
+    new Promise (resolve, reject) =>
+      @db.get sql, params, (err, result) ->
+        if err
+          reject err
+        else
+          resolve result
+  all: (sql, params) ->
+    new Promise (resolve, reject) =>
+      @db.all sql, params, (err, result) ->
+        if err
+          reject err
+        else
+          resolve result
+  each: (sql, params, cb) ->
+    new Promise (resolve, reject) =>
+      @db.each sql, params, ((err, result) ->
+        if err
+          reject err
+        else
+          cb result
+      ), ((err, result) ->
+        if err
+          reject err
+        else
+          resolve result
+      )
 
 module.exports = class Book
-  constructor: (filename) ->
-    @db = new sqlite3.Database filename
-    @db.run 'pragma busy_timeout=5000'
-    @db.run 'pragma journal_mode=WAL'
-    process.on 'exit', => @db.close()
+  constructor: (filename, {readonly}={}) ->
+    @db = new Database filename, readonly
 
   init: ->
-    await new Promise (resolve, reject) =>
-      @db.run '''
-        create table if not exists book (
-          code text primary key,
-          empty integer,
-          value float,
-          solved text,
-          is_leaf integer,
-          n integer)
-        ''', (err) ->
-          if err
-            reject err
-          else
-            resolve()
-    await new Promise (resolve, reject) =>
-      @db.run '''
-        create table if not exists games (
-          moves text primary key,
-          outcome integer
-        )
-        ''',
-        (err) ->
-          if err
-            reject err
-          else
-            resolve()
+    await @db.run 'pragma busy_timeout=5000'
+    await @db.run 'pragma journal_mode=WAL'
+    await @db.run '''
+      create table if not exists book (
+        code text primary key,
+        n_moves integer,
+        value float,
+        n_played integer)
+        '''
+    await @db.run '''
+      create table if not exists games (
+        moves text primary key,
+        outcome integer)
+        '''
 
-  get_by_code: (code) -> new Promise (resolve, reject) =>
-    @db.get 'select * from book where code=?', [code], (err, row)->
-      if err
-        reject err
-      else
-        resolve row
-
-  set_by_code: (code, value, solved, n, is_leaf) ->
+  get_by_code: (code) -> @db.get 'select * from book where code=?', [code]
 
   get: (board) -> @get_by_code(encode_normalized(board))
 
-  set: (board, value, solved, n, is_leaf=0) ->
+  set: (board, data) ->
     code = encode_normalized(board)
-    empty = board.count(EMPTY)
-    new Promise (resolve, reject) =>
-      @db.run '''
-        insert or replace into book (code, empty, value, solved, n, is_leaf)
-        values (?, ?, ?, ?, ?, ?)
-        ''', [code, empty, value, solved, n, is_leaf],
-        (err) ->
-          if err
-            reject err
-          else
-            resolve()
+    n_moves = 60 - board.count(EMPTY)
+    @db.run '''
+      insert or replace into book (code, n_moves, value, n_played)
+        values (?, ?, ?, ?)
+        ''', [code, n_moves, data.value, data.n_played]
 
-  find_opening: (c, first_moves=default_first_move) ->
+  find_opening: (scope, evaluator, opening=DEFAULT_OPENING) ->
     board = new PatternBoard
     moves = []
     turn = BLACK
-    for move in first_moves
+    for move in opening
       flips = board.move turn, move
       unless flips.length
         throw new Error 'invalid move'
-      moves.push {move, solved:null, turn}
+      moves.push {move, turn}
       turn = -turn
     last_value = 0
     loop
@@ -83,197 +95,113 @@ module.exports = class Book
         unless board.any_moves turn
           break
       nodes = []
+      has_leaf = false
+      unplayed = []
       for move in board.list_moves(turn)
         flips = board.move turn, move
         data = await @get board
         board.undo turn, move, flips
         if data
           nodes.push [move, data]
+          if data.n_played == 0
+            has_leaf = true
+        else
+          unplayed.push move
       break unless nodes.length
 
+      if not has_leaf and unplayed.length
+        ev = await evaluator(board, turn, unplayed)
+        flips = board.move turn, ev.move
+        throw new Error 'invalid move' unless flips.length
+        value = ev.value * turn
+        data = { value, n_played:0 }
+        await @set board, data
+        board.undo turn, ev.move, flips
+        nodes.push [ev.move, data]
+        console.log 'leaf', pos_to_str(ev.move, turn), round_value(value)
+
       n = 0
-      n += data.n for [move, data] in nodes
-      #log_n = Math.log(n)
-      log_n = n
+      n += data.n_played for [move, data] in nodes
 
       max = -Infinity
       best = null
-      if c == 0
+      if scope == 0
         nodes = shuffle nodes
       for [move, data] in nodes
-        value = data.value * turn
+        if data.value == 0
+          value = -1
+        else
+          value = data.value * turn
 
-        bias = c * Math.sqrt(log_n / (data.n + 1))
-        console.log pos_to_str(move, turn), data.n, round_value(bias), round_value(value) if c
+        bias = scope * Math.sqrt(n / (data.n_played + 1))
+        console.log pos_to_str(move, turn), data.n_played, round_value(bias),
+          round_value(value)
         value += bias
 
         if value > max
           max = value
-          best = {move, solved: data.solved, turn}
+          best = {move, turn}
           last_value = (value - bias) * turn
 
-      console.log 'best', pos_to_str(best.move, turn), round_value(last_value) if c
+      console.log '-->', pos_to_str(best.move, turn), round_value(last_value)
       moves.push best
       board.move turn, best.move
       turn = -turn
     {board, moves, turn, value: last_value}
 
-  find_unplayed_opening: (c, first_moves=default_first_move) ->
-    opening = await @find_opening(c, first_moves)
-    moves = pos_array_to_str(move for {move} in opening.moves)
-    data = await new Promise (resolve, reject) =>
-      @db.get 'select count(*) as played from games where moves like ?',
-        ["#{moves}%"],
-        (err, data) ->
-          if err
-            reject err
-          else
-            resolve data
-    if data.played
-      null
-    else
-      opening
+  add_game: (moves) ->
+    @db.run 'begin'
 
-  save_game: (moves, outcome) ->
-    moves = pos_array_to_str(move for {move} in moves)
-    await new Promise (resolve, reject) =>
-      @db.run 'insert or replace into games values (?, ?)', [moves, outcome],
-        (err) ->
-          if err
-            reject err
-          else
-            resolve()
-      turn = -turn
-
-  count_games: (me=null) ->
-    data = await new Promise (resolve, reject) =>
-      sql = 'select count(*) as played from games'
-      if me?
-        if me > 0
-          sql += ' where outcome > 0'
-        else if me < 0
-          sql += ' where outcome < 0'
-        else
-          sql += ' where outcome = 0'
-
-      @db.get sql, [],
-        (err, data) ->
-          if err
-            reject err
-          else
-            resolve data
-    data.played
-
-  sum_outcome: (me=null) ->
-    data = await new Promise (resolve, reject) =>
-      @db.get 'select sum(outcome) as sum from games', [],
-        (err, data) ->
-          if err
-            reject err
-          else
-            resolve data
-    data.sum
-
-  get_neutral_positions: (n_moves, n) -> new Promise (resolve, reject) =>
-    @db.all 'select code from book where empty=? order by n desc limit ?',
-      [60-n_moves, n], (err, rows) ->
-        reject err if err
-        unless rows
-          throw new Error 'no positions'
-        resolve rows.map (row) -> decode(row.code)
-
-  learn: (moves, evaluator) ->
     board = new PatternBoard
-    turn = BLACK
     history = []
-    for {move, solved} in moves
+    for {move, turn} in moves
       flips = board.move turn, move
-      if flips.length == 0
-        turn = -turn
-        flips = board.move turn, move
-        if flips.length == 0
-          throw new Error "invalid move #{pos_to_str(move)}"
-      history.push [turn, move, flips, solved]
-      turn = -turn
-
+      throw new Error 'invalid move' unless flips.length
+      history.push {move, turn, flips}
     if board.any_moves(BLACK) or board.any_moves(WHITE)
-      unless board.any_moves(turn)
-        turn = -turn
-      e = await evaluator board, turn
-      value = e.value * turn
-      if e.solved
-        if value == 0
-          value = -100*turn
-        else
-          value *= 100
-      flips = board.move turn, e.move
-      unless flips.length
-        throw new Error 'invalid move from evaluator'
-      console.log 'new move', pos_to_str(e.move), 'value', round_value(value)
-      await @set board, value, e.solved, 1, 1
-      history.push [turn, e.move, flips, e.solved]
-      outcome = null
-    else
-      outcome = board.outcome(BLACK)
-      await @set board, outcome*100, 'full', 1, 1
+      throw new Error 'game not finished'
+    outcome = board.outcome()
 
-    while (h = history.pop())
-      [turn, move_, flips, solved] = h
-      board.undo turn, move_, flips
+    s = pos_array_to_str(moves)
+    @db.run 'insert or replace into games values (?, ?)', [s, outcome]
 
+    data = await @get(board)
+    n_played = if data then data.n_played + 1 else 1
+    await @set board, {n_played, value:outcome}
+
+    while history.length
+      {move, turn, flips} = history.pop()
+      board.undo turn, move, flips
       max = -Infinity
-      unchecked = []
-      have_leaf = false
-      codes = {}
-      for move in board.list_moves(turn)
-        flips = board.move turn, move
-        code = encode_normalized(board)
-        if codes[code]
-          #console.log 'found symmetric move', pos_to_str(move), pos_to_str(codes[code]), pos_to_str(move_)
-          board.undo turn, move, flips
-          continue
-        codes[code] = move
-        data = await @get board
-        board.undo turn, move, flips
-        if data
-          if data.is_leaf and move != move_
-            have_leaf = true
+      for m in board.list_moves(turn)
+        flips = board.move turn, m
+        data = await @get(board)
+        board.undo turn, m, flips
+        if data and data.n_played
           value = data.value * turn
           if value > max
             max = value
-          #unless data.solved
-          #  solved = null
-        else
-          unchecked.push move
+      value = max * turn
+      data = await @get(board)
+      n_played = if data then data.n_played + 1 else 1
+      await @set board, {n_played, value}
+    @db.run 'commit'
 
-      if unchecked.length and not have_leaf and solved != 'full'
-        ev = await evaluator board, turn, unchecked
-        value = ev.value
-        console.log 'leaf', round_value(value*turn), ev.solved or 'eval'
-        if ev.solved
-          if value == 0
-            value = -100*turn
-          else
-            value = 100*value
-        value *= turn
-        if value > max
-          max = value
-        flips = board.move turn, ev.move
-        await @set board, value, ev.solved, 1, 1
-        board.undo turn, ev.move, flips
-        unless ev.solved
-          solved = null
-
-      if max == -Infinity
-        if outcome == null
-          throw new Error 'no children in unfinished game'
-        if outcome == 0
-          value = -100*turn
-        else
-          value = outcome*100
+  count_games: (me=null) ->
+    sql = 'select count(*) as c from games'
+    if me?
+      if me > 0
+        sql += ' where outcome > 0'
+      else if me < 0
+        sql += ' where outcome < 0'
       else
-        value = max * turn
+        sql += ' where outcome = 0'
+    (await @db.get sql).c
 
-      data = await @get board
-      n = data?.n or 0
-      await @set board, value, solved, n+1, 0
+  sum_outcome: -> (await @db.get 'select sum(outcome) as s from games', []).s
+
+  get_neutral_positions: (n_moves, n) ->
+    rows = await @db.all '''
+      select code from book where n_moves=? order by n_played desc limit ?',
+      ''', [n_moves, n]
+    rows.map (row) -> row.code

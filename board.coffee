@@ -32,7 +32,13 @@ pos_array_from_str = (s) ->
     else
       break
 
-pos_array_to_str = (array) -> array.map((pos) -> pos_to_str(pos)).join('')
+pos_array_to_str = (array) ->
+  result = for item in array
+    if item.move? and item.turn?
+      pos_to_str(item.move, item.turn)
+    else
+      pos_to_str(item)
+  result.join('')
 
 _char_to_square = { '-': EMPTY, 'X': BLACK, 'O': WHITE }
 
