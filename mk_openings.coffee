@@ -6,7 +6,7 @@ require './rejection_handler'
 
 args = process.argv.slice 2
 if args.length != 2
-  process.stderr.write "Usage: #{process.argv[1]} nodes book.json\n"
+  process.stderr.write "Usage: #{process.argv[1]} nodes openings.json\n"
   process.exit 1
 [infile, outfile] = args
 do ->

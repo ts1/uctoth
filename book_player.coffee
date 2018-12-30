@@ -1,5 +1,5 @@
 { encode_normalized } = require './encode'
-book = require './book.json'
+book = require './openings.json'
 
 defaults =
   random: 0.7
