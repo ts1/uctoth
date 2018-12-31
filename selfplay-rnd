@@ -1,7 +1,8 @@
 #!/usr/bin/env coffee
 
 fs = require 'fs'
-{ Board, BLACK, pos_to_str, pos_array_to_str } = require './board'
+{ Board, BLACK, pos_to_str, pos_array_to_str, pos_array_from_str } =
+  require './board'
 { readlines, int } = require './util'
 make_player = require './player'
 uct = require './uct'
@@ -9,10 +10,11 @@ pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
 
 FILENAME = 'games'
-RANDOM = .14
+RANDOM = .12
 WLD = 18
 FULL = 16
 BALANCE_MAX = 400
+OPENING = pos_array_from_str('F5')
 
 player = make_player
   book: null
@@ -37,6 +39,12 @@ play = (player) ->
   board = new Board
   turn = BLACK
   moves = []
+  for move in OPENING
+    flips = board.move turn, move
+    throw new Error unless flips.length
+    moves.push {move, turn}
+    process.stdout.write pos_to_str(move, turn)
+    turn = -turn
   loop
     unless board.any_moves turn
       turn = -turn
@@ -45,9 +53,8 @@ play = (player) ->
     {move} = await player board, turn
     flips = board.move turn, move
     console.assert flips.length
-    m = pos_to_str(move, turn)
     moves.push {move, turn}
-    process.stdout.write m
+    process.stdout.write pos_to_str(move, turn)
     turn = -turn
   outcome = board.outcome()
   process.stdout.write " #{outcome}\n"
