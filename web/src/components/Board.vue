@@ -162,7 +162,7 @@
           setTimeout (=>
             @move move
             @thinking = false
-          ), if t < 1000 then 1000 - t else 0
+          ), if t < 2000 then 2000 - t else 0
         @thinking = true
         worker.postMessage type:'move', board:@board.dump(), turn:@turn
 
