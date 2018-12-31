@@ -29,14 +29,19 @@ Employs modified UTC search.
 Searches 15-25 plies deep maximum on modern JavaScript engines.
 Beats my implementation of minimax by 70-80% winning rate.
 
-### Evaluation
+### Static Evaluation
 
 Classic pattern-based evaluation method as described in publications by Michael Buro.
 He is the god of computer othello for me.
 
+### Machine learning
+
+Simple linear regression of 57,000+ sparse features per position.
+Also written in CoffeeScript.
+
 ## Usage
 
-Most scripts expects `scores.json` file existing in this directory.
+Most scripts expect `scores.json` file existing in this directory.
 Copy from `ref` directory at first (then build your own).
 
 ```
