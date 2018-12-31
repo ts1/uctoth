@@ -65,7 +65,6 @@ export default
 <style lang="stylus" scoped>
   .screen
     width 100vw
-    height 100vh
     max-width: 480px
     display flex
     flex-direction column
