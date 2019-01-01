@@ -1,11 +1,6 @@
 #!/bin/bash -e
 
-if [ ! "$1" ]; then
-    echo "Usage: $0 games"
-    exit 1
-fi
-
-./games_to_nodes "$@" | ./nodes_to_single_indexes -
+./dump_nodes | ./nodes_to_single_indexes -
 for i in $(seq 0 9); do
     ./regress tmp/indexes$i.gz tmp/coeffs$i
 done

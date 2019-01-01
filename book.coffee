@@ -209,3 +209,5 @@ module.exports = class Book
   has_game: (moves_str) ->
     (await @db.get 'select count(*) as c from games where moves=?',
       [moves_str]).c
+
+  dump_nodes: (cb) -> @db.each 'select * from book', [], (row) -> cb(row)
