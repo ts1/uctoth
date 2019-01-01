@@ -1,12 +1,10 @@
 #!/bin/bash -e
 while true; do
-    time ./selflearn 1000
-    ./mkgen
-    time ./reg_minmax gen/*/games
-    time ./match match.log
-
-    time ./selfplay-rnd 1000 gen/*/games
-    ./mkgen
-    time ./reg_minmax gen/*/games
+    time ./selfplay-bf -n 200
+    time ./selfplay-rnd --opening f5 -n 200
+    time ./selfplay-rnd --opening f5d6 -n 200
+    time ./selfplay-rnd --opening f5f6 -n 200
+    time ./selfplay-rnd --opening f5f4 -n 200
+    time ./reg
     time ./match match.log
 done
