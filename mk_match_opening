@@ -1,2 +1,0 @@
-#!/bin/bash -e
-./games_to_minmax_nodes gen/*/games | awk '$5==6 {print $0}' | sort -nr -k 4 | head -15 | awk '{print $1}' >match.openings

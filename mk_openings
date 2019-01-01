@@ -1,2 +1,0 @@
-#!/bin/bash -e
-./games_to_minmax_nodes gen/*/games | npx coffee mk_openings.coffee - openings.json
