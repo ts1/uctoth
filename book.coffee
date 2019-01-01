@@ -205,3 +205,7 @@ module.exports = class Book
       select code from book where n_moves=? order by n_played desc limit ?',
       ''', [n_moves, n]
     rows.map (row) -> row.code
+
+  has_game: (moves_str) ->
+    (await @db.get 'select count(*) as c from games where moves=?',
+      [moves_str]).c

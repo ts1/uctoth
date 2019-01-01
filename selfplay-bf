@@ -1,0 +1,99 @@
+#!/usr/bin/env coffee
+
+require './rejection_handler'
+fs = require 'fs'
+{
+  Board
+  BLACK
+  WHITE
+  pos_to_str
+  pos_from_str
+  pos_array_to_str
+  pos_array_from_str
+} = require './board'
+{ readlines, int } = require './util'
+make_player = require './player'
+uct = require './uct'
+pattern_eval = require('./pattern_eval')('scores.json')
+Book = require './book'
+
+argv = require('yargs')
+  .default('n', 1000)
+  .usage("Usage: #{process.argv[1]} [options]")
+  .argv
+
+player = make_player
+  book: null
+  strategy: uct
+    evaluate: pattern_eval
+    verbose: false
+  verbose: false
+  solve_wld: 18
+  solve_full: 16
+
+play = (player, opening) ->
+  board = new Board
+  moves = []
+  for {move, turn} in opening
+    flips = board.move turn, move
+    throw new Error 'invalid move' unless flips.length
+    moves.push {move, turn}
+  turn = -turn
+  console.log board.dump true
+  loop
+    unless board.any_moves turn
+      turn = -turn
+      unless board.any_moves turn
+        break
+    {move} = await player board, turn
+    flips = board.move turn, move
+    console.assert flips.length
+    moves.push {move, turn}
+    process.stdout.write pos_to_str(move, turn)
+    turn = -turn
+  outcome = board.outcome()
+  process.stdout.write " #{outcome}\n"
+  {moves, outcome}
+
+find_unplayed_opening = (book, cb) ->
+  for depth in [1...60]
+    console.log 'depth', depth
+    board = new Board
+    board.move BLACK, pos_from_str('f5')
+    moves = [{move:pos_from_str('f5'), turn:BLACK}]
+
+    sub = (turn, depth) ->
+      unless depth
+        unless await book.get(board)
+          await cb moves
+        return
+
+      unless board.any_moves(turn)
+        turn = -turn
+        unless board.any_moves(turn)
+          return
+      for move in board.list_moves(turn)
+        flips = board.move turn, move
+        throw new Error 'invalid move' unless flips.length
+        moves.push {move, turn}
+        await sub -turn, depth-1
+        moves.pop()
+        board.undo turn, move, flips
+
+    await sub WHITE, depth
+
+do ->
+  book = new Book 'book.db'
+  await book.init()
+
+  find_unplayed_opening book, (opening) ->
+    if fs.existsSync('.reload-selfplay')
+      process.exit 0
+    console.log pos_array_to_str(opening)
+    {moves, outcome} = await play(player, opening)
+    moves_str = pos_array_to_str(moves)
+    await book.add_game moves
+
+    n_games = (await book.count_games()) % argv.n or argv.n
+    console.log 'played', n_games
+    process.exit 0 if n_games >= argv.n

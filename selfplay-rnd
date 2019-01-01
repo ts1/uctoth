@@ -1,5 +1,6 @@
 #!/usr/bin/env coffee
 
+require './rejection_handler'
 fs = require 'fs'
 { Board, BLACK, pos_to_str, pos_array_to_str, pos_array_from_str } =
   require './board'
@@ -8,13 +9,13 @@ make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
+argv = require('yargs')
+  .usage("Usage: #{process.argv[1]} [games...]")
+  .default(opening: 'F5', n: 1000)
+  .argv
 
-FILENAME = 'games'
-RANDOM = .12
-WLD = 18
-FULL = 16
+RANDOM = .13
 BALANCE_MAX = 400
-OPENING = pos_array_from_str('F5')
 
 player = make_player
   book: null
@@ -23,23 +24,14 @@ player = make_player
     verbose: false
     random: RANDOM
   verbose: false
-  solve_wld: WLD
-  solve_full: FULL
-
-read_games = (filename) ->
-  games = {}
-  balance = 0
-  await readlines filename, (line) ->
-    [moves, score] = line.split(' ')
-    games[moves] = true
-    balance += int(score)
-  {games, balance}
+  solve_wld: 18
+  solve_full: 16
 
 play = (player) ->
   board = new Board
   turn = BLACK
   moves = []
-  for move in OPENING
+  for move in pos_array_from_str(argv.opening)
     flips = board.move turn, move
     throw new Error unless flips.length
     moves.push {move, turn}
@@ -61,40 +53,21 @@ play = (player) ->
   {moves, outcome}
 
 do ->
-  args = process.argv.slice 2
-  unless args.length
-    process.stderr.write "Usage: #{process.argv[1]} number [games...]\n"
-    process.exit 1
-  max_games = parseInt args[0]
-
   book = new Book 'book.db'
-  book.init()
+  await book.init()
 
-  total = 0
-  for filename in args.slice 1
-    console.log 'loading', filename, 'for balance'
-    {balance} = await read_games filename
-    total += balance
-
-  if fs.existsSync FILENAME
-    console.log 'loading', FILENAME
-    {games, balance} = await read_games(FILENAME)
-  else
-    games = {}
-    balance = 0
-  balance += total
-  n_games = Object.keys(games).length
+  balance = await book.sum_outcome()
   console.log "balance #{balance}"
   n_dup = 0
   n_play = 0
   n_skip = 0
-  while n_games < max_games
+  loop
     if fs.existsSync('.reload-selfplay')
       break
     {moves, outcome} = await play player
     moves_str = pos_array_to_str(moves)
     n_play++
-    if games[moves_str]
+    if await book.has_game(moves_str)
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       continue
@@ -104,8 +77,8 @@ do ->
       n_skip++
       continue
     balance += outcome
-    games[moves_str] = true
     await book.add_game moves
-    fs.appendFileSync FILENAME, "#{moves_str} #{outcome}\n"
-    n_games++
+    n_games = (await book.count_games()) % argv.n or argv.n
+    console.log 'played', n_games
+    break if n_games >= argv.n
   console.log "played #{n_play} duplicated #{n_dup} skipped #{n_skip} balance #{balance}"
