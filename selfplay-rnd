@@ -4,14 +4,14 @@ require './rejection_handler'
 fs = require 'fs'
 { Board, BLACK, pos_to_str, pos_array_to_str, pos_array_from_str } =
   require './board'
-{ readlines, int } = require './util'
 make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
 argv = require('yargs')
   .usage("Usage: #{process.argv[1]} [games...]")
-  .default(opening: 'F5', n: 1000)
+  .default(opening: 'F5', n: 1000, R: false)
+  .boolean('R')
   .argv
 
 RANDOM = .13
@@ -20,7 +20,8 @@ BALANCE_MAX = 400
 player = make_player
   book: null
   strategy: uct
-    evaluate: pattern_eval
+    evaluate: if argv.R then (-> Math.random()) else pattern_eval
+    max_search: if argv.R then 1 else 14000
     verbose: false
     random: RANDOM
   verbose: false
@@ -56,7 +57,7 @@ do ->
   book = new Book 'book.db'
   await book.init()
 
-  balance = await book.sum_outcome()
+  balance = (await book.sum_outcome()) or 0
   console.log "balance #{balance}"
   n_dup = 0
   n_play = 0
