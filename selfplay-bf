@@ -11,11 +11,12 @@ fs = require 'fs'
   pos_array_to_str
   pos_array_from_str
 } = require './board'
-{ readlines, int } = require './util'
+{ shuffle } = require './util'
 make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
+{ encode_normalized } = require './encode'
 
 argv = require('yargs')
   .default('n', 1000)
@@ -55,9 +56,21 @@ play = (player, opening) ->
   process.stdout.write " #{outcome}\n"
   {moves, outcome}
 
+unique_moves = (board, turn) ->
+  result = []
+  map = {}
+  for move in board.list_moves(turn)
+    flips = board.move turn, move
+    code = encode_normalized board
+    unless map[code]
+      map[code] = true
+      result.push move
+    board.undo turn, move, flips
+  result
+
 find_unplayed_opening = (book, cb) ->
   for depth in [1...60]
-    console.log 'depth', depth
+    console.log 'depth', depth+1
     board = new Board
     board.move BLACK, pos_from_str('f5')
     moves = [{move:pos_from_str('f5'), turn:BLACK}]
@@ -72,7 +85,7 @@ find_unplayed_opening = (book, cb) ->
         turn = -turn
         unless board.any_moves(turn)
           return
-      for move in board.list_moves(turn)
+      for move in shuffle(unique_moves(board, turn))
         flips = board.move turn, move
         throw new Error 'invalid move' unless flips.length
         moves.push {move, turn}
