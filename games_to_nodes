@@ -3,6 +3,7 @@
 require './rejection_handler'
 { Board, BLACK, pos_array_from_str, pos_to_str } = require './board'
 { readlines } = require './util'
+{ encode } = require './encode'
 
 n_dump = 0
 
@@ -19,14 +20,13 @@ replay_and_dump = (moves, score, out) ->
       unless board.any_moves turn
         turn = 0
 
-    out.write "#{board.dump false} #{turn} #{score}\n"
+    out.write "#{encode board} #{score}\n"
     n_dump++
 
   if board.any_moves(turn) or board.any_moves(-turn)
     throw new Error 'game not finished'
   if score != board.outcome()
     throw new Error 'score invalid'
-
 
 do ->
   args = process.argv.slice(2)

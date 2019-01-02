@@ -5,18 +5,18 @@ fs = require 'fs'
 { PatternBoard, patterns, N_MOVES_PER_PHASE, N_PHASES } = require './pattern'
 { EMPTY } = require './board'
 { readlines, gzwriter, int } = require './util'
+{ decode } = require './encode'
 
 each_board = (filename, cb) ->
   readlines filename, (line) ->
-    [squares, turn, outcome] = line.split ' '
-    board = new PatternBoard squares
-    turn = parseInt turn
+    [code, outcome] = line.split ' '
+    board = new PatternBoard decode code
     outcome = parseInt outcome
-    cb board, turn, outcome
+    cb board, outcome
 
 indexify = (filename, outfiles) ->
   n = 0
-  await each_board filename, (board, turn, outcome) ->
+  await each_board filename, (board, outcome) ->
     row = [outcome]
     for p in patterns
       map = {}
@@ -44,16 +44,11 @@ indexify = (filename, outfiles) ->
 do ->
   args = process.argv.slice 2
   if args.length != 1
-    console.log "Usage: #{process.argv[1]} prefix|file"
+    console.log "Usage: #{process.argv[1]} nodes[.gz]"
     process.exit 1
   [arg] = args
-  if fs.existsSync("tmp/#{arg}_nodes.gz")
-    infile = "tmp/#{arg}_nodes.gz"
-    outfiles = (gzwriter "tmp/#{arg}_indexes#{i}.gz" for i in [0...N_PHASES])
-  else
-    infile = arg
-    outfiles = (gzwriter "tmp/indexes#{i}.gz" for i in [0...N_PHASES])
+  infile = arg
+  outfiles = (gzwriter "tmp/indexes#{i}" for i in [0...N_PHASES])
 
   console.log "indexing #{infile}"
   await indexify infile, outfiles
-  gz.end() for gz in outfiles

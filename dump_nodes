@@ -8,4 +8,4 @@ do ->
   book = new Book 'book.db'
   await book.init()
   await book.dump_nodes (data) ->
-    console.log decode(data.code), data.turn, data.value
+    process.stdout.write "#{data.code} #{data.value}\n"
