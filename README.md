@@ -17,10 +17,12 @@ Works both on Node.js (with ES6+ features) and on [browsers](https://ts1.github.
 
 ### Self learning
 
-Starting from random plays, strengthens itself by a loop of self playing and machine learning.
+Starting from random plays, strengthens itself by a loop of self playing and
+machine learning.
 Uses no existing records of games.
 
-Included `scores.json` file is a result of 30 iterations of 1,000 self-plays and learnings.
+Included `scores.json` file is a result of 30 iterations of 1,000 self-plays
+and learnings.
 10 days work of a MacBook Pro.
 
 ### Search algorithm
@@ -29,7 +31,7 @@ Employs modified UTC search.
 Searches 15-25 plies deep maximum on modern JavaScript engines.
 Beats my implementation of minimax by 70-80% winning rate.
 
-### Static Evaluation
+### Static evaluation
 
 Classic pattern-based evaluation method as described in publications by Michael Buro.
 He is the god of computer othello for me.
@@ -48,7 +50,49 @@ Copy from `ref` directory at first (then build your own).
 cp ref/scores.json .
 ```
 
-TODO: Write more description here.
+### Bootstrapping
+
+This section describes how to train your own `scores.json`.
+
+First off, generate 1,000 randomly played games.
+
+```
+./selfplay-rnd -R
+```
+
+They are random but endgame is perfectly played.
+Generated games are stored in `book.db` (SQLite database).
+
+Next, learn the generated games and make a new `scores.json`.
+
+```
+./reg
+```
+
+Now you can remove `book.db` of random games.
+
+```
+rm book.db*
+```
+
+Copy `auto` script from `samples` directory.
+
+```
+cp samples/auto .
+```
+
+You may want to edit `auto` and other scripts (especially constants) as you
+like.
+
+Now you are ready to run automatic self learning loop.
+
+```
+./auto
+```
+
+By default it runs regression and 30-game matches versus `ref/scores.json`
+every 1,000 games generated.
+Match results are appended to `match.log`.
 
 ## Acknowledgement
 
@@ -58,4 +102,4 @@ Sound created by Nobuyuki Honda.
 
 MIT
 
-Copyright © 2018 by Takeshi Sone
+Copyright © 2018-2019 by Takeshi Sone
