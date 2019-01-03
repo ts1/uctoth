@@ -2,6 +2,6 @@
 
 ./dump_nodes | ./nodes_to_single_indexes -
 for i in $(seq 0 9); do
-    ./regress tmp/indexes$i tmp/coeffs$i
+    ./regress $@ tmp/indexes$i tmp/coeffs$i
 done
 ./coeffs_to_score

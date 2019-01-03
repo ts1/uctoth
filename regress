@@ -2,6 +2,12 @@
 
 { readlines, gzwriter, shuffle, round_value } = require './util'
 { get_single_index_size } = require './pattern'
+yargs = require 'yargs'
+  .usage "Usage: #{process.argv[1]} [options] train_file [test_file] outfile"
+  .default t: 1e-4
+  .alias t: 'threshold'
+  .describe t: 'loss difference threshold'
+argv = yargs.argv
 
 INTERCEPT = false
 AVERAGE = false
@@ -9,7 +15,6 @@ WLD = false
 SPLIT = false
 MINI_BATCH = false
 BATCH_SIZE = 10000
-THRESHOLD = 1e-4
 D_FACTOR = 120
 
 index_size = get_single_index_size() + 1
@@ -162,7 +167,7 @@ regress = (train_file, test_file) ->
         console.log 'step', step, 'loss', e, 'rate', round_value(rate), 'd', d_avg
         step++
 
-        if step >= D_FACTOR and d_avg < THRESHOLD
+        if step >= D_FACTOR and d_avg < argv.t
           break
 
         last_e = e
@@ -179,7 +184,7 @@ regress = (train_file, test_file) ->
 
   {coeffs, r2, step, intercept, loss:last_e}
 
-args = process.argv.slice 2
+args = argv._
 
 if args.length == 3
   [train_file, test_file, outfile] = args
@@ -187,7 +192,7 @@ else if args.length == 2
   [train_file, outfile] = args
   test_file = null
 else
-  console.error "Usage: #{process.argv[1]} train_file test_file outfile"
+  yargs.showHelp()
   process.exit 1
 
 do ->
