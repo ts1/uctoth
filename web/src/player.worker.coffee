@@ -23,14 +23,14 @@ param_table =
   normal:
     book: true
     book_random: 1
-    search: 3
-    random: .1
+    search: 1
+    random: 0
     wld: 0
     full: 0
   hard:
     book: true
     book_random: 1
-    search: 5
+    search: 6
     random: 0
     wld: 8
     full: 10
