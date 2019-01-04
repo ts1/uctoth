@@ -8,25 +8,76 @@ make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
-argv = require('yargs')
-  .usage("Usage: #{process.argv[1]} [games...]")
-  .default(opening: 'F5', n: 1000, R: false)
-  .boolean('R')
-  .argv
 
-RANDOM = .13
-BALANCE_MAX = 400
+argv = require 'yargs'
+  .usage "Usage: #{process.argv[1]} [options...]"
+  .options
+    o:
+      alias: 'opening'
+      desc: 'Opening'
+      type: 'string'
+      default: 'F5'
+      requiresArg: true
+    n:
+      desc: 'Number of games to play'
+      type: 'number'
+      default: 1000
+      requiresArg: true
+    R:
+      alias: 'random-play'
+      desc: 'Random play mode'
+      type: 'boolean'
+      default: false
+    r:
+      alias: 'randomness'
+      desc: 'Randomness'
+      type: 'number'
+      default: 0.13
+      requiresArg: true
+    b:
+      alias: 'balance'
+      desc: 'Tolerance of outcome balance'
+      type: 'number'
+      default: 400
+      requiresArg: true
+    B:
+      alias: 'book'
+      desc: 'Database file to save games'
+      type: 'string'
+      default: 'book.db'
+      requiresArg: true
+    s:
+      alias: 'search'
+      desc: 'Number of UCT searches per move'
+      type: 'number'
+      default: 14000
+      requireArg: true
+    w:
+      alias: 'wld'
+      desc: 'Depth of win-loss-draw endgame search'
+      default: 18
+      requireArg: true
+    f:
+      alias: 'full'
+      desc: 'Depth of full endgame search'
+      default: 16
+      requireArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
+  .argv
 
 player = make_player
   book: null
   strategy: uct
     evaluate: if argv.R then (-> Math.random()) else pattern_eval
-    max_search: if argv.R then 1 else 14000
+    max_search: if argv.R then 1 else argv.s
     verbose: false
-    random: RANDOM
+    random: argv.r
   verbose: false
-  solve_wld: 18
-  solve_full: 16
+  solve_wld: argv.w
+  solve_full: argv.f
 
 play = (player) ->
   board = new Board
@@ -54,7 +105,7 @@ play = (player) ->
   {moves, outcome}
 
 do ->
-  book = new Book 'book.db'
+  book = new Book argv.book
   await book.init()
 
   balance = (await book.sum_outcome()) or 0
@@ -73,7 +124,7 @@ do ->
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       continue
     b = balance + outcome
-    if (b > BALANCE_MAX and outcome > 0) or (b < -BALANCE_MAX and outcome < 0)
+    if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
       console.log "SKIP FOR BALANCE (current #{balance})"
       n_skip++
       continue
