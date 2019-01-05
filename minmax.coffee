@@ -1,7 +1,7 @@
 { EMPTY, pos_from_str, pos_to_str, Board } = require './board'
 { PatternBoard } = require './pattern'
 solve = require './endgame'
-{ round_value } = require './util'
+{ INFINITY } = require './util'
 
 corner_zone = do ->
   b = new Board
@@ -82,7 +82,7 @@ module.exports = (options={}) ->
       flips = board.move(me, pos)
       if flips.length
         any_moves = true
-        score = -simple_minmax(board, -me, -Infinity, Infinity, 0, 1)
+        score = -simple_minmax(board, -me, -INFINITY, INFINITY, 0, 1)
         board.undo(me, pos, flips)
         moves.push [pos, score]
 
@@ -99,8 +99,8 @@ module.exports = (options={}) ->
       next_depth = depth - 1
       if cq and next_depth == 0 and corner_zone.get(pos)
         next_depth = 1
-      if zws and depth >= 4 and isFinite(lower) and upper - lower > 0.0015
-        score = -minmax(board, -me, -(lower+0.001), -lower, 0, next_depth)
+      if zws and depth >= 4 and lower != -INFINITY and upper - lower > 1
+        score = -minmax(board, -me, -(lower+1), -lower, 0, next_depth)
         if score > lower and score < upper
           score = -minmax(board, -me, -upper, -score, 0, next_depth)
       else
@@ -156,30 +156,32 @@ module.exports = (options={}) ->
         break
       console.log "depth: #{depth}" if verbose
       moves.sort (a, b) -> move_scores[b] - move_scores[a]
-      max = -Infinity
+      max = -INFINITY
       best = 0
       for pos in moves
         flips = board.move(me, pos)
         if flips.length
           process.stdout.write "#{pos_to_str(pos)}" if verbose
-          if zws and isFinite(max)
-            score = -minmax(board, -me, -(max+0.001), -max, 0, depth-1)
+          if zws and max != -INFINITY
+            score = -minmax(board, -me, -(max+1), -max, 0, depth-1)
             if score > max
               process.stdout.write(':\b') if verbose
-              score = -minmax(board, -me, -Infinity, -score, 0, depth-1)
+              score = -minmax(board, -me, -INFINITY, -score, 0, depth-1)
           else
-            score = -minmax(board, -me, -Infinity, -max, 0, depth-1)
+            if zws
+              process.stdout.write(':\b') if verbose
+            score = -minmax(board, -me, -INFINITY, -max, 0, depth-1)
           board.undo(me, pos, flips)
           if score > max
-            process.stdout.write ":#{round_value(score)} " if verbose
+            process.stdout.write ":#{score} " if verbose
             max = score
             best = pos
           else
             if depth > 1
-              process.stdout.write ' ' if verbose
-              score = -99
+              score = -999999
+              process.stdout.write " " if verbose
             else
-              process.stdout.write ":#{round_value(score)} " if verbose
+              process.stdout.write ":#{score} " if verbose
           move_scores[pos] *= .001
           move_scores[pos] += score
       process.stdout.write '\n' if verbose

@@ -2,7 +2,8 @@
 require './rejection_handler'
 fs = require 'fs'
 { N_PHASES, patterns, get_single_index, get_single_index_size } = require './pattern'
-{ int, round_value } = require './util'
+{ int } = require './util'
+{ SCORE_MULT } = require './pattern'
 
 init_scores = ->
   scores = {}
@@ -56,7 +57,7 @@ round = (scores) ->
     for phase in [0...N_PHASES]
       tbl = scores[p.name][phase]
       for i in [0...(3**p.len+1)/2]
-        tbl[i] = round_value(tbl[i])
+        tbl[i] = Math.round(tbl[i] * SCORE_MULT)
 
 scores = init_scores()
 load_coeffs scores

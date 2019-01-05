@@ -3,6 +3,7 @@
 
 N_PHASES = 10
 N_MOVES_PER_PHASE = 60 / N_PHASES
+SCORE_MULT = 1000
 
 all_one = (len) -> (3 ** len - 1) / 2
 
@@ -279,7 +280,16 @@ class PatternBoard extends Board
     console.log 'ok'
     @indexes = saved
 
-module.exports = { PatternBoard, N_PHASES, N_MOVES_PER_PHASE, patterns, n_indexes, get_single_index, get_single_index_size }
+module.exports = {
+  PatternBoard
+  N_PHASES
+  N_MOVES_PER_PHASE
+  SCORE_MULT
+  patterns
+  n_indexes
+  get_single_index
+  get_single_index_size
+}
 
 if 0
   for i in [0..all_one(10)]

@@ -14,7 +14,8 @@ memoize = (fn) ->
     value = cache.get(args)
     if value is undefined
       value = fn(args...)
-      cache.set args, value
+      cache.set args
+      value
     value
 
 int = (f) -> f | 0
@@ -94,4 +95,15 @@ lru_cache = (max) ->
 
 round_value = (value) -> Math.round(value * 1e4) / 1e4
 
-module.exports = { shuffle, memoize, int, readlines, gzwriter, lru_cache, round_value }
+INFINITY = 1<<30
+
+module.exports = {
+  shuffle
+  memoize
+  int
+  readlines
+  gzwriter
+  lru_cache
+  round_value
+  INFINITY
+}

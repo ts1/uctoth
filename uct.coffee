@@ -1,8 +1,9 @@
-{ PatternBoard } = require './pattern'
+{ PatternBoard, SCORE_MULT } = require './pattern'
 { pos_to_str } = require './board'
+{ INFINITY } = require './util'
 
 defaults =
-  C: 1.9
+  C: 1.9*SCORE_MULT
   max_search: 14000
   verbose: true
   evaluate: null
@@ -25,7 +26,7 @@ module.exports = (options={}) ->
 
       if not node.children or node.children.length == 0
         node.children = []
-        max = -Infinity
+        max = -INFINITY
         any_moves = false
         board.each_empty (move) ->
           flips = board.move me, move, false
@@ -80,7 +81,7 @@ module.exports = (options={}) ->
         ###
         best.value = -uct_search best, -me, false, depth+1
         board.undo me, best.move, flips
-        max = -Infinity
+        max = -INFINITY
         for child in node.children
           #console.log 'return', pos_to_str(child.move), child.value
           if child.value > max
@@ -96,7 +97,7 @@ module.exports = (options={}) ->
 
     node = root
     while node.children?.length
-      max = -Infinity
+      max = -INFINITY
       best = null
       for child in node.children
         if child.n > max
@@ -110,8 +111,8 @@ module.exports = (options={}) ->
       return {moves:[]}
 
     if options.random == 0
-      max_n = -Infinity
-      max_value = -Infinity
+      max_n = -INFINITY
+      max_value = -INFINITY
       best = null
       for child in root.children
         if child.n > max_n or (child.n == max_n and child.value > max_value)
