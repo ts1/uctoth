@@ -1,11 +1,12 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
 uct = require './uct'
 
-CACHE_SIZE = 300000
+CACHE_SIZE = 500000
 CACHE = true
 CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 10
 SHALLOW_SEARCH = 6
+USE_MTDF = true
 
 if CACHE
   cache = require('./cache')(CACHE_SIZE)
@@ -129,11 +130,35 @@ solve = (board, me, lower, upper, evaluate) ->
   left = board.count(EMPTY)
   ordered_solve(board, me, lower, upper, score, left, evaluate)
 
+mtdf = (board, me, lower, upper, evaluate, first_guess, verbose) ->
+  score = board.score(me)
+  left = board.count(EMPTY)
+  l = lower
+  u = upper
+  guess = Math.round(first_guess / 2) * 2
+  guess = l if guess < l
+  guess = u if guess > u
+  while l < u
+    process.stdout.write "[#{l},#{u}](#{guess})" if verbose
+    beta = if guess == l then l+2 else guess
+    value = ordered_solve(board, me, beta-2, beta, score, left, evaluate)
+    process.stdout.write "#{value}" if verbose
+    if value >= beta
+      if value >= upper
+        return value
+      l = value
+    else
+      if value <= lower
+        return value
+      u = value
+    guess = value
+  value
+
 module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
   moves or= board.list_moves(me)
 
   left = board.count(EMPTY)
-  n_search = 10000 * 3**(left - 19)
+  n_search = 10000 * 3**(left - 18)
   if n_search > 400000
     n_search = 400000
   if n_search < 10000
@@ -145,6 +170,8 @@ module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
   for move in uct_result.moves
     move_values[move.move] = move.n
   moves.sort (a, b) -> move_values[b] - move_values[a]
+
+  first_guess = uct_result.value
 
   if wld
     lower = -1
@@ -158,13 +185,16 @@ module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
     flips = board.move(me, pos)
     console.assert flips.length
     process.stdout.write "#{pos_to_str(pos)}" if verbose
-    if lower > -64
-      score = -solve(board, -me, -(lower+1), -lower, evaluate)
-      if score > lower and score < upper
-        process.stdout.write ':\b' if verbose
-        score = -solve(board, -me, -upper, -score, evaluate)
+    if USE_MTDF
+      score = -mtdf(board, -me, -upper, -lower, evaluate, -first_guess, verbose)
     else
-      score = -solve(board, -me, -upper, -lower, evaluate)
+      if lower > -64
+        score = -solve(board, -me, -(lower+2), -lower, evaluate)
+        if score > lower and score < upper
+          process.stdout.write ':\b' if verbose
+          score = -solve(board, -me, -upper, -score, evaluate)
+      else
+        score = -solve(board, -me, -upper, -lower, evaluate)
     board.undo(me, pos, flips)
     if score > lower
       process.stdout.write ":#{score} " if verbose
