@@ -133,7 +133,7 @@ module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
   moves or= board.list_moves(me)
 
   left = board.count(EMPTY)
-  n_search = 10000 * 2**(left - 19)
+  n_search = 10000 * 3**(left - 19)
   if n_search > 400000
     n_search = 400000
   if n_search < 10000
@@ -157,23 +157,23 @@ module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
   for pos from moves
     flips = board.move(me, pos)
     console.assert flips.length
-    process.stdout.write "#{pos_to_str(pos)}:" if verbose
+    process.stdout.write "#{pos_to_str(pos)}" if verbose
     if lower > -64
       score = -solve(board, -me, -(lower+1), -lower, evaluate)
       if score > lower and score < upper
-        process.stdout.write '!' if verbose
+        process.stdout.write ':\b' if verbose
         score = -solve(board, -me, -upper, -score, evaluate)
     else
       score = -solve(board, -me, -upper, -lower, evaluate)
     board.undo(me, pos, flips)
     if score > lower
-      process.stdout.write "#{score} " if verbose
+      process.stdout.write ":#{score} " if verbose
       lower = score
       best = pos
       if score >= upper
         break
     else
-      process.stdout.write "* " if verbose
+      process.stdout.write " " if verbose
   process.stdout.write '\n' if verbose
   cache.stats() if verbose and CACHE
 
