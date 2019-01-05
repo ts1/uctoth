@@ -7,6 +7,7 @@ CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 10
 SHALLOW_SEARCH = 6
 USE_MTDF = true
+USE_PARITY = true
 
 if CACHE
   cache = require('./cache')(CACHE_SIZE)
@@ -25,6 +26,32 @@ if CACHE
       value
 else
   cached_solve = (f, board) -> f
+
+if USE_PARITY
+  parity_index = []
+  for x in [0..3]
+    for y in [0..3]
+      parity_index[pos_from_xy x, y] = 0
+  for x in [4..7]
+    for y in [0..3]
+      parity_index[pos_from_xy x, y] = 1
+  for x in [0..3]
+    for y in [4..7]
+      parity_index[pos_from_xy x, y] = 2
+  for x in [4..7]
+    for y in [4..7]
+      parity_index[pos_from_xy x, y] = 3
+
+  parity_tbl = null
+
+  init_parity = (board) ->
+    parity_tbl = [0, 0, 0, 0]
+    board.each_empty (pos) ->
+      parity_tbl[parity_index[pos]] ^= 1
+
+  update_parity = (board, pos) ->
+    parity_tbl[parity_index[pos]] ^= 1
+
 
 simple_solve = (board, me, lower, upper, base_score, left) ->
   board = new Board board
@@ -53,18 +80,22 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
     # return base_score
 
     any_moves = false
-    board.each_empty (pos) =>
-      flips = board.move(me, pos)
-      n = flips.length
-      return true unless n
-      any_moves = true
-      score = base_score + 2*n + 1
-      score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
-      board.undo me, pos, flips
-      if score > lower
-        lower = score
-        return false if score >= upper # stop iteration
-      true # continue iteration
+    for parity in [USE_PARITY..0] by -1
+      board.each_empty (pos) =>
+        return true if USE_PARITY and parity_tbl[parity_index[pos]] != parity
+        flips = board.move(me, pos)
+        n = flips.length
+        return true unless n
+        update_parity(board, pos) if USE_PARITY
+        any_moves = true
+        score = base_score + 2*n + 1
+        score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
+        board.undo me, pos, flips
+        update_parity(board, pos) if USE_PARITY
+        if score > lower
+          lower = score
+          return false if score >= upper # stop iteration
+        true # continue iteration
     if any_moves
       lower
     else
@@ -75,6 +106,8 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
           base_score - left
       else
         -solve_sub(-me, -upper, -lower, -base_score, 1, left)
+
+  init_parity(board) if USE_PARITY
 
   solve_sub = cached_solve solve_sub, board
   solve_sub(me, lower, upper, base_score, 0, left)
