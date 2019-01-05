@@ -161,25 +161,25 @@ module.exports = (options={}) ->
       for pos in moves
         flips = board.move(me, pos)
         if flips.length
-          process.stdout.write "#{pos_to_str(pos)}:" if verbose
+          process.stdout.write "#{pos_to_str(pos)}" if verbose
           if zws and isFinite(max)
             score = -minmax(board, -me, -(max+0.001), -max, 0, depth-1)
             if score > max
-              process.stdout.write('!') if verbose
+              process.stdout.write(':\b') if verbose
               score = -minmax(board, -me, -Infinity, -score, 0, depth-1)
           else
             score = -minmax(board, -me, -Infinity, -max, 0, depth-1)
           board.undo(me, pos, flips)
           if score > max
-            process.stdout.write "#{round_value(score)} " if verbose
+            process.stdout.write ":#{round_value(score)} " if verbose
             max = score
             best = pos
           else
             if depth > 1
-              process.stdout.write '* ' if verbose
+              process.stdout.write ' ' if verbose
               score = -99
             else
-              process.stdout.write "#{round_value(score)} " if verbose
+              process.stdout.write ":#{round_value(score)} " if verbose
           move_scores[pos] *= .001
           move_scores[pos] += score
       process.stdout.write '\n' if verbose
