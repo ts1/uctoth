@@ -15,6 +15,54 @@ pattern_eval = require './pattern_eval'
 { round_value } = require './util'
 book_player = require './book_player'
 
+argv = require 'yargs'
+  .options
+    black:
+      alias: 'b'
+      desc: 'Black player'
+      type: ['uct', 'human', 'minimax', 'simple', 'invert']
+      default: 'uct'
+      requiresArg: true
+    white:
+      alias: 'w'
+      desc: 'White player'
+      type: ['uct', 'human', 'minimax', 'simple', 'invert']
+      default: 'minimax'
+      requiresArg: true
+    search:
+      alias: 's'
+      desc: 'Number of UCT search'
+      type: 'number'
+      default: 380000
+      requiresArg: true
+    book:
+      desc: 'Use opening book'
+      type: 'boolean'
+      default: true
+    depth:
+      alias: 'd'
+      desc: 'Search depth of minimax'
+      type: 'number'
+      default: 11
+      requiresArg: true
+    wld:
+      alias: 'W'
+      desc: 'Depth of win-loss-draw endgame search'
+      type: 'number'
+      default: 20
+      requiresArg: true
+    full:
+      alias: 'f'
+      desc: 'Depth of ful endgame search'
+      type: 'number'
+      default: 18
+      requiresArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
+  .argv
+
 input = (prompt) -> new Promise (resolve) ->
   rl = readline.createInterface process.stdin, process.stdout
   rl.question prompt, (answer) ->
@@ -38,46 +86,51 @@ human = (board, turn) ->
       console.log 'illegal move'
   {move:pos}
 
-DEPTH = 11
-FULL = 18
-WLD = 20
-
 simple = Player
-  book: book_player()
+  book: if argv.book then book_player() else null
   strategy: require('./uct')
     evaluate: require('./simple_eval')
-    max_search: 380000
+    max_search: argv.search
     board_class: Board
-  solve_wld: WLD
-  solve_full: FULL
+  solve_wld: argv.wld
+  solve_full: argv.full
 
 minmax = Player
-  book: book_player()
+  book: if argv.book then book_player() else null
   strategy: require('./minmax')
     evaluate: pattern_eval('scores.json')
-    max_depth: DEPTH
+    max_depth: argv.depth
     shuffle: false
     #cache_size: 0
-  solve_wld: WLD
-  solve_full: FULL
+  solve_wld: argv.wld
+  solve_full: argv.full
 
 uct = Player
-  book: book_player()
+  book: if argv.book then book_player() else null
   strategy: require('./uct')
     evaluate: pattern_eval('scores.json')
-    max_search: 380000
-  solve_wld: WLD
-  solve_full: FULL
+    max_search: argv.search
+  solve_wld: argv.wld
+  solve_full: argv.full
 
 invert = Player
   book: null
   strategy: require('./uct')
     evaluate: pattern_eval('scores.json', true)
-    max_search: 38000
-  solve_wld: 0
-  solve_full: 0
+    max_search: argv.search
+  inverted: true
+  solve_wld: argv.wld
+  solve_full: argv.full
 
 time_tbl = {}
+
+choose_player = (turn) ->
+  switch (if turn==BLACK then argv.black else argv.white)
+    when 'uct' then uct
+    when 'human' then human
+    when 'minimax' then minmax
+    when 'simple' then simple
+    when 'invert' then invert
 
 do ->
   board = new PatternBoard
@@ -90,9 +143,7 @@ do ->
     console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
     console.log "#{board.count(EMPTY)} empty squares"
     console.log square_to_char(turn), 'to move'
-    switch turn
-      when BLACK then player = uct
-      when WHITE then player = minmax
+    player = choose_player turn
     if board.any_moves(turn)
       while true
         t = Date.now()
