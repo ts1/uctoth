@@ -4,8 +4,8 @@ uct = require './uct'
 CACHE_SIZE = 300000
 CACHE = true
 CACHE_THRESHOLD = 8
-ORDER_THRESHOLD = 9
-SHALLOW_SEARCH = 5
+ORDER_THRESHOLD = 10
+SHALLOW_SEARCH = 6
 
 if CACHE
   cache = require('./cache')(CACHE_SIZE)
@@ -96,7 +96,13 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluate) ->
       else
         return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
-    moves.sort (a, b) -> (b.n - a.n or b.value - a.value)
+    for move in moves
+      flips = board.move me, move.move
+      move.mobility = board.count_moves(-me)
+      board.undo me, move.move, flips
+
+    moves.sort (a, b) ->
+      a.mobility - b.mobility or b.n - a.n or b.value - a.value
 
     for {move} in moves
       flips = board.move me, move

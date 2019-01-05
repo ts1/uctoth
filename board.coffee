@@ -201,6 +201,12 @@ class Board
         return false # stop iteration
     result
 
+  count_moves: (me) ->
+    result = 0
+    @each_empty (pos) =>
+      result++ if @can_move(me, pos)
+    result
+
   list_moves: (me) ->
     moves = []
     @each_empty (pos) =>
