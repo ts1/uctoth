@@ -7,7 +7,7 @@ CACHE_THRESHOLD = 8
 ORDER_THRESHOLD = 10
 SHALLOW_SEARCH = 6
 USE_MTDF = true
-USE_PARITY = true
+USE_PARITY = false
 
 if CACHE
   cache = require('./cache')(CACHE_SIZE)
@@ -80,7 +80,8 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
     # return base_score
 
     any_moves = false
-    for parity in [USE_PARITY..0] by -1
+    p = if USE_PARITY then 1 else 0
+    for parity in [p..0] by -1
       board.each_empty (pos) =>
         return true if USE_PARITY and parity_tbl[parity_index[pos]] != parity
         flips = board.move(me, pos)
@@ -96,6 +97,7 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
           lower = score
           return false if score >= upper # stop iteration
         true # continue iteration
+      break if lower >= upper
     if any_moves
       lower
     else
