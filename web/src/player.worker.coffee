@@ -13,8 +13,8 @@ param_table =
     search: 1000
     random: 0
     invert: true
-    wld: 12
-    full: 14
+    wld: 13
+    full: 15
   easy:
     search: 1
     random: .1
@@ -39,8 +39,8 @@ param_table =
     book_random: .1
     search: 100000
     random: 0
-    wld: 15
-    full: 17
+    wld: 16
+    full: 18
 
 set_level = (level) ->
   params = param_table[level]
