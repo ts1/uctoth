@@ -33,12 +33,18 @@ argv = require 'yargs'
       alias: 's'
       desc: 'Number of UCT search'
       type: 'number'
-      default: 380000
+      default: 240000
       requiresArg: true
     book:
       desc: 'Use opening book'
       type: 'boolean'
       default: true
+    book_random:
+      alias: 'r'
+      desc: 'Randomness of opening book'
+      type: 'number'
+      default: 0.7
+      requiresArg: true
     depth:
       alias: 'd'
       desc: 'Search depth of minimax'
@@ -86,8 +92,10 @@ human = (board, turn) ->
       console.log 'illegal move'
   {move:pos}
 
+book = if argv.book then book_player(random: argv.book_random) else null
+
 simple = Player
-  book: if argv.book then book_player() else null
+  book: book
   strategy: require('./uct')
     evaluate: require('./simple_eval')
     max_search: argv.search
@@ -96,7 +104,7 @@ simple = Player
   solve_full: argv.full
 
 minmax = Player
-  book: if argv.book then book_player() else null
+  book: book
   strategy: require('./minmax')
     evaluate: pattern_eval('scores.json')
     max_depth: argv.depth
@@ -106,7 +114,7 @@ minmax = Player
   solve_full: argv.full
 
 uct = Player
-  book: if argv.book then book_player() else null
+  book: book
   strategy: require('./uct')
     evaluate: pattern_eval('scores.json')
     max_search: argv.search
