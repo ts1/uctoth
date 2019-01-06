@@ -66,11 +66,28 @@ DOWN = +9
 LEFT = -1
 RIGHT = +1
 
-ALL_DIRECTIONS = [
-  UP+LEFT, UP, UP+RIGHT,
-  LEFT, RIGHT,
-  DOWN+LEFT, DOWN, DOWN+RIGHT
-]
+FLIP_DIR_TBL = do ->
+  tbl = []
+  for y in [0..7]
+    for x in [0..7]
+      tbl[pos_from_xy x, y] = dirs = []
+      if x > 1
+        dirs.push LEFT
+        if y > 1
+          dirs.push LEFT+UP
+        if y < 6
+          dirs.push LEFT+DOWN
+      if x < 6
+        dirs.push RIGHT
+        if y > 1
+          dirs.push RIGHT+UP
+        if y < 6
+          dirs.push RIGHT+DOWN
+      if y > 1
+        dirs.push UP
+      if y < 6
+        dirs.push DOWN
+  tbl
 
 SEARCH_ORDER = do ->
   # Search order of moves in upper left quarter of board,
@@ -183,7 +200,7 @@ class Board
   can_move: (me, pos) ->
     if @board[pos] == EMPTY
       foe = -me
-      for d in ALL_DIRECTIONS
+      for d in FLIP_DIR_TBL[pos]
         p = pos + d
         if @board[p] == foe
           p += d
@@ -226,7 +243,7 @@ class Board
     flips = []
     if @board[pos] == EMPTY
       foe = -me
-      for d in ALL_DIRECTIONS
+      for d in FLIP_DIR_TBL[pos]
         p = pos + d
         if @board[p] == foe
           p += d
@@ -246,7 +263,7 @@ class Board
     flips = 0
     if @board[pos] == EMPTY
       foe = -me
-      for d in ALL_DIRECTIONS
+      for d in FLIP_DIR_TBL[pos]
         p = pos + d
         n = 0
         while @board[p] == foe
