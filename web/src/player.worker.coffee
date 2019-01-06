@@ -6,8 +6,6 @@ import scores from '@oth/ref/scores.json'
 
 player = null
 
-make_player_with_params = () ->
-
 param_table =
   easiest:
     search: 1000
