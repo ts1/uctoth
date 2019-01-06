@@ -49,7 +49,7 @@ module.exports = (options={}) ->
           if pass
             #process.stdout.write " #{board.outcome()}\n" if options.verbose
             unless node.outcome?
-              node.outcome =  board.outcome(me)
+              node.outcome =  board.outcome(me) * SCORE_MULT
               grew = true
             return node.outcome
           else
