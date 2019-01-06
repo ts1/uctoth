@@ -160,7 +160,7 @@ module.exports = (options={}) ->
     for depth in [1..max_depth]
       if depth > left
         break
-      console.log "depth: #{depth}" if verbose
+      process.stdout.write "depth=#{depth}: " if verbose
       moves.sort (a, b) -> move_scores[b] - move_scores[a]
       max = -INFINITY
       best = 0
