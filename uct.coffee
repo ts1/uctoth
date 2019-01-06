@@ -1,6 +1,7 @@
 { PatternBoard, SCORE_MULT } = require './pattern'
 { pos_to_str } = require './board'
 { INFINITY } = require './util'
+{ encode } = require './encode'
 
 defaults =
   C: 1.9*SCORE_MULT
@@ -12,6 +13,24 @@ defaults =
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
+  cache = {}
+
+  save_cache = (board, me, root) ->
+    for node from root.children ? []
+      flips = board.move me, node.move
+      console.assert flips.length
+      cache[encode(board)] = node
+      for node2 from node.children ? []
+        flips2 = board.move -me, node2.move
+        console.assert flips2.length
+        cache[encode(board)] = node2
+        board.undo -me, node2.move, flips2
+      board.undo me, node.move, flips
+
+  restore_cache = (board) ->
+    result = cache[encode(board)]
+    cache = {}
+    result
 
   (board, me) ->
     board = new options.board_class board
@@ -89,11 +108,15 @@ module.exports = (options={}) ->
         #console.log 'best', max
         return max
 
-    root = {value:0, n:0, children:[]}
-    while root.n < options.max_search
+    root = restore_cache(board) or {value:0, n:0, children:[]}
+    console.log 'cached', root.n if options.verbose
+
+    for i from [0...options.max_search]
       grew = false
       uct_search root, me, false, 0
       break unless grew
+
+    save_cache board, me, root
 
     node = root
     while node.children?.length
