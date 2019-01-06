@@ -1,5 +1,6 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
 uct = require './uct'
+{ INFINITY } = require './util'
 
 CACHE_SIZE = 500000
 CACHE = true
@@ -76,9 +77,8 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
   solve_sub = (me, lower, upper, base_score, pass, left) ->
     if left == 1
       return final_move(me, base_score)
-    #if left == 0
-    # return base_score
 
+    max = -INFINITY
     any_moves = false
     p = if USE_PARITY then 1 else 0
     for parity in [p..0] by -1
@@ -93,13 +93,15 @@ simple_solve = (board, me, lower, upper, base_score, left) ->
         score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
         board.undo me, pos, flips
         update_parity(board, pos) if USE_PARITY
-        if score > lower
-          lower = score
-          return false if score >= upper # stop iteration
+        if score > max
+          max = score
+          if score > lower
+            lower = score
+            return false if score >= upper # stop iteration
         true # continue iteration
       break if lower >= upper
     if any_moves
-      lower
+      max
     else
       if pass
         if base_score > 0
@@ -140,6 +142,7 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluate) ->
     moves.sort (a, b) ->
       a.mobility - b.mobility or b.n - a.n or b.value - a.value
 
+    max = -INFINITY
     for {move} in moves
       flips = board.move me, move
       score = base_score + 2*flips.length + 1
@@ -151,11 +154,13 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluate) ->
       else
         score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
       board.undo me, move, flips
-      if score > lower
-        lower = score
-        if score >= upper
-          break
-    lower
+      if score > max
+        max = score
+        if score > lower
+          lower = score
+          if score >= upper
+            break
+    max
 
   solve_sub = cached_solve solve_sub, board
   solve_sub(me, lower, upper, base_score, 0, left)
@@ -186,7 +191,7 @@ mtdf = (board, me, lower, upper, evaluate, first_guess, verbose) ->
       if value <= lower
         return value
       u = value
-    guess = Math.round((l+u)/4) * 2
+    guess = value
   value
 
 module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
