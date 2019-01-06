@@ -143,7 +143,7 @@ ordered_solve = (board, me, lower, upper, base_score, left, evaluate) ->
     for {move} in moves
       flips = board.move me, move
       score = base_score + 2*flips.length + 1
-      if lower > -64 and upper - lower > 1 and left >= 12
+      if not USE_MTDF and lower > -64 and upper - lower > 1 and left >= 12
         s = -solve_sub(-me, -(lower+1), -lower, -score, 0, left-1)
         if s > lower and s < upper
           s = -solve_sub(-me, -upper, -s, -score, 0, left-1)
