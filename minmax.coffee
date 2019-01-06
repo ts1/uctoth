@@ -1,5 +1,5 @@
 { EMPTY, pos_from_str, pos_to_str, Board } = require './board'
-{ PatternBoard } = require './pattern'
+{ PatternBoard, SCORE_MULT } = require './pattern'
 solve = require './endgame'
 { INFINITY } = require './util'
 
@@ -50,6 +50,7 @@ module.exports = (options={}) ->
       return evaluate(board, me)
 
     any_moves = false
+    max = -INFINITY
     board.each_empty (pos) ->
       flips = board.move(me, pos)
       if flips.length
@@ -59,15 +60,17 @@ module.exports = (options={}) ->
           next_depth = 1
         score = -simple_minmax(board, -me, -upper, -lower, 0, next_depth)
         board.undo(me, pos, flips)
-        if score > lower
-          lower = score
-          if score >= upper
-            return false # stop iteration
+        if score > max
+          max = score
+          if score > lower
+            lower = score
+            if score >= upper
+              return false # stop iteration
     if any_moves
-      lower
+      max
     else
       if pass
-        evaluate(board, me)
+        board.outcome(me) * SCORE_MULT
       else
         -simple_minmax(board, -me, -upper, -lower, 1, depth-1)
 
@@ -94,6 +97,7 @@ module.exports = (options={}) ->
 
     moves.sort (a, b) -> (b[1] - a[1])
 
+    max = -INFINITY
     for [pos] in moves
       flips = board.move(me, pos)
       next_depth = depth - 1
@@ -106,11 +110,13 @@ module.exports = (options={}) ->
       else
         score = -minmax(board, -me, -upper, -lower, 0, next_depth)
       board.undo(me, pos, flips)
-      if score > lower
-        lower = score
-        if score >= upper
-          break
-    lower
+      if score > max
+        max = score
+        if score > lower
+          lower = score
+          if score >= upper
+            break
+    max
 
   if cache_size
     cache = require('./cache')(cache_size)
