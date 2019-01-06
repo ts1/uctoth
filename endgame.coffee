@@ -4,10 +4,10 @@ uct = require './uct'
 CACHE_SIZE = 500000
 CACHE = true
 CACHE_THRESHOLD = 8
-ORDER_THRESHOLD = 10
+ORDER_THRESHOLD = 9
 SHALLOW_SEARCH = 6
 USE_MTDF = true
-USE_PARITY = false
+USE_PARITY = true
 
 if CACHE
   cache = require('./cache')(CACHE_SIZE)
@@ -174,10 +174,10 @@ mtdf = (board, me, lower, upper, evaluate, first_guess, verbose) ->
   guess = l if guess < l
   guess = u if guess > u
   while l < u
-    process.stdout.write "[#{l},#{u}](#{guess})" if verbose
+    #process.stdout.write "[#{l},#{u}](#{guess})" if verbose
     beta = if guess == l then l+2 else guess
     value = ordered_solve(board, me, beta-2, beta, score, left, evaluate)
-    process.stdout.write "#{value}" if verbose
+    #process.stdout.write "#{value}" if verbose
     if value >= beta
       if value >= upper
         return value
@@ -186,7 +186,7 @@ mtdf = (board, me, lower, upper, evaluate, first_guess, verbose) ->
       if value <= lower
         return value
       u = value
-    guess = value
+    guess = Math.round((l+u)/4) * 2
   value
 
 module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
@@ -239,6 +239,7 @@ module.exports = (board, me, wld, verbose, evaluate, moves=null) ->
         break
     else
       process.stdout.write " " if verbose
+    first_guess = lower
   process.stdout.write '\n' if verbose
   cache.stats() if verbose and CACHE
 
