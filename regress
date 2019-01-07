@@ -95,12 +95,11 @@ regress = (train_file, test_file) ->
     train_set = test_set = await read_rows train_file
   console.log "train set #{train_set.length}, test set #{test_set.length}"
 
-  if AVERAGE
-    train_avg = average train_set
-    console.log "train avg #{train_avg}"
-    test_avg = average test_set
-    console.log "test avg #{train_avg}"
-  else
+  train_avg = average train_set
+  console.log "train avg #{train_avg}"
+  test_avg = average test_set
+  console.log "test avg #{train_avg}"
+  unless AVERAGE
     train_avg = 0
     test_avg = 0
 
@@ -167,7 +166,7 @@ regress = (train_file, test_file) ->
         console.log 'step', step, 'loss', e, 'rate', round_value(rate), 'd', d_avg
         step++
 
-        if step >= D_FACTOR and d_avg < argv.t
+        if d_avg < argv.t
           break
 
         last_e = e
