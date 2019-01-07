@@ -48,7 +48,11 @@ play = (player, opening) ->
         break
     {move} = await player board, turn
     flips = board.move turn, move
-    console.assert flips.length
+    unless flips.length
+      console.error 'invalid move'
+      console.log board.dump true
+      console.log pos_to_str(move, turn)
+      process.exit 1
     moves.push {move, turn}
     process.stdout.write pos_to_str(move, turn)
     turn = -turn
