@@ -19,11 +19,11 @@ module.exports = (options={}) ->
     for node from root.children ? []
       flips = board.move me, node.move
       console.assert flips.length
-      cache[encode(board)] = node
+      cache[encode(board)] = node unless node.pass
       for node2 from node.children ? []
         flips2 = board.move -me, node2.move
         console.assert flips2.length
-        cache[encode(board)] = node2
+        cache[encode(board)] = node2 unless node2.pass
         board.undo -me, node2.move, flips2
       board.undo me, node.move, flips
 
