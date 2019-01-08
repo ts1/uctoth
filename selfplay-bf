@@ -51,6 +51,8 @@ play = (player, opening) ->
     unless flips.length
       console.error 'invalid move'
       console.log board.dump true
+      console.log move
+      console.log turn
       console.log pos_to_str(move, turn)
       process.exit 1
     moves.push {move, turn}
