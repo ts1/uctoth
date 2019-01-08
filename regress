@@ -1,24 +1,21 @@
 #!/usr/bin/env coffee
 
-{ readlines, gzwriter, shuffle, round_value } = require './util'
+{ readlines, gzwriter } = require './util'
 { get_single_index_size } = require './pattern'
 yargs = require 'yargs'
-  .usage "Usage: #{process.argv[1]} [options] train_file [test_file] outfile"
-  .default t: 1e-4
-  .alias t: 'threshold'
-  .describe t: 'loss difference threshold'
+  .usage "Usage: #{process.argv[1]} [options] indexes coeffs"
+  .options
+    t:
+      desc: 'threshold to terminate regression'
+      alias: 'threshold'
+      default: 1e-3
+      type: 'number'
+      requiresArg: true
 argv = yargs.argv
 
-INTERCEPT = false
-AVERAGE = false
-WLD = false
-SPLIT = false
-MINI_BATCH = false
-BATCH_SIZE = 10000
 D_FACTOR = 120
 
-index_size = get_single_index_size() + 1
-intercept_index = index_size - 1
+index_size = get_single_index_size()
 
 each_index = (row, cb) ->
   for i in [1...row.length] by 2
@@ -28,35 +25,24 @@ predict = (coeffs, row) ->
   result = 0
   each_index row, (index, value) ->
     result += coeffs[index] * value
-  result += coeffs[intercept_index]
   result
 
-verify = (rows, coeffs, avg) ->
+verify = (rows, coeffs) ->
   sum_sq_err = 0
-  n = 0
   rows.forEach (row) ->
-    outcome = row[0] - avg
+    outcome = row[0]
     e = outcome - predict(coeffs, row)
     sum_sq_err += e*e
-    n++
-  Math.sqrt(sum_sq_err / n)
+  Math.sqrt(sum_sq_err / rows.length)
 
-make_gradient = (rows, coeffs, avg, offset, stride) ->
-  sum = 0
+make_gradient = (rows, coeffs) ->
   vector = (0 for i in [0...index_size] by 1)
-  for i in [offset...rows.length] by stride
-    row = rows[i]
-    outcome = row[0] - avg
+  sum = 0
+  for row from rows
+    outcome = row[0]
     e = outcome - predict(coeffs, row)
     each_index row, (index, value) ->
-      u = vector[index] or 0
-      vector[index] = u + e * value
-      sum += Math.abs(value)
-    if INTERCEPT
-      vector[intercept_index] = e
-      sum += 1
-  for i in [0...index_size]
-    vector[i] /= sum
+      vector[index] += e * value
   vector
 
 update_coeffs = (coeffs, vector, rate) ->
@@ -64,20 +50,10 @@ update_coeffs = (coeffs, vector, rate) ->
 
 read_rows = (filename, split) ->
   console.log "loading #{filename}"
-  train_set = []
-  test_set = []
+  rows = []
   await readlines filename, (line) ->
-    row = JSON.parse line
-    if WLD
-      row[0] = if row[0] > 0 then 10 else if row[0] < 0 then -10 else 0
-    if split and Math.random() < split
-      test_set.push row
-    else
-      train_set.push row
-  if split
-    {train_set, test_set}
-  else
-    train_set
+    rows.push JSON.parse line
+  rows
 
 average = (rows) ->
   sum = 0
@@ -85,115 +61,60 @@ average = (rows) ->
     sum += row[0]
   sum / rows.length
 
-regress = (train_file, test_file) ->
-  if test_file
-    train_set = await read_rows train_file
-    test_set = await read_rows test_file
-  else if SPLIT
-    {train_set, test_set} = await read_rows train_file, 0.3
-  else
-    train_set = test_set = await read_rows train_file
-  console.log "train set #{train_set.length}, test set #{test_set.length}"
-
-  train_avg = average train_set
-  console.log "train avg #{train_avg}"
-  test_avg = average test_set
-  console.log "test avg #{train_avg}"
-  unless AVERAGE
-    train_avg = 0
-    test_avg = 0
-
+regress = (index_file) ->
+  train_set = await read_rows index_file
+  console.log "train set #{train_set.length}"
+  console.log "avg #{average train_set}"
   coeffs = (0 for i in [0...index_size] by 1)
-
-  dev = verify test_set, coeffs, test_avg
-  last_e = dev
-  console.log 'deviation', last_e
-
-  if MINI_BATCH
-    batch_size = BATCH_SIZE or Math.round(Math.sqrt(train_set.length))
-    n_batches = Math.ceil(train_set.length / batch_size)
-    console.log "#{n_batches} batches of #{batch_size}"
-  else
-    batch_size = train_set.length
-    n_batches = 1
+  dev = last_loss = verify train_set, coeffs
+  console.log 'deviation', last_loss
 
   n = 0
   step = 1
-  epoch = 0
   d_avg = 0
+  rate = 1
   loop
-    all_finish = true
-    if MINI_BATCH
-      train_set = shuffle train_set
-    for batch in [0...n_batches]
-      console.log "epoch #{epoch} batch #{batch}" if MINI_BATCH
-      rate = 10000
-      finish = false
-      until finish
-        changed = false
-        if n >= 30
-          n = 0
-          if MINI_BATCH
-            all_finish = false
-            break
-          else
-            rate *= 10000
-            changed = true
-            #console.log 'trying rate', rate
-        updates = make_gradient train_set, coeffs, train_avg, batch, n_batches
-        loop
-          new_coeffs = update_coeffs coeffs, updates, rate
-          e = verify test_set, new_coeffs, test_avg
-          if e > last_e
-            rate *= 0.7
-            #console.log 'reduced rate to', rate
-            changed = true
-            if rate < 0.01
-              finish = true
-              unless MINI_BATCH
-                all_finish = true
-              break
-          else
-            break
-        break if finish
-        coeffs = new_coeffs
+    vector = make_gradient train_set, coeffs
 
-        d = last_e - e
-        if step <= D_FACTOR
-          d_avg = (d_avg * (step - 1) + d) / step
-        else
-          d_avg = (d_avg * (D_FACTOR - 1) + d) / D_FACTOR
-        console.log 'step', step, 'loss', e, 'rate', round_value(rate), 'd', d_avg
-        step++
+    changed = false
+    loop
+      new_coeffs = update_coeffs coeffs, vector, rate
+      loss = verify train_set, new_coeffs
+      break if loss < last_loss
+      rate *= 0.7
+      changed = true
+    if changed
+      console.log 'rate', rate
+    coeffs = new_coeffs
 
-        if d_avg < argv.t
-          break
+    d = last_loss - loss
+    if step <= D_FACTOR
+      d_avg = (d_avg * (step - 1) + d) / step
+    else
+      d_avg = (d_avg * (D_FACTOR - 1) + d) / D_FACTOR
+    console.log 'step', step, 'loss', loss, 'd', d_avg
+    break if d_avg < argv.threshold
 
-        last_e = e
-        if not changed
-          n++
-    break if all_finish
-    epoch++
+    step++
 
-  intercept = coeffs[intercept_index]
-  console.log 'intercept', intercept if INTERCEPT
+    last_loss = loss
 
-  r2 = 1 - last_e**2 / dev**2
+    n++
+    if n >= 30
+      rate *= 10000
+      n = 0
+
+  r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
 
-  {coeffs, r2, step, intercept, loss:last_e}
+  {coeffs, r2, step, loss:last_loss}
 
-args = argv._
-
-if args.length == 3
-  [train_file, test_file, outfile] = args
-else if args.length == 2
-  [train_file, outfile] = args
-  test_file = null
+if argv._.length == 2
+  [index_file, outfile] = argv._
 else
   yargs.showHelp()
   process.exit 1
 
 do ->
-  coeffs = await regress train_file, test_file
+  coeffs = await regress index_file
   gzwriter(outfile).end(JSON.stringify coeffs)
