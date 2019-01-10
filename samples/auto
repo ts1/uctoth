@@ -5,7 +5,6 @@ while true; do
     time ./selfplay-rnd --opening f5d6 -n 200
     time ./selfplay-rnd --opening f5f6 -n 200
     time ./selfplay-rnd --opening f5f4 -n 200
-    cp scores.json scores.json.bak
-    time ./reg
+    time ./reg -t 1e-3
     time ./match match.log
 done

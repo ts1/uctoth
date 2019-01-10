@@ -4,4 +4,5 @@
 for i in $(seq 0 9); do
     ./regress $@ tmp/indexes$i tmp/coeffs$i
 done
+cp -p scores.json scores.json.bak
 ./coeffs_to_score
