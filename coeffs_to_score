@@ -17,12 +17,12 @@ init_scores = ->
 
 load_coeffs = (scores) ->
   for phase in [0...N_PHASES]
-    {coeffs, step, intercept, r2, loss} = JSON.parse fs.readFileSync "tmp/coeffs#{phase}"
+    {coeffs, step, r2, loss, avg} = JSON.parse fs.readFileSync "tmp/coeffs#{phase}"
     for i in [0...get_single_index_size()]
       {pattern, index} = get_single_index(i)
       scores[pattern][phase][index] = coeffs[i]
     scores.meta or= []
-    scores.meta[phase] = {step, intercept, r2, loss}
+    scores.meta[phase] = {step, r2, loss, avg}
 
 interpolate = (scores) ->
   for p in patterns

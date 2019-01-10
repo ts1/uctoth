@@ -64,7 +64,8 @@ average = (rows) ->
 regress = (index_file) ->
   train_set = await read_rows index_file
   console.log "train set #{train_set.length}"
-  console.log "avg #{average train_set}"
+  avg = average train_set
+  console.log "avg #{avg}"
   coeffs = (0 for i in [0...index_size] by 1)
   dev = last_loss = verify train_set, coeffs
   console.log 'deviation', last_loss
@@ -107,7 +108,7 @@ regress = (index_file) ->
   r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
 
-  {coeffs, r2, step, loss:last_loss}
+  {coeffs, r2, step, loss:last_loss, avg}
 
 if argv._.length == 2
   [index_file, outfile] = argv._
