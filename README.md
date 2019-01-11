@@ -57,7 +57,7 @@ This section describes how to train your own `scores.json`.
 First off, generate 1,000 randomly played games.
 
 ```
-./selfplay-rnd -R
+./selfplay-rnd -R -n 1000
 ```
 
 They are random but endgame is perfectly played.
@@ -66,7 +66,7 @@ Generated games are stored in `book.db` (SQLite database).
 Next, learn the generated games and make a new `scores.json`.
 
 ```
-./reg
+./reg -t 1e-2
 ```
 
 Now you can remove `book.db` of random games.
