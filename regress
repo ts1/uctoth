@@ -85,7 +85,7 @@ regress = (index_file) ->
       rate *= 0.7
       changed = true
     if changed
-      console.log 'rate', rate
+      console.log 'rate', rate * train_set.length
     coeffs = new_coeffs
 
     d = last_loss - loss
