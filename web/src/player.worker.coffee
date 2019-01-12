@@ -59,6 +59,7 @@ set_level = (level) ->
       max_search: search
       random: random
       verbose: false
+      inverted: invert ? false
     verbose: false
     inverted: invert ? false
     endgame_eval: evaluate

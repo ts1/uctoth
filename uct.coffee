@@ -10,6 +10,7 @@ defaults =
   evaluate: null
   board_class: PatternBoard
   random: 0
+  inverted: false
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -68,7 +69,9 @@ module.exports = (options={}) ->
           if pass
             #process.stdout.write " #{board.outcome()}\n" if options.verbose
             unless node.outcome?
-              node.outcome =  board.outcome(me) * SCORE_MULT
+              node.outcome = board.outcome(me) * SCORE_MULT
+              if options.inverted
+                node.outcome = -node.outcome
               grew = true
             return node.outcome
           else

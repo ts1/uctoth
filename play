@@ -126,6 +126,7 @@ invert = Player
   strategy: require('./uct')
     evaluate: pattern_eval('scores.json', true)
     max_search: argv.search
+    inverted: true
   inverted: true
   solve_wld: argv.wld
   solve_full: argv.full
