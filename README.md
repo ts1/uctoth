@@ -29,7 +29,7 @@ and learnings.
 
 Employs modified UTC search.
 Searches 15-25 plies deep maximum on modern JavaScript engines.
-Beats my implementation of minimax by 70-80% winning rate.
+Beats my implementation of minimax with NegaScout by 70-80% winning rate.
 
 ### Static evaluation
 
@@ -52,7 +52,7 @@ cp ref/scores.json .
 
 ### Bootstrapping
 
-This section describes how to train your own `scores.json`.
+This section describes how to train your own `scores.json` from scratch.
 
 First off, generate 1,000 randomly played games.
 
@@ -63,7 +63,7 @@ First off, generate 1,000 randomly played games.
 They are random but endgame is perfectly played.
 Generated games are stored in `book.db` (SQLite database).
 
-Next, learn the generated games and make a new `scores.json`.
+Next, learn the generated games and make your first `scores.json`.
 
 ```
 ./reg -t 1e-2
@@ -81,8 +81,11 @@ Copy `auto` script from `samples` directory.
 cp samples/auto .
 ```
 
-You may want to edit `auto` and other scripts (especially constants) as you
-like.
+You may edit `auto` as you like.
+Especially the regression threshold (`-t` parameter) should be relatively large
+when you have only small number of games, then gradually be smaller as the
+number of games increases.
+Check the `match` result to see if your change gives better result.
 
 Now you are ready to run automatic self learning loop.
 
@@ -90,9 +93,30 @@ Now you are ready to run automatic self learning loop.
 ./auto
 ```
 
-By default it runs regression and 30-game matches versus `ref/scores.json`
+By default it runs regression and 30-game matches against `ref/scores.json`
 every 1,000 games generated.
 Match results are appended to `match.log`.
+
+### Running self-play and learning in parallel
+
+Running self-play and regression simultaneously can utilize multi-core CPUs,
+thus can speed up the entire self learning process.
+It's especially useful when the number of games grows large and regression takes
+several hours, and of course when you have an idle CPU core.
+
+Sample scripts are in `samples` directory, copy them.
+
+```
+cp samples/selfplay-loop samples/reg-loop .
+```
+
+Edit the scripts as you need.
+Then run `selfplay-loop` in one terminal, and `reg-loop` in another.
+
+The trick is simple. `reg-loop` touches a file when a regression finishes.
+And main loop in selfplay scripts checks if that file exists and exits if it
+does.
+Then `selfplay-loop` starts a new selfplay process with the fresh `scores.json`.
 
 ## Acknowledgement
 

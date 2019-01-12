@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+SIGNAL_FILE=.reload-selfplay
+
+while true; do
+    time ./reg -t 1e-5
+    if [ -f $SIGNAL_FILE ]; then
+        echo 'games not generated'
+        exit 1
+    fi
+    touch $SIGNAL_FILE
+    time ./match match.log
+done

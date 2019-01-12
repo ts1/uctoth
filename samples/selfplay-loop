@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+clear_signal() {
+    rm -f .reload-selfplay
+}
+
+while true; do
+    clear_signal
+    time ./selfplay-bf -d 8
+    clear_signal
+    time ./selfplay-rnd --opening f5f6 -r 0.12
+    clear_signal
+    time ./selfplay-rnd --opening f5d6 -r 0.12
+done

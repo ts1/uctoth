@@ -1,12 +1,11 @@
 /tmp
 /memo
-/old
 /node_modules
-/scores.json
+/scores.json*
 .DS_Store
 .*.swp
 /book.db*
-/games
 /match.log
-/gen
 /auto
+/reg-loop
+/selfplay-loop
