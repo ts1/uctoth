@@ -74,6 +74,7 @@ simple = Player
     evaluate: require('./simple_eval')
     verbose: false
     board_class: Board
+    max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
   verbose: false
