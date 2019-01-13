@@ -9,6 +9,7 @@ defaults =
   solve_full: 20
   verbose: true
   inverted: false
+  endgame_eval: null
 
 F5 = pos_from_str('F5')
 
@@ -18,12 +19,12 @@ module.exports = (options={}) ->
   solve = if opts.inverted
     endgame
       verbose: opts.verbose
-      evaluate: require('./pattern_eval')('scores.json', true)
+      evaluate: opts.endgame_eval or require('./pattern_eval')('scores.json', true)
       inverted: true
   else
     endgame
       verbose: opts.verbose
-      evaluate: require('./pattern_eval')('scores.json')
+      evaluate: opts.endgame_eval or require('./pattern_eval')('scores.json')
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)
