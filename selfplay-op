@@ -1,0 +1,112 @@
+#!/usr/bin/env coffee
+
+require './rejection_handler'
+fs = require 'fs'
+{ Board, BLACK, pos_to_str, pos_array_to_str, pos_array_from_str } =
+  require './board'
+make_player = require './player'
+uct = require './uct'
+pattern_eval = require('./pattern_eval')('scores.json')
+Book = require './book'
+
+argv = require 'yargs'
+  .usage "Usage: #{process.argv[1]} [options...]"
+  .options
+    o:
+      alias: 'opening'
+      desc: 'Opening'
+      type: 'string'
+      default: 'F5'
+      requiresArg: true
+    n:
+      desc: 'Number of games to play'
+      type: 'number'
+      requiresArg: true
+    B:
+      alias: 'book'
+      desc: 'Database file to save games'
+      type: 'string'
+      default: 'book.db'
+      requiresArg: true
+    s:
+      alias: 'search'
+      desc: 'Number of UCT searches per move'
+      type: 'number'
+      default: 14000
+      requiresArg: true
+    S:
+      alias: 'scope'
+      desc: 'UCT constant'
+      type: 'number'
+      default: 2
+      requiresArg: true
+    w:
+      alias: 'wld'
+      desc: 'Depth of win-loss-draw endgame search'
+      default: 18
+      requiresArg: true
+    f:
+      alias: 'full'
+      desc: 'Depth of full endgame search'
+      default: 16
+      requiresArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
+  .argv
+
+player = make_player
+  book: null
+  strategy: uct
+    evaluate: pattern_eval
+    max_search: argv.s
+    verbose: false
+  verbose: false
+  solve_wld: argv.w
+  solve_full: argv.f
+
+play = (player, opening) ->
+  board = new Board
+  moves = []
+  for {move, turn} in opening.moves
+    flips = board.move turn, move
+    throw new Error unless flips.length
+    moves.push {move, turn}
+    process.stdout.write pos_to_str(move, turn)
+  console.log ':', opening.value
+  turn = opening.turn
+  loop
+    unless board.any_moves turn
+      turn = -turn
+      unless board.any_moves turn
+        break
+    {move, solved} = await player board, turn
+    flips = board.move turn, move
+    console.assert flips.length
+    moves.push {move, turn, solved}
+    process.stdout.write pos_to_str(move, turn)
+    turn = -turn
+  outcome = board.outcome()
+  process.stdout.write " #{outcome}\n"
+  {moves, outcome}
+
+do ->
+  book = new Book argv.book
+  await book.init()
+
+  n_play = 0
+  loop
+    if fs.existsSync('.reload-selfplay')
+      break
+    opening = await book.find_opening(argv.scope,
+      pos_array_from_str(argv.opening))
+    {moves, outcome} = await play player, opening
+    moves_str = pos_array_to_str(moves)
+    n_play++
+    await book.add_game moves
+    if argv.n?
+      n_games = (await book.count_games()) % argv.n or argv.n
+      console.log 'played', n_games
+      break if n_games >= argv.n
+  console.log "played #{n_play}"
