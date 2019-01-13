@@ -74,7 +74,8 @@ play = (player, opening) ->
     throw new Error unless flips.length
     moves.push {move, turn}
     process.stdout.write pos_to_str(move, turn)
-  console.log ':', opening.value
+  console.log ':', Math.round(opening.value)
+  console.log board.dump true
   turn = opening.turn
   loop
     unless board.any_moves turn
