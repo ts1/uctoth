@@ -173,6 +173,9 @@
           @board.undo turn, pos, flips
           break if turn == @user
         @user_moves--
+        if @turn != @user
+          @turn = @user
+          @message text:  @i18n.your_turn
 
         # BLACK MAGIC TO LET VUE UPDATE
         @board.board.push(0)
