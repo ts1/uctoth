@@ -93,10 +93,10 @@ play = (player) ->
       turn = -turn
       unless board.any_moves turn
         break
-    {move} = await player board, turn
+    {move, solved} = await player board, turn
     flips = board.move turn, move
     console.assert flips.length
-    moves.push {move, turn}
+    moves.push {move, turn, solved}
     process.stdout.write pos_to_str(move, turn)
     turn = -turn
   outcome = board.outcome()

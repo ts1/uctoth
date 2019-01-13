@@ -59,7 +59,7 @@ play = (player, opening) ->
       turn = -turn
       unless board.any_moves turn
         break
-    {move} = await player board, turn
+    {move, solved} = await player board, turn
     flips = board.move turn, move
     unless flips.length
       console.error 'invalid move'
@@ -68,7 +68,7 @@ play = (player, opening) ->
       console.log turn
       console.log pos_to_str(move, turn)
       process.exit 1
-    moves.push {move, turn}
+    moves.push {move, turn, solved}
     process.stdout.write pos_to_str(move, turn)
     turn = -turn
   outcome = board.outcome()
