@@ -5,7 +5,7 @@ Book = require './book'
 { decode } = require './encode'
 
 do ->
-  book = new Book 'book.db'
+  book = new Book 'book.db', readonly: true
   await book.init()
   await book.dump_nodes (data) ->
-    process.stdout.write "#{data.code} #{data.value}\n"
+    process.stdout.write "#{data.code} #{data.outcome}\n"
