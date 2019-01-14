@@ -77,35 +77,34 @@ module.exports = (options={}) ->
     update_parity = (board, pos) ->
       parity_tbl[parity_index[pos]] ^= 1
 
+  final_move = (board, me, score) ->
+    pos = board.first_empty()
+    n = board.count_flips(me, pos)
+    if n
+      score + 2*n + 1
+    else
+      n = board.count_flips(-me, pos)
+      if n
+        score - 2*n - 1
+      else
+        if score > 0
+          score + 1
+        else if score < 0
+          score - 1
+        else
+          score
+
+  if opt.inverted
+    final_move = do ->
+      orig = final_move
+      (me, score) -> -orig(me, score)
 
   simple_solve = (board, me, lower, upper, base_score, left) ->
     board = new Board board
 
-    final_move = (me, score) ->
-      pos = board.first_empty()
-      n = board.count_flips(me, pos)
-      if n
-        score + 2*n + 1
-      else
-        n = board.count_flips(-me, pos)
-        if n
-          score - 2*n - 1
-        else
-          if score > 0
-            score + 1
-          else if score < 0
-            score - 1
-          else
-            score
-
-    if opt.inverted
-      final_move = do ->
-        orig = final_move
-        (me, score) -> -orig(me, score)
-
     solve_sub = (me, lower, upper, base_score, pass, left) ->
       if left == 1
-        return final_move(me, base_score)
+        return final_move(board, me, base_score)
 
       max = -INFINITY
       any_moves = false
