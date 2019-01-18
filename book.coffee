@@ -180,7 +180,8 @@ module.exports = class Book
         value = data.eval * turn
 
         bias = scope * Math.sqrt(n / (data.n_played + 1))
-        console.log pos_to_str(move, turn), data.n_played, Math.round(bias), value
+        if scope
+          console.log pos_to_str(move, turn), data.n_played, Math.round(bias), value
         value += bias
 
         if value > max
@@ -188,7 +189,8 @@ module.exports = class Book
           best = {move, turn}
           last_value = (value - bias) * turn
 
-      console.log '-->', pos_to_str(best.move, turn), Math.round(last_value)
+      if scope
+        console.log '-->', pos_to_str(best.move, turn), Math.round(last_value)
       moves.push best
       board.move turn, best.move
       turn = -turn
