@@ -72,12 +72,12 @@ simple = Player
   book: null
   strategy: require('./uct')
     evaluate: require('./simple_eval')
-    verbose: false
+    verbose: argv.verbose
     board_class: Board
     max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
-  verbose: false
+  verbose: argv.verbose
 
 minmax = Player
   book: null
@@ -85,30 +85,30 @@ minmax = Player
     evaluate: pattern_eval(argv.scores)
     max_depth: argv.depth
     shuffle: false
-    verbose: false
+    verbose: argv.verbose
   solve_wld: argv.wld
   solve_full: argv.full
-  verbose: false
+  verbose: argv.verbose
 
 uct = Player
   book: null
   strategy: require('./uct')
     evaluate: pattern_eval(argv.scores)
-    verbose: false
+    verbose: argv.verbose
     max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
-  verbose: false
+  verbose: argv.verbose
 
 uct_ref = Player
   book: null
   strategy: require('./uct')
     evaluate: pattern_eval(argv.ref)
-    verbose: false
+    verbose: argv.verbose
     max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
-  verbose: false
+  verbose: argv.verbose
 
 players = [uct]
 players.push if argv.minimax
@@ -131,10 +131,11 @@ play = (board, black, white) ->
       switch turn
         when BLACK then player = black
         when WHITE then player = white
-      {move} = await player(board, turn)
+      {move, value} = await player(board, turn)
       process.stdout.write pos_to_str(move, turn) unless argv.v
       flips = board.move turn, move
       console.assert flips.length
+      console.log 'Estimated value', value if argv.v and value?
     else
       if board.any_moves(-turn)
         console.log 'PASS' if argv.v
