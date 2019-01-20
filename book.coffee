@@ -293,3 +293,9 @@ module.exports = class Book
       [moves_str]).c
 
   dump_nodes: (cb) -> @db.each 'select * from nodes', [], (row) -> cb(row)
+
+  get_played_nodes: (min_played, cb) ->
+    @db.each '''
+      select * from nodes
+      where n_played >= ? and is_leaf = 0 and eval is not null
+      ''', [min_played], (row) -> cb row

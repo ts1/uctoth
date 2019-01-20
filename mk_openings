@@ -1,0 +1,37 @@
+#!/usr/bin/env coffee
+require './rejection_handler'
+fs = require 'fs'
+Book = require './book'
+argv = require 'yargs'
+  .options
+    m:
+      alias: 'min'
+      desc: 'Minimum number played'
+      default: 30
+      type: 'number'
+      requiresArg: true
+    o:
+      alias: 'output'
+      desc: 'Output file'
+      default: 'openings.json'
+      type: 'string'
+      requiresArg: true
+    b:
+      alias: 'book'
+      desc: 'Book database'
+      default: 'book.db'
+      type: 'string'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
+  .argv
+
+do ->
+  book = new Book argv.book, readonly: true
+  await book.init()
+  result = {}
+  await book.get_played_nodes argv.min, (node) ->
+    result[node.code] = { n: node.n_played, value: node.eval }
+  fs.writeFileSync argv.output, JSON.stringify result

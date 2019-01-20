@@ -19,10 +19,11 @@ module.exports = (options={}) ->
       data = book[code]
       board.undo me, move, flips
       if data
-        node = {move, n:data.n, value:data.value*me}
+        value = data.value * me
+        node = {move, value, n:data.n}
         nodes.push node
-        if data.n > max
-          max = data.n
+        if value > max
+          max = value
           best = node
         sum += data.n
     return null unless nodes.length
@@ -41,5 +42,5 @@ module.exports = (options={}) ->
           best = node
           break
 
-    console.log 'book', max if opts.verbose
+    console.log 'book', best.n if opts.verbose
     best
