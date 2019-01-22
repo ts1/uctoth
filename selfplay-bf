@@ -95,7 +95,8 @@ find_unplayed_opening = (book, depth, cb) ->
 
   sub = (turn, depth) ->
     unless depth
-      unless await book.get(board)
+      data = await book.get(board)
+      unless data?.n_played
         await cb moves
       return
 
