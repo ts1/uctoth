@@ -5,6 +5,7 @@ require './rejection_handler'
 { PatternBoard } = require './pattern'
 Player = require './player'
 pattern_eval = require './pattern_eval'
+{ decode } = require './encode'
 
 argv = require 'yargs'
   .options
@@ -151,7 +152,8 @@ draws = 0
 do ->
   s = ''
   n_matches = 0
-  for b in fs.readFileSync(argv.openings, 'utf8').trim().split('\n')
+  for code in fs.readFileSync(argv.openings, 'utf8').trim().split('\n')
+    b = decode code
     board = new PatternBoard b
     console.log board.dump true
     outcome = await play board, players[0], players[1]
