@@ -253,8 +253,8 @@ module.exports = (options={}) ->
     first_guess = uct_result.value / SCORE_MULT
 
     if wld
-      lower = -1
-      upper = 1
+      lower = -2
+      upper = 2
     else
       lower = -64
       upper = 64

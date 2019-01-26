@@ -281,6 +281,7 @@ module.exports = class Book
       throw new Error 'invalid move' unless flips.length
       process.stdout.write pos_to_str(move, turn)
       history.push {move, turn, flips}
+    process.stdout.write ": #{value} "
     if board.any_moves(-turn)
       turn = -turn
     ev = await evaluate(board, turn)
@@ -294,11 +295,12 @@ module.exports = class Book
       console.log ' transposition'
     else
       data = {n_played:0, is_leaf:true}
+      value = ev.value * turn
+      console.log ": #{value}"
       if ev.solved
-        data.eval = outcome_to_eval(ev.value*turn, turn)
+        data.eval = outcome_to_eval(value, turn)
       else
-        data.eval = ev.value * turn
-      console.log ':', value, '->', data.eval
+        data.eval = value
       await @set board, data
 
     await @add_to_tree board, history
