@@ -32,6 +32,6 @@ do ->
   book = new Book argv.book, readonly: true
   await book.init()
   result = {}
-  await book.get_played_nodes argv.min, (node) ->
-    result[node.code] = { n: node.n_played, value: node.eval }
+  await book.get_visited_nodes argv.min, (node) ->
+    result[node.code] = { n: node.n_visited, value: node.pub_value }
   fs.writeFileSync argv.output, JSON.stringify result

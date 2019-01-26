@@ -100,34 +100,16 @@ module.exports = class Book
         code text primary key,
         n_moves integer,
         outcome integer,
-        eval integer,
+        pub_value integer,
+        pri_value integer,
         is_leaf integer,
-        n_played integer)
+        n_visited integer)
         '''
     await @db.run '''
       create table if not exists games (
         moves text primary key,
         outcome integer)
         '''
-
-    # migration
-    try
-      await @db.run 'select * from book limit 1'
-    catch
-      return
-
-    @migrate()
-
-  migrate: ->
-    process.stdout.write 'Running db migration: '
-    await @db.run '''
-      insert into nodes (code, n_moves, outcome, n_played)
-      select code, n_moves, value, n_played from book
-      '''
-    await @db.run 'drop table book'
-    await @db.run 'vacuum'
-    process.stdout.write 'done\n'
-
   get_by_code: (code) -> @db.get 'select * from nodes where code=?', [code]
 
   get: (board) -> @get_by_code(encode_normalized(board))
@@ -137,10 +119,11 @@ module.exports = class Book
     n_moves = 60 - board.count(EMPTY)
     @db.run '''
       insert or replace into nodes
-        (code, n_moves, outcome, eval, n_played, is_leaf)
-        values (?, ?, ?, ?, ?, ?)
+        (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf)
+        values (?, ?, ?, ?, ?, ?, ?)
         ''',
-        [code, n_moves, data.outcome, data.eval, data.n_played, data.is_leaf]
+        [code, n_moves, data.outcome, data.pub_value, data.pri_value,
+          data.n_visited, data.is_leaf]
 
   find_opening: (scope, opening=DEFAULT_OPENING) ->
     scope *= SCORE_MULT
@@ -165,24 +148,25 @@ module.exports = class Book
         data = await @get board
         board.undo turn, move, flips
         #console.log pos_to_str(move, turn), data
-        if data?.eval?
-          if Math.abs(data.eval) != INFINITY # XXX
+        if data?.pri_value?
+          if Math.abs(data.pri_value) != INFINITY # XXX
             nodes.push [move, data]
       break unless nodes.length
 
       n = 0
-      n += data.n_played for [move, data] in nodes
+      n += data.n_visited for [move, data] in nodes
 
       max = -Infinity
       best = null
       if scope == 0
         nodes = shuffle nodes
       for [move, data] in nodes
-        value = data.eval * turn
+        value = data.pri_value * turn
 
-        bias = scope * Math.sqrt(n / (data.n_played + 1))
+        bias = scope * Math.sqrt(n / (data.n_visited + 1))
         if scope
-          console.log pos_to_str(move, turn), data.n_played, Math.round(bias), value
+          console.log pos_to_str(move, turn), data.n_visited,
+            Math.round(bias), value
         value += bias
 
         if value > max
@@ -211,12 +195,12 @@ module.exports = class Book
     s = pos_array_to_str(moves)
     @db.run 'insert or replace into games values (?, ?)', [s, outcome]
 
-    data = (await @get(board)) or {n_played:0}
+    data = (await @get(board)) or {n_visited:0}
     data.outcome = outcome
-    data.eval = outcome_to_eval(outcome, turn)
-    data.n_played++
+    data.pub_value = outcome * SCORE_MULT
+    data.pri_value = outcome_to_eval(outcome, turn)
+    data.n_visited++
     await @set board, data
-
     await @add_to_tree board, history
 
   add_to_tree: (board, history) ->
@@ -224,7 +208,7 @@ module.exports = class Book
     while history.length
       {move, turn, flips, solved} = history.pop()
       board.undo turn, move, flips
-      max_outcome = max_eval = -INFINITY
+      max_outcome = max_pub = max_pri = -INFINITY
       have_leaf = false
       unevaled = []
       for m in board.list_moves(turn)
@@ -232,18 +216,18 @@ module.exports = class Book
         data = await @get(board)
         board.undo turn, m, flips
         if data
-          if data.n_played
+          if data.outcome?
             outcome = data.outcome * turn
             if outcome > max_outcome
               max_outcome = outcome
-          if data.eval?
-            ev = data.eval * turn
-            if ev > max_eval
-              max_eval = ev
-            if data.is_leaf
-              have_leaf = true
-          else
-            unevaled.push m
+          pri = data.pri_value * turn
+          if pri > max_pri
+            max_pri = pri
+          pub = data.pub_value * turn
+          if pub > max_pub
+            max_pub = pub
+          if data.is_leaf
+            have_leaf = true
         else
           unevaled.push m
 
@@ -251,24 +235,31 @@ module.exports = class Book
         ev = await evaluate(board, turn, unevaled)
         flips = board.move turn, ev.move
         throw new Error 'invalid move' unless flips.length
-        data = (await @get(board)) or {n_played:0}
+        data = (await @get(board)) or {n_visited:0}
+        value = ev.value * turn
         if ev.solved
-          data.eval = outcome_to_eval(ev.value * turn, turn)
+          data.pri_value = outcome_to_eval(value, turn)
+          data.pub_value = value * SCORE_MULT
         else
-          data.eval = ev.value * turn
+          data.pri_value = value
+          data.pub_value = value
         data.is_leaf = true
         await @set board, data
-        #console.log 'leaf', pos_to_str(ev.move, turn), data.eval
+        #console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
         board.undo turn, ev.move, flips
-        ev = data.eval * turn
-        if ev > max_eval
-          max_eval = ev
+        pri = data.pri_value * turn
+        if pri > max_pri
+          max_pri = pri
+        pub = data.pub_value * turn
+        if pub > max_pub
+          max_pub = pub
 
-      data = (await @get(board)) or {n_played:0}
+      data = (await @get(board)) or {n_visited:0}
       data.outcome = max_outcome * turn
-      data.eval = max_eval * turn
+      data.pub_value = max_pub * turn
+      data.pri_value = max_pri * turn
       data.is_leaf = false
-      data.n_played++
+      data.n_visited++
       await @set board, data
     await @db.run 'commit'
 
@@ -294,13 +285,13 @@ module.exports = class Book
     if data
       console.log ' transposition'
     else
-      data = {n_played:0, is_leaf:true}
+      data = {n_visited:0, is_leaf:true}
       value = ev.value * turn
       console.log ": #{value}"
       if ev.solved
-        data.eval = outcome_to_eval(value, turn)
+        data.pri_value = outcome_to_eval(value, turn)
       else
-        data.eval = value
+        data.pri_value = value
       await @set board, data
 
     await @add_to_tree board, history
@@ -320,7 +311,7 @@ module.exports = class Book
 
   get_neutral_positions: (n_moves, n) ->
     rows = await @db.all '''
-      select code from nodes where n_moves=? order by n_played desc limit ?',
+      select code from nodes where n_moves=? order by n_visited desc limit ?',
       ''', [n_moves, n]
     rows.map (row) -> row.code
 
@@ -330,8 +321,6 @@ module.exports = class Book
 
   dump_nodes: (cb) -> @db.each 'select * from nodes', [], (row) -> cb(row)
 
-  get_played_nodes: (min_played, cb) ->
-    @db.each '''
-      select * from nodes
-      where n_played >= ? and is_leaf = 0 and eval is not null
-      ''', [min_played], (row) -> cb row
+  get_visited_nodes: (min_visited, cb) ->
+    @db.each 'select * from nodes where n_visited >= ?', [min_visited], (row) ->
+      cb row
