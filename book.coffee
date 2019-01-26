@@ -166,7 +166,8 @@ module.exports = class Book
         board.undo turn, move, flips
         #console.log pos_to_str(move, turn), data
         if data?.eval?
-          nodes.push [move, data]
+          if Math.abs(data.eval) != INFINITY # XXX
+            nodes.push [move, data]
       break unless nodes.length
 
       n = 0
@@ -197,8 +198,6 @@ module.exports = class Book
     {board, moves, turn, value: last_value}
 
   add_game: (moves) ->
-    @db.run 'begin'
-
     board = new PatternBoard
     history = []
     for {move, turn, solved} in moves
@@ -218,6 +217,10 @@ module.exports = class Book
     data.n_played++
     await @set board, data
 
+    await @add_to_tree board, history
+
+  add_to_tree: (board, history) ->
+    await @db.run 'begin'
     while history.length
       {move, turn, flips, solved} = history.pop()
       board.undo turn, move, flips
@@ -267,7 +270,38 @@ module.exports = class Book
       data.is_leaf = false
       data.n_played++
       await @set board, data
-    @db.run 'commit'
+    await @db.run 'commit'
+
+  extend: (scope, opening=DEFAULT_OPENING) ->
+    {moves, value} = await @find_opening(scope, opening)
+    board = new PatternBoard
+    history = []
+    for {move, turn} in moves
+      flips = board.move turn, move
+      throw new Error 'invalid move' unless flips.length
+      process.stdout.write pos_to_str(move, turn)
+      history.push {move, turn, flips}
+    if board.any_moves(-turn)
+      turn = -turn
+    ev = await evaluate(board, turn)
+    flips = board.move turn, ev.move
+    throw new Error 'invalid move' unless flips.length
+    process.stdout.write pos_to_str(ev.move, turn)
+    history.push {move:ev.move, turn, flips, solved: ev.solved}
+
+    data = await @get(board)
+    if data
+      console.log ' transposition'
+    else
+      data = {n_played:0, is_leaf:true}
+      if ev.solved
+        data.eval = outcome_to_eval(ev.value*turn, turn)
+      else
+        data.eval = ev.value * turn
+      console.log ':', value, '->', data.eval
+      await @set board, data
+
+    await @add_to_tree board, history
 
   count_games: (me=null) ->
     sql = 'select count(*) as c from games'

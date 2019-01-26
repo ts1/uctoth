@@ -1,0 +1,41 @@
+#!/usr/bin/env coffee
+require './rejection_handler'
+{ pos_array_from_str } = require './board'
+Book = require './book'
+argv = require 'yargs'
+  .options
+    o:
+      alias: 'opening'
+      desc: 'Opening to learn'
+      default: 'F5'
+      type: 'string'
+      requiresArg: true
+    n:
+      desc: 'Number to learn'
+      type: 'number'
+      default: Infinity
+      requiresArg: true
+    S:
+      alias: 'scope'
+      desc: 'UCT constant to find opening'
+      default: 0
+      type: 'number'
+      requiresArg: true
+    B:
+      alias: 'book'
+      desc: 'Database file'
+      default: 'book.db'
+      type: 'string'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .strict()
+  .version false
+  .argv
+
+do ->
+  book = new Book argv.book
+  await book.init()
+  opening = pos_array_from_str(argv.opening)
+  for i in [0...argv.n]
+    await book.extend argv.scope, opening
