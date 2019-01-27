@@ -257,7 +257,8 @@ module.exports = class Book
           max_pub = pub
 
       data = (await @get(board)) or {n_visited:0}
-      data.outcome = max_outcome * turn
+      if max_outcome > -INFINITY
+        data.outcome = max_outcome * turn
       data.pub_value = max_pub * turn
       data.pri_value = max_pri * turn
       data.is_leaf = false
@@ -294,6 +295,7 @@ module.exports = class Book
         data.pri_value = outcome_to_eval(value, turn)
       else
         data.pri_value = value
+      data.pub_value = value
       await @set board, data
 
     await @add_to_tree board, history
