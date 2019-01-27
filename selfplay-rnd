@@ -4,7 +4,7 @@ require './rejection_handler'
 fs = require 'fs'
 { Board, BLACK, pos_to_str, pos_array_to_str, pos_array_from_str } =
   require './board'
-make_player = require './player'
+Player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
@@ -29,9 +29,19 @@ argv = require 'yargs'
       default: false
     r:
       alias: 'randomness'
-      desc: 'Randomness'
+      desc: 'Initial randomness'
       type: 'number'
       default: 0.13
+      requiresArg: true
+    min_dup:
+      desc: 'Minimum duplication rate'
+      type: 'number'
+      default: 0.1
+      requiresArg: true
+    max_dup:
+      desc: 'Maximum duplication rate'
+      type: 'number'
+      default: 0.2
       requiresArg: true
     b:
       alias: 'balance'
@@ -67,16 +77,17 @@ argv = require 'yargs'
   .strict()
   .argv
 
-player = make_player
-  book: null
-  strategy: uct
-    evaluate: if argv.R then (-> Math.random()) else pattern_eval
-    max_search: if argv.R then 1 else argv.s
+make_player = (randomness) ->
+  Player
+    book: null
+    strategy: uct
+      evaluate: if argv.R then (-> Math.random()) else pattern_eval
+      max_search: if argv.R then 1 else argv.s
+      verbose: false
+      random: randomness
     verbose: false
-    random: argv.r
-  verbose: false
-  solve_wld: argv.w
-  solve_full: argv.f
+    solve_wld: argv.w
+    solve_full: argv.f
 
 play = (player) ->
   board = new Board
@@ -107,6 +118,9 @@ do ->
   book = new Book argv.book
   await book.init()
 
+  randomness = argv.randomness
+  player = make_player(randomness)
+
   balance = (await book.sum_outcome()) or 0
   console.log "balance #{balance}"
   n_dup = 0
@@ -115,12 +129,21 @@ do ->
   loop
     if fs.existsSync('.reload-selfplay')
       break
+    if (n_play - n_skip) > 0
+      if (n_dup + 1) / (n_play - n_skip) <= argv.min_dup
+        randomness *= 0.9
+        console.log 'randomness', randomness
+        player = make_player(randomness)
     {moves, outcome} = await play player
     moves_str = pos_array_to_str(moves)
     n_play++
     if await book.has_game(moves_str)
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
+      if (n_dup - 1) / (n_play - n_skip) >= argv.max_dup
+        randomness *= 1.4
+        console.log 'randomness', randomness
+        player = make_player(randomness)
       continue
     b = balance + outcome
     if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
