@@ -19,7 +19,7 @@ argv = require 'yargs'
       alias: 'depth'
       desc: 'Evaluation depth'
       type: 'number'
-      default: 8
+      default: 6
       requiresArg: true
     w:
       alias: 'wld'

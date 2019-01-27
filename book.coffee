@@ -59,7 +59,7 @@ class Database
 
 defaults =
   readonly: false
-  eval_depth: 6
+  eval_depth: 5
   solve_wld: 18
   solve_full: 16
 
@@ -90,14 +90,14 @@ module.exports = class Book
         solve_full: opt.solve_full
         verbose: false
 
-  (board, me, moves) ->
-    ev = await player1 board, me, moves
-    unless ev.value?
-      ev = await player1 board, me, [ev.move]
-    unless ev.solved
-      ev2 = await player2 board, me, [ev.move]
-      ev.value = Math.round(ev.value + ev2.value / 2)
-    ev
+      (board, me, moves) ->
+        ev = await player1 board, me, moves
+        unless ev.value?
+          ev = await player1 board, me, [ev.move]
+        unless ev.solved
+          ev2 = await player2 board, me, [ev.move]
+          ev.value = Math.round(ev.value + ev2.value / 2)
+        ev
 
   init: ->
     await @db.run 'pragma busy_timeout=5000'
