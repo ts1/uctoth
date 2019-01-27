@@ -15,6 +15,24 @@ argv = require 'yargs'
       type: 'number'
       default: Infinity
       requiresArg: true
+    d:
+      alias: 'depth'
+      desc: 'Evaluation depth'
+      type: 'number'
+      default: 8
+      requiresArg: true
+    w:
+      alias: 'wld'
+      desc: 'Depth of win-loss-draw solve'
+      type: 'number'
+      default: 18
+      requiresArg: true
+    f:
+      alias: 'full'
+      desc: 'Depth of full solve'
+      type: 'number'
+      default: 16
+      requiresArg: true
     S:
       alias: 'scope'
       desc: 'UCT constant to find opening'
@@ -34,7 +52,7 @@ argv = require 'yargs'
   .argv
 
 do ->
-  book = new Book argv.book, eval_depth: 7
+  book = new Book argv.book, eval_depth: argv.depth, solve_wld: argv.wld, solve_full: argv.full
   await book.init()
   opening = pos_array_from_str(argv.opening)
   for i in [0...argv.n]

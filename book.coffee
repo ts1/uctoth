@@ -8,8 +8,6 @@ Player = require './player'
 minmax = require './minmax'
 
 DEFAULT_OPENING = [pos_from_str('F5')]
-EVAL_DEPTH = 5
-
 
 outcome_to_eval = (outcome, me) ->
   if outcome > 0
@@ -61,7 +59,7 @@ class Database
 
 defaults =
   readonly: false
-  eval_depth: 5
+  eval_depth: 6
   solve_wld: 18
   solve_full: 16
 
