@@ -253,8 +253,9 @@ module.exports = class Book
         data = (await @get(board)) or {n_visited:0}
         value = ev.value * turn
         if ev.solved
-          if ev.solved == 'full'
+          if ev.solved == 'full' or (ev.solved == 'wld' and value == 0)
             data.pri_value = outcome_to_eval(value, turn)
+            data.outcome = value
           else
             data.pri_value = value * SCORE_MULT
           data.pub_value = value * SCORE_MULT
@@ -307,8 +308,9 @@ module.exports = class Book
       data = {n_visited:0, is_leaf:true}
       value = ev.value * turn
       if ev.solved
-        if ev.solved == 'full'
+        if ev.solved == 'full' or (ev.solved == 'wld' and value == 0)
           data.pri_value = outcome_to_eval(value, turn)
+          data.outcome = value
         else
           data.pri_value = value * SCORE_MULT
         data.pub_value = value * SCORE_MULT
@@ -344,7 +346,7 @@ module.exports = class Book
     (await @db.get 'select count(*) as c from games where moves=?',
       [moves_str]).c
 
-  dump_nodes: (cb) -> @db.each 'select * from nodes', [], (row) -> cb(row)
+  dump_nodes: (cb) -> @db.each 'select * from nodes where outcome is not null', [], (row) -> cb(row)
 
   get_visited_nodes: (min_visited, cb) ->
     @db.each 'select * from nodes where n_visited >= ?', [min_visited], (row) ->
