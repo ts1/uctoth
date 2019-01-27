@@ -35,6 +35,8 @@ evaluate = do ->
 
   (board, me, moves) ->
     ev = await player1 board, me, moves
+    unless ev.value?
+      ev = await player1 board, me, [ev.move]
     unless ev.solved
       ev2 = await player2 board, me, [ev.move]
       ev.value = Math.round(ev.value + ev2.value / 2)
