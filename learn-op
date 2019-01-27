@@ -34,7 +34,7 @@ argv = require 'yargs'
   .argv
 
 do ->
-  book = new Book argv.book
+  book = new Book argv.book, eval_depth: 7
   await book.init()
   opening = pos_array_from_str(argv.opening)
   for i in [0...argv.n]

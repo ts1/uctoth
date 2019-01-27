@@ -10,37 +10,6 @@ minmax = require './minmax'
 DEFAULT_OPENING = [pos_from_str('F5')]
 EVAL_DEPTH = 5
 
-evaluate = do ->
-  player1 = Player
-    book: null
-    strategy: minmax
-      verbose: false
-      max_depth: EVAL_DEPTH
-      evaluate: pattern_eval
-      cache_size: 0
-    solve_wld: 18
-    solve_full: 16
-    verbose: false
-
-  player2 = Player
-    book: null
-    strategy: minmax
-      verbose: false
-      max_depth: EVAL_DEPTH - 1
-      evaluate: pattern_eval
-      cache_size: 0
-    solve_wld: 18
-    solve_full: 16
-    verbose: false
-
-  (board, me, moves) ->
-    ev = await player1 board, me, moves
-    unless ev.value?
-      ev = await player1 board, me, [ev.move]
-    unless ev.solved
-      ev2 = await player2 board, me, [ev.move]
-      ev.value = Math.round(ev.value + ev2.value / 2)
-    ev
 
 outcome_to_eval = (outcome, me) ->
   if outcome > 0
@@ -90,9 +59,47 @@ class Database
           resolve result
       )
 
+defaults =
+  readonly: false
+  eval_depth: 5
+  solve_wld: 18
+  solve_full: 16
+
 module.exports = class Book
-  constructor: (filename, {readonly}={}) ->
-    @db = new Database filename, readonly
+  constructor: (filename, options={}) ->
+    opt = {defaults..., options...}
+    @db = new Database filename, opt.readonly
+    @evaluate = do ->
+      player1 = Player
+        book: null
+        strategy: minmax
+          verbose: false
+          max_depth: opt.eval_depth
+          evaluate: pattern_eval
+          #cache_size: 0
+        solve_wld: opt.solve_wld
+        solve_full: opt.solve_full
+        verbose: false
+
+      player2 = Player
+        book: null
+        strategy: minmax
+          verbose: false
+          max_depth: opt.eval_depth - 1
+          evaluate: pattern_eval
+          #cache_size: 0
+        solve_wld: opt.solve_wld
+        solve_full: opt.solve_full
+        verbose: false
+
+  (board, me, moves) ->
+    ev = await player1 board, me, moves
+    unless ev.value?
+      ev = await player1 board, me, [ev.move]
+    unless ev.solved
+      ev2 = await player2 board, me, [ev.move]
+      ev.value = Math.round(ev.value + ev2.value / 2)
+    ev
 
   init: ->
     await @db.run 'pragma busy_timeout=5000'
@@ -105,13 +112,21 @@ module.exports = class Book
         pub_value integer,
         pri_value integer,
         is_leaf integer,
+        solved integer,
         n_visited integer)
         '''
+
     await @db.run '''
       create table if not exists games (
         moves text primary key,
         outcome integer)
         '''
+
+    # migration
+    try
+      await @db.run '''alter table nodes add column solved integer'''
+    catch
+
   get_by_code: (code) -> @db.get 'select * from nodes where code=?', [code]
 
   get: (board) -> @get_by_code(encode_normalized(board))
@@ -121,11 +136,11 @@ module.exports = class Book
     n_moves = 60 - board.count(EMPTY)
     @db.run '''
       insert or replace into nodes
-        (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf)
-        values (?, ?, ?, ?, ?, ?, ?)
+        (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf, solved)
+        values (?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         [code, n_moves, data.outcome, data.pub_value, data.pri_value,
-          data.n_visited, data.is_leaf]
+          data.n_visited, data.is_leaf, data.solved]
 
   find_opening: (scope, opening=DEFAULT_OPENING) ->
     scope *= SCORE_MULT
@@ -173,7 +188,7 @@ module.exports = class Book
 
         if value > max
           max = value
-          best = {move, turn}
+          best = {move, turn, solved: data.solved}
           last_value = (value - bias) * turn
 
       if scope
@@ -234,13 +249,16 @@ module.exports = class Book
           unevaled.push m
 
       if not solved and not have_leaf and unevaled.length
-        ev = await evaluate(board, turn, unevaled)
+        ev = await @evaluate(board, turn, unevaled)
         flips = board.move turn, ev.move
         throw new Error 'invalid move' unless flips.length
         data = (await @get(board)) or {n_visited:0}
         value = ev.value * turn
         if ev.solved
-          data.pri_value = outcome_to_eval(value, turn)
+          if ev.solved == 'full'
+            data.pri_value = outcome_to_eval(value, turn)
+          else
+            data.pri_value = value * SCORE_MULT
           data.pub_value = value * SCORE_MULT
         else
           data.pri_value = value
@@ -270,15 +288,15 @@ module.exports = class Book
     {moves, value} = await @find_opening(scope, opening)
     board = new PatternBoard
     history = []
-    for {move, turn} in moves
+    for {move, turn, solved} in moves
       flips = board.move turn, move
       throw new Error 'invalid move' unless flips.length
       process.stdout.write pos_to_str(move, turn)
-      history.push {move, turn, flips}
+      history.push {move, turn, flips, solved}
     process.stdout.write ": #{value} "
     if board.any_moves(-turn)
       turn = -turn
-    ev = await evaluate(board, turn)
+    ev = await @evaluate(board, turn)
     flips = board.move turn, ev.move
     throw new Error 'invalid move' unless flips.length
     process.stdout.write pos_to_str(ev.move, turn)
@@ -290,12 +308,17 @@ module.exports = class Book
     else
       data = {n_visited:0, is_leaf:true}
       value = ev.value * turn
-      console.log ": #{value}"
       if ev.solved
-        data.pri_value = outcome_to_eval(value, turn)
+        if ev.solved == 'full'
+          data.pri_value = outcome_to_eval(value, turn)
+        else
+          data.pri_value = value * SCORE_MULT
+        data.pub_value = value * SCORE_MULT
       else
         data.pri_value = value
-      data.pub_value = value
+        data.pub_value = value
+      data.solved = ev.solved
+      console.log ": #{data.pub_value}"
       await @set board, data
 
     await @add_to_tree board, history
