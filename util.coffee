@@ -97,6 +97,21 @@ round_value = (value) -> Math.round(value * 1e4) / 1e4
 
 INFINITY = 1<<30
 
+
+unique_moves = (board, me, moves=null) ->
+  {encode_normalized} = require './encode'
+  moves or= board.list_moves(me)
+  codes = {}
+  result = []
+  for move in moves
+    flips = board.move me, move
+    code = encode_normalized(board)
+    board.undo me, move, flips
+    unless codes[code]
+      codes[code] = true
+      result.push move
+  result
+
 module.exports = {
   shuffle
   memoize
@@ -106,4 +121,5 @@ module.exports = {
   lru_cache
   round_value
   INFINITY
+  unique_moves
 }

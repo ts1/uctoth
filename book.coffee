@@ -2,7 +2,7 @@ sqlite3 = require('sqlite3').verbose()
 { encode_normalized } = require './encode'
 { BLACK, WHITE, EMPTY, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
 { PatternBoard, SCORE_MULT } = require './pattern'
-{ shuffle, INFINITY } = require './util'
+{ shuffle, INFINITY, unique_moves } = require './util'
 pattern_eval = require('./pattern_eval')('scores.json')
 Player = require './player'
 minmax = require './minmax'
@@ -158,7 +158,7 @@ module.exports = class Book
         unless board.any_moves turn
           break
       nodes = []
-      for move in board.list_moves(turn)
+      for move in unique_moves(board, turn)
         flips = board.move turn, move
         data = await @get board
         board.undo turn, move, flips
