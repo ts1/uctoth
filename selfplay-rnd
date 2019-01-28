@@ -31,7 +31,7 @@ argv = require 'yargs'
       alias: 'randomness'
       desc: 'Initial randomness'
       type: 'number'
-      default: 0.13
+      default: 0.1
       requiresArg: true
     min_dup:
       desc: 'Minimum duplication rate'
@@ -132,7 +132,7 @@ do ->
       break
     if (n_play - n_skip) > 0
       if (n_dup + 1) / (n_play - n_skip) <= argv.min_dup
-        randomness *= 0.9
+        randomness *= 0.95
         console.log 'randomness', randomness
         player = make_player(randomness)
     {moves, outcome} = await play player
@@ -142,7 +142,7 @@ do ->
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       if (n_dup - 1) / (n_play - n_skip) >= argv.max_dup
-        randomness *= 1.4
+        randomness *= 1.2
         console.log 'randomness', randomness
         player = make_player(randomness)
       continue
