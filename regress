@@ -100,7 +100,7 @@ regress = (index_file) ->
     else
       d_avg = (d_avg * (D_FACTOR - 1) + d) / D_FACTOR
     console.log 'step', step, 'loss', loss, 'd', d_avg
-    break if d_avg < argv.threshold
+    break if step >= D_FACTOR and d_avg < argv.threshold
 
     step++
 
