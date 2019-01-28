@@ -142,7 +142,7 @@ do ->
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       if (n_dup - 1) / (n_play - n_skip) >= argv.max_dup
-        randomness *= 1.2
+        randomness *= 1.1
         console.log 'randomness', randomness
         player = make_player(randomness)
       continue
