@@ -145,7 +145,6 @@ do ->
       console.log "SKIP FOR BALANCE (current #{balance})"
       n_skip++
       continue
-    balance += outcome
 
     if await book.has_game(moves_str)
       n_dup++
@@ -156,6 +155,7 @@ do ->
         player = make_player(randomness)
       continue
 
+    balance += outcome
     await book.add_game moves
     if argv.n?
       n_games = (await book.count_games()) % argv.n or argv.n
