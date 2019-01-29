@@ -126,19 +126,28 @@ do ->
   n_dup = 0
   n_play = 0
   n_skip = 0
-  games = {}
   loop
     if fs.existsSync('.reload-selfplay')
       break
+
     if (n_play - n_skip) > 0
       if (n_dup + 1) / (n_play - n_skip) <= argv.min_dup
         randomness *= 0.95
         console.log 'randomness', randomness
         player = make_player(randomness)
+
     {moves, outcome} = await play player
     moves_str = pos_array_to_str(moves)
     n_play++
-    if games[moves_str] or await book.has_game(moves_str)
+
+    b = balance + outcome
+    if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
+      console.log "SKIP FOR BALANCE (current #{balance})"
+      n_skip++
+      continue
+    balance += outcome
+
+    if await book.has_game(moves_str)
       n_dup++
       console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
       if (n_dup - 1) / (n_play - n_skip) >= argv.max_dup
@@ -146,13 +155,7 @@ do ->
         console.log 'randomness', randomness
         player = make_player(randomness)
       continue
-    games[moves_str] = true
-    b = balance + outcome
-    if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
-      console.log "SKIP FOR BALANCE (current #{balance})"
-      n_skip++
-      continue
-    balance += outcome
+
     await book.add_game moves
     if argv.n?
       n_games = (await book.count_games()) % argv.n or argv.n
