@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-{ readlines, gzwriter } = require './util'
+{ readlines, gzwriter, round_value } = require './util'
 { get_single_index_size } = require './pattern'
 yargs = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options] indexes coeffs"
@@ -83,15 +83,11 @@ regress = (index_file) ->
   loop
     vector = make_gradient train_set, coeffs
 
-    changed = false
     loop
       new_coeffs = update_coeffs coeffs, vector, rate
       loss = verify train_set, new_coeffs, last_loss
       break if loss < last_loss
       rate *= 0.7
-      changed = true
-    if changed
-      console.log 'rate', rate * train_set.length
     coeffs = new_coeffs
 
     d = last_loss - loss
@@ -99,7 +95,9 @@ regress = (index_file) ->
       d_avg = (d_avg * (step - 1) + d) / step
     else
       d_avg = (d_avg * (D_FACTOR - 1) + d) / D_FACTOR
-    console.log 'step', step, 'loss', loss, 'd', d_avg
+    console.log 'step', step, 'loss', loss,
+      'rate', round_value(rate*train_set.length),
+      'd', d_avg
     break if step >= D_FACTOR and d_avg < argv.threshold
 
     step++
