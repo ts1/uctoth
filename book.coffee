@@ -219,7 +219,7 @@ module.exports = class Book
     await @add_to_tree board, history
 
   add_to_tree: (board, history) ->
-    await @db.run 'begin'
+    #await @db.run 'begin'
     while history.length
       {move, turn, flips, solved} = history.pop()
       board.undo turn, move, flips
@@ -281,7 +281,7 @@ module.exports = class Book
       data.is_leaf = false
       data.n_visited++
       await @set board, data
-    await @db.run 'commit'
+    #await @db.run 'commit'
 
   extend: (scope, opening=DEFAULT_OPENING) ->
     {moves, value} = await @find_opening(scope, opening)
