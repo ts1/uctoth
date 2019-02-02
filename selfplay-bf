@@ -30,16 +30,29 @@ argv = require 'yargs'
       type: 'number'
       default: 1
       requiresArg: true
+    s:
+      alias: 'search'
+      desc: 'Number of UCT search per move'
+      type: 'number'
+      default: 14000
+      requiresArg: true
+    balance:
+      desc: 'Balance outcome (--no-balance to disable)'
+      default: true
+      requiresArg: false
     h:
       alias: 'help'
   .version false
   .strict()
   .argv
 
+balance = 0
+
 player = make_player
   book: null
   strategy: uct
     evaluate: pattern_eval
+    max_search: argv.search
     verbose: false
   verbose: false
   solve_wld: 18
@@ -88,15 +101,26 @@ unique_moves = (board, turn) ->
   result
 
 find_unplayed_opening = (book, depth, cb) ->
-  console.log 'depth', depth+1
+  console.log 'depth', depth
   board = new Board
   board.move BLACK, pos_from_str('f5')
   moves = [{move:pos_from_str('f5'), turn:BLACK}]
 
-  sub = (turn, depth) ->
-    unless depth
+  sub = (turn, d) ->
+    leaf = false
+    if d > depth
+      leaf = true
+    else if d == depth
+      leaf = true
+      if argv.balance
+        if ((depth&1) and balance < 0) or ((depth&1)==0 and balance > 0)
+          leaf = false
+
+    if leaf
       data = await book.get(board)
       unless data?.outcome?
+        if d > depth
+          console.log 'extending for balance'
         await cb moves
       return
 
@@ -108,17 +132,19 @@ find_unplayed_opening = (book, depth, cb) ->
       flips = board.move turn, move
       throw new Error 'invalid move' unless flips.length
       moves.push {move, turn}
-      await sub -turn, depth-1
+      await sub -turn, d+1
       moves.pop()
       board.undo turn, move, flips
 
-  await sub WHITE, depth
+  await sub WHITE, 1
 
 do ->
   book = new Book 'book.db'
   await book.init()
+  balance = await book.sum_outcome() or 0
+  console.log 'balance', balance
 
-  for depth in [(argv.depth-1)..60]
+  for depth in [argv.depth..60]
     await find_unplayed_opening book, depth, (opening) ->
       if fs.existsSync('.reload-selfplay')
         process.exit 0
@@ -126,6 +152,8 @@ do ->
       {moves, outcome} = await play(player, opening)
       moves_str = pos_array_to_str(moves)
       await book.add_game moves
+      balance += outcome
+      console.log 'balance', balance
 
       if argv.n?
         n_games = (await book.count_games()) % argv.n or argv.n
