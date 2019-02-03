@@ -1,5 +1,6 @@
 { encode_normalized } = require './encode'
 book = require './openings.json'
+{ SCORE_MULT } = require './pattern'
 
 defaults =
   random: 0.7
@@ -25,13 +26,12 @@ module.exports = (options={}) ->
         if value > max
           max = value
           best = node
-        sum += data.n
     return null unless nodes.length
 
     if opts.random
       sum_p = 0
       for node in nodes
-        node.p = (node.n / sum) ** (1/opts.random)
+        node.p = Math.exp(node.value / (1*SCORE_MULT*opts.random))
         sum_p += node.p
 
       r = Math.random() * sum_p

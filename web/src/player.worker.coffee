@@ -20,7 +20,7 @@ param_table =
     full: 0
   normal:
     book: true
-    book_random: .5
+    book_random: .6
     search: 1
     random: 0
     wld: 0
