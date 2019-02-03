@@ -13,7 +13,7 @@ readline = require 'readline'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 { round_value } = require './util'
-book_player = require './book_player'
+book_player = require './static_book_player'
 
 argv = require 'yargs'
   .options

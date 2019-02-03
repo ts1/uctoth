@@ -48,7 +48,7 @@ set_level = (level) ->
 
   evaluate = if invert then pattern_eval(scores, true) else pattern_eval(scores)
   if book
-    book = require('@oth/book_player')
+    book = require('@oth/static_book_player')
       random: book_random
       #verbose: false
 
