@@ -20,13 +20,13 @@ argv = require 'yargs'
     black:
       alias: 'b'
       desc: 'Black player'
-      type: ['uct', 'human', 'minimax', 'simple', 'invert']
+      choices: ['uct', 'human', 'minimax', 'simple', 'invert']
       default: 'uct'
       requiresArg: true
     white:
       alias: 'w'
       desc: 'White player'
-      type: ['uct', 'human', 'minimax', 'simple', 'invert']
+      choices: ['uct', 'human', 'minimax', 'simple', 'invert']
       default: 'minimax'
       requiresArg: true
     search:
@@ -36,9 +36,10 @@ argv = require 'yargs'
       default: 240000
       requiresArg: true
     book:
-      desc: 'Use opening book'
-      type: 'boolean'
-      default: true
+      desc: 'Opening book'
+      choices: ['static', 'db', 'none']
+      default: 'static'
+      requiresArg: true
     book_random:
       alias: 'r'
       desc: 'Randomness of opening book'
@@ -55,13 +56,13 @@ argv = require 'yargs'
       alias: 'W'
       desc: 'Depth of win-loss-draw endgame search'
       type: 'number'
-      default: 21
+      default: 20
       requiresArg: true
     full:
       alias: 'f'
       desc: 'Depth of ful endgame search'
       type: 'number'
-      default: 19
+      default: 18
       requiresArg: true
     h:
       alias: 'help'
@@ -92,7 +93,13 @@ human = (board, turn) ->
       console.log 'illegal move'
   {move:pos}
 
-book = if argv.book then book_player(random: argv.book_random) else null
+book =
+  if argv.book == 'static'
+    require('./static_book_player')(random: argv.book_random)
+  else if argv.book == 'db'
+    require('./db_book_player')(random: argv.book_random)
+  else
+    null
 
 simple = Player
   book: book
