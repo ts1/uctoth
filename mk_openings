@@ -2,12 +2,21 @@
 require './rejection_handler'
 fs = require 'fs'
 Book = require './book'
+{ Board, BLACK, WHITE, pos_from_str, pos_to_str } = require './board'
+{ unique_moves } = require './util'
+
 argv = require 'yargs'
   .options
     m:
-      alias: 'min'
-      desc: 'Minimum number played'
-      default: 30
+      alias: 'max_moves'
+      desc: 'Minimum number of moves'
+      default: 40
+      type: 'number'
+      requiresArg: true
+    d:
+      alias: 'max_diff'
+      desc: 'Minimum difference of move value from best move'
+      default: 2000
       type: 'number'
       requiresArg: true
     o:
@@ -22,16 +31,54 @@ argv = require 'yargs'
       default: 'book.db'
       type: 'string'
       requiresArg: true
+    v:
+      alias: 'verbose'
+      type: 'boolean'
     h:
       alias: 'help'
   .version false
   .strict()
   .argv
 
+nodes = {}
+book = new Book argv.book, readonly: true
+board = new Board
+
+add_nodes = (turn, depth, movestr) ->
+  return if depth > argv.max_moves
+  moves = []
+  for move in unique_moves(board, turn)
+    flips = board.move turn, move
+    console.assert flips.length
+    data = await book.get(board)
+    if data and not nodes[data.code]? and not data.is_leaf and data.n_visited
+      moves.push {
+        move
+        value: data.pub_value * turn
+        n: data.n_visited
+        code: data.code
+      }
+    board.undo turn, move, flips
+  return unless moves.length
+
+  moves.sort (a, b) -> b.value - a.value
+  best_value = moves[0].value
+  for move in moves
+    if depth == 1 or best_value - move.value <= argv.max_diff
+      nodes[move.code] = { value: move.value * turn, n: move.n }
+      new_movestr = movestr + pos_to_str(move.move, turn)
+      console.log new_movestr, nodes[move.code] if argv.verbose
+      flips = board.move turn, move.move
+      console.assert flips.length
+      if board.any_moves(-turn)
+        await add_nodes -turn, depth+1, new_movestr
+      else if board.any_moves(turn)
+        await add_nodes turn, depth+1, new_movestr
+      board.undo turn, move.move, flips
+
 do ->
-  book = new Book argv.book, readonly: true
   await book.init()
-  result = {}
-  await book.get_visited_nodes argv.min, (node) ->
-    result[node.code] = { n: node.n_visited, value: node.pub_value }
-  fs.writeFileSync argv.output, JSON.stringify result
+  board.move BLACK, pos_from_str('F5')
+  await add_nodes WHITE, 1, 'F5'
+  console.log "#{Object.keys(nodes).length} nodes"
+  fs.writeFileSync argv.output, JSON.stringify nodes
