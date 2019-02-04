@@ -62,11 +62,13 @@ defaults =
   eval_depth: 5
   solve_wld: 18
   solve_full: 16
+  verbose: false
 
 module.exports = class Book
   constructor: (filename, options={}) ->
     opt = {defaults..., options...}
     @db = new Database filename, opt.readonly
+
     @evaluate = do ->
       player1 = Player
         book: null
@@ -98,6 +100,8 @@ module.exports = class Book
           ev2 = await player2 board, me, [ev.move]
           ev.value = Math.round(ev.value + ev2.value / 2)
         ev
+
+    @verbose = opt.verbose
 
   init: ->
     await @db.run 'pragma busy_timeout=5000'
@@ -179,7 +183,7 @@ module.exports = class Book
         value = data.pri_value * turn
 
         bias = scope * Math.sqrt(n / (data.n_visited + 1))
-        if scope
+        if @verbose
           console.log pos_to_str(move, turn), data.n_visited,
             Math.round(bias), value
         value += bias
@@ -187,9 +191,9 @@ module.exports = class Book
         if value > max
           max = value
           best = {move, turn, solved: data.solved}
-          last_value = (value - bias) * turn
+          last_value = Math.round((value - bias) * turn)
 
-      if scope
+      if @verbose
         console.log '-->', pos_to_str(best.move, turn), Math.round(last_value)
       moves.push best
       board.move turn, best.move
