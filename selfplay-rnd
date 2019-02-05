@@ -8,6 +8,7 @@ Player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
+{ int } = require './util'
 
 argv = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options...]"
@@ -33,15 +34,20 @@ argv = require 'yargs'
       type: 'number'
       default: 0.1
       requiresArg: true
-    min_dup:
-      desc: 'Minimum duplication rate'
+    min_col:
+      desc: 'Minimum collision rate'
       type: 'number'
       default: 0.1
       requiresArg: true
-    max_dup:
-      desc: 'Maximum duplication rate'
+    max_col:
+      desc: 'Maximum collision rate'
       type: 'number'
       default: 0.2
+      requiresArg: true
+    D:
+      desc: 'Collision average duration'
+      type: 'number'
+      default: 40
       requiresArg: true
     b:
       alias: 'balance'
@@ -71,6 +77,15 @@ argv = require 'yargs'
       desc: 'Depth of full endgame search'
       default: 16
       requireArg: true
+    d:
+      alias: 'depth'
+      desc: 'Learn depth'
+      default: 5
+      requireArg: true
+    v:
+      alias: 'verbose'
+      default: false
+      type: 'boolean'
     h:
       alias: 'help'
   .version false
@@ -115,7 +130,8 @@ play = (player) ->
   {moves, outcome}
 
 do ->
-  book = new Book argv.book
+  book = new Book argv.book,
+    solve_wld: argv.wld, solve_full: argv.full, eval_depth: argv.depth
   await book.init()
 
   randomness = argv.randomness
@@ -123,16 +139,16 @@ do ->
 
   balance = (await book.sum_outcome()) or 0
   console.log "balance #{balance}"
-  n_dup = 0
+  n_col = 0
   n_play = 0
   n_skip = 0
+  avg_col = 0
   loop
     if fs.existsSync('.reload-selfplay')
       break
 
     {moves, outcome} = await play player
     moves_str = pos_array_to_str(moves)
-    n_play++
 
     b = balance + outcome
     if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
@@ -140,20 +156,29 @@ do ->
       n_skip++
       continue
 
-    if await book.has_game(moves_str)
-      n_dup++
-      console.log "DUPLICATED #{n_dup}/#{n_play-n_skip}"
-      if n_dup / (n_play - n_skip) >= argv.max_dup
-        randomness *= 1.1
-        console.log 'randomness', randomness
-        player = make_player(randomness)
-      continue
+    n_play++
 
-    if (n_play - n_skip) > 0
-      if (n_dup + 1) / (n_play - n_skip) <= argv.min_dup
-        randomness *= 0.95
-        console.log 'randomness', randomness
-        player = make_player(randomness)
+    collision = await book.has_game(moves_str)
+    if collision
+      n_col++
+      console.log "COLLISION #{n_col}/#{n_play}"
+
+    if n_play < argv.D
+      avg_col = (avg_col * (n_play - 1) + int(collision)) / n_play
+    else
+      avg_col = (avg_col * (argv.D - 1) + int(collision)) / argv.D
+
+    if avg_col > argv.max_col
+      randomness *= 1.01
+      player = make_player(randomness)
+      console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
+    else if avg_col < argv.min_col
+      randomness *= 0.99
+      player = make_player(randomness)
+      console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
+
+    if collision
+      continue
 
     balance += outcome
     await book.add_game moves
@@ -161,4 +186,4 @@ do ->
       n_games = (await book.count_games()) % argv.n or argv.n
       console.log 'played', n_games
       break if n_games >= argv.n
-  console.log "played #{n_play} duplicated #{n_dup} skipped #{n_skip} balance #{balance}"
+  console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"
