@@ -25,7 +25,7 @@ Included `scores.json` file is a result of 30 iterations of 1,000 self-plays
 and learnings.
 10 days work of a MacBook Pro.
 
-### Search algorithm
+### Game tree search
 
 Employs modified UTC search.
 Searches 15-25 plies deep maximum on modern JavaScript engines.
