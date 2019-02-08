@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+
+./learn-op -d 10 -w 20 -f 18 -o f5d6 -n 100 -S 0.5
+./learn-op -d 10 -w 20 -f 18 -o f5d6 -n 100
+./learn-op -d 10 -w 20 -f 18 -o f5f6 -n 100 -S 0.5
+./learn-op -d 10 -w 20 -f 18 -o f5f6 -n 100
+./learn-op -d 10 -w 0 -f 18 -o f5f4 -n 50 -S 0.5
+./learn-op -d 10 -w 0 -f 18 -o f5f4 -n 50
+
+exec $0
