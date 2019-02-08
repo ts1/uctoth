@@ -1,6 +1,7 @@
 {EMPTY, pos_from_str} = require './board'
 { encode_normalized } = require './encode'
 endgame = require './endgame'
+{ shuffle } = require './util'
 
 defaults =
   book: null
@@ -10,6 +11,7 @@ defaults =
   verbose: true
   inverted: false
   endgame_eval: null
+  shuffle: false
 
 F5 = pos_from_str('F5')
 
@@ -28,10 +30,11 @@ module.exports = (options={}) ->
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)
-    if left == 60 and board.can_move(me, F5)
+    if not opts.shuffle and left == 60 and board.can_move(me, F5)
       return {move:F5}
 
     moves = force_moves or board.list_moves(me)
+    moves = shuffle moves if opts.shuffle
     codes = {}
     unique_moves = []
     for move in moves

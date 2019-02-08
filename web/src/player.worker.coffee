@@ -2,7 +2,7 @@ import { Board } from '@oth/board'
 import pattern_eval from '@oth/pattern_eval'
 import make_player from '@oth/player'
 import uct from '@oth/uct'
-import scores from '@oth/ref/scores.json'
+import scores from './scores.json'
 
 player = null
 
@@ -20,14 +20,14 @@ param_table =
     full: 0
   normal:
     book: true
-    book_random: .6
+    book_random: 1
     search: 1
     random: 0
     wld: 0
     full: 0
   hard:
     book: true
-    book_random: .2
+    book_random: .5
     search: 6
     random: 0
     wld: 8
@@ -53,6 +53,7 @@ set_level = (level) ->
       #verbose: false
 
   player = make_player
+    shuffle: true
     book: book
     strategy: uct
       evaluate: evaluate
