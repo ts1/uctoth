@@ -4,7 +4,7 @@
 { encode } = require './encode'
 
 defaults =
-  C: 1.9*SCORE_MULT
+  C: 1.8*SCORE_MULT
   max_search: 14000
   verbose: true
   evaluate: null
@@ -81,7 +81,7 @@ module.exports = (options={}) ->
         max = -Infinity
         best = null
         for child in node.children
-          bias = options.C * Math.sqrt(node.n / child.n)
+          bias = options.C * Math.sqrt(node.n / (child.n + 1))
           value = child.value + bias
           #console.log pos_to_str(child.move), child.n, child.value, bias
           if value > max
