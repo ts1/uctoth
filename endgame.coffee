@@ -102,9 +102,35 @@ module.exports = (options={}) ->
   simple_solve = (board, me, lower, upper, base_score, left) ->
     board = new Board board
 
+    solve_2_empty = (me, score, pass) ->
+      emp1 = board.first_empty()
+      emp2 = board.empty_next[emp1]
+      best = -INFINITY
+
+      flips = board.move me, emp1
+      n = flips.length
+      if n
+        best = -final_move(board, -me, -(score + 2*n + 1))
+        board.undo me, emp1, flips
+
+      flips = board.move me, emp2
+      n = flips.length
+      if n
+        s = -final_move(board, -me, -(score + 2*n + 1))
+        if s > best
+          best = s
+        board.undo me, emp2, flips
+
+      if best > -INFINITY
+        best
+      else if pass
+        calc_outcome(score, 2)
+      else
+        -solve_2_empty(-me, -score, true)
+
     solve_sub = (me, lower, upper, base_score, pass, left) ->
-      if left == 1
-        return final_move(board, me, base_score)
+      if left == 2
+        return solve_2_empty(me, base_score, pass)
 
       max = -INFINITY
       any_moves = false
