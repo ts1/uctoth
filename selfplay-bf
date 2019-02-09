@@ -40,6 +40,16 @@ argv = require 'yargs'
       desc: 'Balance outcome (--no-balance to disable)'
       default: true
       requiresArg: false
+    w:
+      alias: 'wld'
+      desc: 'Depth of win-loss-draw endgame search'
+      default: 18
+      requireArg: true
+    f:
+      alias: 'full'
+      desc: 'Depth of full endgame search'
+      default: 16
+      requireArg: true
     h:
       alias: 'help'
   .version false
@@ -55,8 +65,8 @@ player = make_player
     max_search: argv.search
     verbose: false
   verbose: false
-  solve_wld: 18
-  solve_full: 16
+  solve_wld: argv.wld
+  solve_full: argv.full
 
 play = (player, opening) ->
   board = new Board
