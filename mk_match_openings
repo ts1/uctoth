@@ -1,0 +1,108 @@
+#!/usr/bin/env coffee
+
+require './rejection_handler'
+{ unique_moves, gzwriter } = require './util'
+{ Board, WHITE, BLACK, pos_from_str, pos_to_str } = require './board'
+Book = require './book'
+{ encode, decode } = require './encode'
+
+argv = require 'yargs'
+  .options
+    m:
+      alias: 'moves'
+      desc: 'Number of moves'
+      default: 8
+      type: 'number'
+      requiresArg: true
+    n:
+      alias: 'openings'
+      desc: 'Number of openings'
+      default: 15
+      type: 'number'
+      requiresArg: true
+    B:
+      alias: 'book'
+      desc: 'Book database'
+      default: 'book.db'
+      requiresArg: true
+    o:
+      alias: 'output'
+      desc: 'Output file'
+      default: 'match.openings'
+      requiresArg: true
+    V:
+      alias: 'min_visited'
+      desc: 'Minimum number of node visits'
+      default: 30
+      type: 'number'
+      requiresArg: true
+    v:
+      alias: 'verbose'
+      type: 'boolean'
+      default: false
+    h:
+      alias: 'help'
+  .strict()
+  .version false
+  .argv
+
+board = new Board
+book = new Book argv.book, readonly: true
+openings = []
+
+find_openings = (turn, n_moves, move_str, deviation, value, n) ->
+  if n_moves >= argv.moves
+    openings.push {
+      code: encode(board)
+      move_str
+      deviation
+      value
+      n
+    }
+    return
+
+  moves = []
+  for move in unique_moves(board, turn)
+    flips = board.move turn, move
+    console.assert flips.length
+    data = await book.get(board)
+    if data and not data.is_leaf and data.n_visited > argv.min_visited
+      moves.push {move, value: data.pub_value * turn, n: data.n_visited}
+    board.undo turn, move, flips
+
+  return unless moves.length
+
+  moves.sort (a, b) -> b.value - a.value
+  best_value = moves[0].value
+
+  for {move, value, n} in moves
+    flips = board.move turn, move
+    console.assert flips.length
+    t =
+      if board.any_moves(-turn)
+        -turn
+      else
+        turn
+    ms = move_str + pos_to_str(move, turn)
+    dev = deviation + (best_value - value)
+    await find_openings t, n_moves+1, ms, dev, value * turn, n
+    board.undo turn, move, flips
+
+do ->
+  await book.init()
+  board.move BLACK, pos_from_str('F5')
+  await find_openings WHITE, 1, 'F5', 0, 0, 0
+  openings.sort (a, b) -> a.deviation - b.deviation
+  n = 0
+  codes = {}
+  output = gzwriter argv.output
+  for op in openings
+    continue if codes[op.code]
+    codes[op.code] = true
+    output.write "#{op.code}\n"
+    if argv.verbose
+      console.log new Board(decode(op.code)).dump true
+      console.log op.move_str, 'deviation', op.deviation, 'value', op.value,
+        'n_visited', op.n
+    break if ++n >= argv.openings
+  output.end()
