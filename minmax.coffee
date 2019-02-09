@@ -27,6 +27,7 @@ defaults =
   cache_size: 300000
   zws: true
   shuffle: true
+  use_mtdf: false
 
 module.exports = (options={}) ->
   {
@@ -39,6 +40,7 @@ module.exports = (options={}) ->
     cache_size
     zws
     shuffle
+    use_mtdf
   } = {defaults..., options...}
 
   if invert
@@ -142,10 +144,28 @@ module.exports = (options={}) ->
     simple_minmax = cached_minmax simple_minmax
     minmax = cached_minmax minmax
 
-  main = (board, me, moves=null) ->
-    #if cache_size
-    #  cache = require('./cache')(cache_size)
+  mtdf = (board, me, lower, upper, guess, depth) ->
+    l = lower
+    u = upper
+    guess = l if guess < l
+    guess = u if guess > u
+    while l < u
+      #process.stdout.write "[#{l},#{u}]" if verbose
+      #process.stdout.write "(#{guess})" if verbose
+      beta = if guess == l then l+1 else guess
+      value = minmax(board, me, beta-1, beta, 0, depth)
+      if value >= beta
+        if value >= upper
+          return value
+        l = value
+      else
+        if value <= lower
+          return value
+        u = value
+      guess = value
+    value
 
+  main = (board, me, moves=null) ->
     board = new board_class board
 
     moves or= board.list_moves(me)
@@ -157,7 +177,9 @@ module.exports = (options={}) ->
 
     left = board.count(EMPTY)
 
-    for depth in [1..max_depth]
+    first_depth = (max_depth & 1) or 2
+    guess = 0
+    for depth in [first_depth..max_depth] by 2
       if depth > left
         break
       process.stdout.write "depth=#{depth}: " if verbose
@@ -168,15 +190,18 @@ module.exports = (options={}) ->
         flips = board.move(me, pos)
         if flips.length
           process.stdout.write "#{pos_to_str(pos)}" if verbose
-          if zws and max != -INFINITY
-            score = -minmax(board, -me, -(max+1), -max, 0, depth-1)
-            if score > max
-              process.stdout.write(':\b') if verbose
-              score = -minmax(board, -me, -INFINITY, -score, 0, depth-1)
+          if use_mtdf
+            score = -mtdf(board, -me, -INFINITY, -max, -guess, depth-1)
           else
-            if zws
-              process.stdout.write(':\b') if verbose
-            score = -minmax(board, -me, -INFINITY, -max, 0, depth-1)
+            if zws and max != -INFINITY
+              score = -minmax(board, -me, -(max+1), -max, 0, depth-1)
+              if score > max
+                process.stdout.write(':\b') if verbose
+                score = -minmax(board, -me, -INFINITY, -score, 0, depth-1)
+            else
+              if zws
+                process.stdout.write(':\b') if verbose
+              score = -minmax(board, -me, -INFINITY, -max, 0, depth-1)
           board.undo(me, pos, flips)
           if score > max
             process.stdout.write ":#{score} " if verbose
@@ -190,10 +215,10 @@ module.exports = (options={}) ->
               process.stdout.write ":#{score} " if verbose
           move_scores[pos] *= .001
           move_scores[pos] += score
+          guess = max
       process.stdout.write '\n' if verbose
 
-    #if verbose and cache_size
-    #  cache.stats()
+    cache.stats() if verbose and cache_size
 
     {value: max, move: best, solved: null}
 
