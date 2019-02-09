@@ -150,8 +150,8 @@ score = 0
 draws = 0
 
 do ->
-  s = ''
   n_matches = 0
+  n_diff = 0
   for code in fs.readFileSync(argv.openings, 'utf8').trim().split('\n')
     b = decode code
     board = new PatternBoard b
@@ -160,13 +160,13 @@ do ->
     score += outcome
     if outcome > 0
       wins[0]++
-      s += 'X'
+      w0 = 1
     else if outcome < 0
       wins[1]++
-      s += 'O'
+      w0 = -1
     else
       draws++
-      s += '-'
+      w0 = 0
     n_matches++
 
     board = new PatternBoard b
@@ -174,14 +174,16 @@ do ->
     score -= outcome
     if outcome > 0
       wins[1]++
-      s += 'X'
+      w1 = 1
     else if outcome < 0
       wins[0]++
-      s += 'O'
+      w1 = -1
     else
       draws++
-      s += '-'
+      w1 = 0
     n_matches++
+
+    n_diff++ if w0 != w1
 
     console.log 'player[0]', wins[0], 'wins'
     console.log 'player[1]', wins[1], 'wins'
@@ -191,7 +193,7 @@ do ->
     avg = score / n_matches
     console.log 'avg score for player[0]', avg
 
-  console.log s
+  console.log 'openings quality', n_diff / (n_matches / 2)
 
   [arg] = argv._
   if arg
