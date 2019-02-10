@@ -142,7 +142,7 @@ do ->
   n_col = 0
   n_play = 0
   n_skip = 0
-  avg_col = 0
+  avg_col = (argv.min_col + argv.max_col) / 2
   loop
     if fs.existsSync('.reload-selfplay')
       break
@@ -163,10 +163,7 @@ do ->
       n_col++
       console.log "COLLISION #{n_col}/#{n_play}"
 
-    if n_play < argv.D
-      avg_col = (avg_col * (n_play - 1) + int(collision)) / n_play
-    else
-      avg_col = (avg_col * (argv.D - 1) + int(collision)) / argv.D
+    avg_col = (avg_col * (argv.D - 1) + int(collision)) / argv.D
 
     if avg_col > argv.max_col
       randomness *= 1.01
