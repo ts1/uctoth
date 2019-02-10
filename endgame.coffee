@@ -6,7 +6,6 @@ uct = require './uct'
 
 CACHE_MIN = 10
 ORDER_MIN = 9
-USE_MTDF = true
 
 defaults =
   cache_size: 1000000
@@ -201,13 +200,7 @@ module.exports = (options={}) ->
       for {move} in moves
         flips = board.move me, move
         score = base_score + 2*flips.length + 1
-        if not USE_MTDF and lower > -64 and upper - lower > 1 and left >= 12
-          s = -solve_sub(-me, -(lower+1), -lower, -score, 0, left-1)
-          if s > lower and s < upper
-            s = -solve_sub(-me, -upper, -s, -score, 0, left-1)
-          score = s
-        else
-          score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
+        score = -solve_sub(-me, -upper, -lower, -score, 0, left-1)
         board.undo me, move, flips
         if score > max
           max = score
@@ -219,11 +212,6 @@ module.exports = (options={}) ->
 
     solve_sub = cached_solve solve_sub, board
     solve_sub(me, lower, upper, base_score, 0, left)
-
-  solve = (board, me, lower, upper) ->
-    score = board.score(me)
-    left = board.count(EMPTY)
-    ordered_solve(board, me, lower, upper, score, left)
 
   mtdf = (board, me, lower, upper, first_guess) ->
     score = board.score(me)
@@ -288,16 +276,7 @@ module.exports = (options={}) ->
       flips = board.move(me, pos)
       console.assert flips.length
       process.stdout.write "#{pos_to_str(pos)}" if opt.verbose
-      if USE_MTDF
-        score = -mtdf(board, -me, -upper, -lower, -first_guess)
-      else
-        if lower > -64
-          score = -solve(board, -me, -(lower+2), -lower)
-          if score > lower and score < upper
-            process.stdout.write ':\b' if opt.verbose
-            score = -solve(board, -me, -upper, -score)
-        else
-          score = -solve(board, -me, -upper, -lower)
+      score = -mtdf(board, -me, -upper, -lower, -first_guess)
       board.undo(me, pos, flips)
       if score > lower
         process.stdout.write ":#{score} " if opt.verbose
