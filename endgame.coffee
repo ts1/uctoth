@@ -2,6 +2,7 @@
 { SCORE_MULT } = require './pattern'
 uct = require './uct'
 { INFINITY, int } = require './util'
+{ PatternBoard } = require './pattern'
 
 CACHE_THRESHOLD = 8
 ORDER_MIN = 9
@@ -251,6 +252,8 @@ module.exports = (options={}) ->
     value
 
   (board, me, wld, moves=null) ->
+    board = new PatternBoard board
+
     moves or= board.list_moves(me)
 
     left = board.count(EMPTY)
