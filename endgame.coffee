@@ -77,8 +77,7 @@ module.exports = (options={}) ->
     update_parity = (board, pos) ->
       parity_tbl[parity_index[pos]] ^= 1
 
-  final_move = (board, me, score) ->
-    pos = board.first_empty()
+  final_move = (board, me, score, pos) ->
     n = board.count_flips(me, pos)
     if n
       score + 2*n + 1
@@ -107,19 +106,19 @@ module.exports = (options={}) ->
       emp2 = board.empty_next[emp1]
       best = -INFINITY
 
-      flips = board.move me, emp1
+      flips = board.move me, emp1, false
       n = flips.length
       if n
-        best = -final_move(board, -me, -(score + 2*n + 1))
-        board.undo me, emp1, flips
+        best = -final_move(board, -me, -(score + 2*n + 1), emp2)
+        board.undo me, emp1, flips, false
 
-      flips = board.move me, emp2
+      flips = board.move me, emp2, false
       n = flips.length
       if n
-        s = -final_move(board, -me, -(score + 2*n + 1))
+        s = -final_move(board, -me, -(score + 2*n + 1), emp1)
         if s > best
           best = s
-        board.undo me, emp2, flips
+        board.undo me, emp2, flips, false
 
       if best > -INFINITY
         best
