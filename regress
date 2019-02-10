@@ -1,6 +1,7 @@
 #!/usr/bin/env coffee
 
-{ readlines, gzwriter, round_value } = require './util'
+require './rejection_handler'
+{ readlines, gzwriter, round_value, shuffle } = require './util'
 { get_single_index_size } = require './pattern'
 yargs = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options] indexes coeffs"
@@ -11,6 +12,13 @@ yargs = require 'yargs'
       default: 1e-3
       type: 'number'
       requiresArg: true
+    s:
+      alias: 'split'
+      desc: 'Split this ratio as test set'
+      default: 0
+      type: 'number'
+      requiresArg: true
+
 argv = yargs.argv
 
 D_FACTOR = 120
@@ -54,12 +62,22 @@ make_gradient = (rows, coeffs) ->
 update_coeffs = (coeffs, vector, rate) ->
   coeffs[i] + vector[i] * rate for i in [0...index_size] by 1
 
-read_rows = (filename, split) ->
+read_rows = (filename) ->
   console.log "loading #{filename}"
   rows = []
   await readlines filename, (line) ->
     rows.push JSON.parse line
-  rows
+  if argv.split
+    n_train = Math.round(argv.split * rows.length)
+    rows = shuffle rows
+    train_set = rows.slice(0, n_train)
+    test_set = rows.slice(n_train)
+    {train_set, test_set}
+  else
+    train_set = test_set = rows
+    {train_set, test_set}
+
+split_rows = (rows) ->
 
 average = (rows) ->
   sum = 0
@@ -68,10 +86,12 @@ average = (rows) ->
   sum / rows.length
 
 regress = (index_file) ->
-  train_set = await read_rows index_file
+  {train_set, test_set} = await read_rows index_file
+
   console.log "train set #{train_set.length}"
+  console.log "test set #{test_set.length}"
   avg = average train_set
-  console.log "avg #{avg}"
+  console.log "train set avg #{avg}"
   coeffs = (0 for i in [0...index_size] by 1)
   dev = last_loss = verify train_set, coeffs
   console.log 'deviation', last_loss
@@ -80,14 +100,24 @@ regress = (index_file) ->
   step = 1
   d_avg = 0
   rate = 10 / train_set.length
+  finish = false
   loop
     vector = make_gradient train_set, coeffs
 
+    try_up = false
     loop
       new_coeffs = update_coeffs coeffs, vector, rate
-      loss = verify train_set, new_coeffs, last_loss
+      loss = verify test_set, new_coeffs, last_loss
       break if loss < last_loss
       rate *= 0.7
+      if rate*train_set.length < 1e-5
+        if not try_up
+          try_up = true
+          rate = 1000 / train_set.length
+        else
+          finish = true
+          break
+    break if finish
     coeffs = new_coeffs
 
     d = last_loss - loss
