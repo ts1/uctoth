@@ -1,4 +1,5 @@
 #!/usr/bin/env coffee
+require './rejection_handler'
 readline = require 'readline'
 {
   Board

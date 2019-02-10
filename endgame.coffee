@@ -4,32 +4,8 @@ uct = require './uct'
 { INFINITY, int } = require './util'
 
 CACHE_THRESHOLD = 8
-ORDER_MIN = 10
-ORDER_MAX = 20
+ORDER_MIN = 9
 USE_MTDF = true
-
-UCT_TBL = [
-  6
-  8
-  10
-  12
-  16
-  20
-  24
-  32
-  40
-  48
-  64
-]
-
-evaluators = []
-
-get_eval = (empty) ->
-  empty = ORDER_MAX if empty > ORDER_MAX
-  empty = ORDER_MIN if empty < ORDER_MIN
-  retval = evaluators[empty - ORDER_MIN]
-  console.assert retval
-  retval
 
 defaults =
   cache_size: 500000
@@ -204,7 +180,15 @@ module.exports = (options={}) ->
       if left < ORDER_MIN
         return simple_solve(board, me, lower, upper, base_score, left)
 
-      {moves} = get_eval(left)(board, me)
+      moves = []
+      board.each_empty (pos) ->
+        flips = board.move me, pos
+        if flips.length
+          moves.push
+            move: pos
+            mobility: board.count_moves(-me)
+            value: opt.evaluate(board, me)
+          board.undo me, pos, flips
 
       unless moves.length
         if pass
@@ -212,13 +196,7 @@ module.exports = (options={}) ->
         else
           return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
-      for move in moves
-        flips = board.move me, move.move
-        move.mobility = board.count_moves(-me)
-        board.undo me, move.move, flips
-
-      moves.sort (a, b) ->
-        a.mobility - b.mobility or b.n - a.n or b.value - a.value
+      moves.sort (a, b) -> a.mobility - b.mobility or b.value - a.value
 
       max = -INFINITY
       for {move} in moves
@@ -274,14 +252,6 @@ module.exports = (options={}) ->
 
   (board, me, wld, moves=null) ->
     moves or= board.list_moves(me)
-
-    evaluators =
-      for emp in [ORDER_MIN..ORDER_MAX]
-        uct
-          max_search: UCT_TBL[emp - ORDER_MIN]
-          evaluate: opt.evaluate
-          verbose: false
-          inverted: opt.inverted
 
     left = board.count(EMPTY)
     n_search = 10000 * 3**(left - 18)
