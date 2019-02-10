@@ -47,7 +47,7 @@ argv = require 'yargs'
     D:
       desc: 'Collision average duration'
       type: 'number'
-      default: 40
+      default: 20
       requiresArg: true
     b:
       alias: 'balance'
