@@ -1,14 +1,17 @@
 { Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
 { SCORE_MULT } = require './pattern'
 uct = require './uct'
-{ INFINITY, int } = require './util'
+{ INFINITY, lru_cache } = require './util'
 { PatternBoard } = require './pattern'
 
-CACHE_MIN = 10
-ORDER_MIN = 9
+CACHE_MIN = 11
+ORDER_MIN = 10
+CACHE_EXACT = 0
+CACHE_UBOUND = 1
+CACHE_LBOUND = -1
 
 defaults =
-  cache_size: 1000000
+  cache_size: 500000
   inverted: false
   verbose: true
   evaluate: null
@@ -16,9 +19,6 @@ defaults =
 
 module.exports = (options={}) ->
   opt = {defaults..., options...}
-
-  #if opt.inverted
-  #  opt.use_parity = false
   
   calc_outcome = (score, left) ->
     if score > 0
@@ -34,22 +34,12 @@ module.exports = (options={}) ->
       (score, left) -> -orig(score, left)
 
   if opt.cache_size
-    cache = require('./cache')(opt.cache_size)
-    cached_solve = (f, board) ->
-      (me, lower, upper, score, pass, left) ->
-        if left < CACHE_MIN
-          return f me, lower, upper, score, pass, left
-
-        value = cache.get(board, me, left, lower, upper)
-        if value != null
-          return value
-
-        value = f me, lower, upper, score, pass, left
-
-        cache.set board, me, left, lower, upper, value
-        value
+    cache = lru_cache(opt.cache_size)
+    cache_put = (board, value, type) -> cache.put(board.key(), {value, type})
+    cache_get = (board) -> cache.get(board.key())
   else
-    cached_solve = (f, board) -> f
+    cache_put = ->
+    cache_get = -> null
 
   if opt.use_parity
     parity_index = []
@@ -178,6 +168,21 @@ module.exports = (options={}) ->
       if left < ORDER_MIN
         return simple_solve(board, me, lower, upper, base_score, left)
 
+      orig_lower = lower
+
+      if left >= CACHE_MIN
+        data = cache_get(board)
+        if data
+          switch data.type
+            when CACHE_EXACT
+              return data.value
+            when CACHE_UBOUND
+              if data.value <= lower
+                return data.value
+            when CACHE_LBOUND
+              if data.value >= upper
+                return data.value
+
       moves = []
       board.each_empty (pos) ->
         flips = board.move me, pos
@@ -190,7 +195,10 @@ module.exports = (options={}) ->
 
       unless moves.length
         if pass
-          return calc_outcome(base_score, left)
+          score = calc_outcome(base_score, left)
+          if left >= CACHE_MIN
+            cache_put(board, score, CACHE_EXACT)
+          return score
         else
           return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
@@ -208,9 +216,15 @@ module.exports = (options={}) ->
             lower = score
             if score >= upper
               break
+      if left >= CACHE_MIN
+        if max >= upper
+          cache_put(board, max, CACHE_LBOUND)
+        else if max <= orig_lower
+          cache_put(board, max, CACHE_UBOUND)
+        else
+          cache_put(board, max, CACHE_EXACT)
       max
 
-    solve_sub = cached_solve solve_sub, board
     solve_sub(me, lower, upper, base_score, 0, left)
 
   mtdf = (board, me, lower, upper, first_guess) ->
@@ -288,7 +302,7 @@ module.exports = (options={}) ->
         process.stdout.write " " if opt.verbose
       first_guess = lower
     process.stdout.write '\n' if opt.verbose
-    cache.stats() if opt.verbose and opt.cache_size
+    console.log cache.stats() if opt.verbose and opt.cache_size
 
     if not best
       best = moves[0]
