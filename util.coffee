@@ -83,7 +83,7 @@ lru_cache = (max) ->
     item = cache[key]
     unless item
       miss += 1
-      return null 
+      return null
     hit += 1
     if item != head.next
       remove item
@@ -96,7 +96,6 @@ lru_cache = (max) ->
 round_value = (value) -> Math.round(value * 1e4) / 1e4
 
 INFINITY = 1<<30
-
 
 unique_moves = (board, me, moves=null) ->
   {encode_normalized} = require './encode'

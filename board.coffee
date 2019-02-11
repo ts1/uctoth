@@ -350,6 +350,7 @@ class Board
         m++
     console.assert n == m
 
+  key: -> JSON.stringify(@board)
 
 module.exports = {
   EMPTY, BLACK, WHITE, GUARD,
