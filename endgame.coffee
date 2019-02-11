@@ -35,8 +35,9 @@ module.exports = (options={}) ->
 
   if opt.cache_size
     cache = lru_cache(opt.cache_size)
-    cache_put = (board, value, type) -> cache.put(board.key(), {value, type})
-    cache_get = (board) -> cache.get(board.key())
+    cache_put = (me, board, value, type) ->
+      cache.put(board.key() + me, {value, type})
+    cache_get = (me, board) -> cache.get(board.key() + me)
   else
     cache_put = ->
     cache_get = -> null
@@ -171,7 +172,7 @@ module.exports = (options={}) ->
       orig_lower = lower
 
       if left >= CACHE_MIN
-        data = cache_get(board)
+        data = cache_get(me, board)
         if data
           switch data.type
             when CACHE_EXACT
@@ -197,7 +198,7 @@ module.exports = (options={}) ->
         if pass
           score = calc_outcome(base_score, left)
           if left >= CACHE_MIN
-            cache_put(board, score, CACHE_EXACT)
+            cache_put(me, board, score, CACHE_EXACT)
           return score
         else
           return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
@@ -216,13 +217,15 @@ module.exports = (options={}) ->
             lower = score
             if score >= upper
               break
+
       if left >= CACHE_MIN
         if max >= upper
-          cache_put(board, max, CACHE_LBOUND)
+          cache_put(me, board, max, CACHE_LBOUND)
         else if max <= orig_lower
-          cache_put(board, max, CACHE_UBOUND)
+          cache_put(me, board, max, CACHE_UBOUND)
         else
-          cache_put(board, max, CACHE_EXACT)
+          cache_put(me, board, max, CACHE_EXACT)
+
       max
 
     solve_sub(me, lower, upper, base_score, 0, left)
