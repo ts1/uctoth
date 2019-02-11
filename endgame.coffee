@@ -4,12 +4,12 @@ uct = require './uct'
 { INFINITY, int } = require './util'
 { PatternBoard } = require './pattern'
 
-CACHE_THRESHOLD = 8
+CACHE_MIN = 10
 ORDER_MIN = 9
 USE_MTDF = true
 
 defaults =
-  cache_size: 500000
+  cache_size: 1000000
   inverted: false
   verbose: true
   evaluate: null
@@ -38,7 +38,7 @@ module.exports = (options={}) ->
     cache = require('./cache')(opt.cache_size)
     cached_solve = (f, board) ->
       (me, lower, upper, score, pass, left) ->
-        if left <= CACHE_THRESHOLD
+        if left < CACHE_MIN
           return f me, lower, upper, score, pass, left
 
         value = cache.get(board, me, left, lower, upper)
@@ -172,7 +172,6 @@ module.exports = (options={}) ->
 
     init_parity(board) if opt.use_parity
 
-    solve_sub = cached_solve solve_sub, board
     solve_sub(me, lower, upper, base_score, 0, left)
 
   ordered_solve = (board, me, lower, upper, base_score, left) ->
@@ -256,7 +255,7 @@ module.exports = (options={}) ->
     moves or= board.list_moves(me)
 
     left = board.count(EMPTY)
-    n_search = 10000 * 3**(left - 18)
+    n_search = 10000 * 3**(left - 20)
     if n_search > 400000
       n_search = 400000
     if n_search < 10000
