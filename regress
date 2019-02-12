@@ -14,8 +14,8 @@ yargs = require 'yargs'
       requiresArg: true
     s:
       alias: 'split'
-      desc: 'Split this ratio as test set'
-      default: 0
+      desc: 'Split this ratio as train set, and rest as test set'
+      default: null
       type: 'number'
       requiresArg: true
 
