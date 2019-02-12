@@ -9,5 +9,5 @@ while true; do
         exit 1
     fi
     touch $SIGNAL_FILE
-    time ./match match.log
+    time npx coffee match match.log
 done

@@ -50,6 +50,10 @@ Copy from `ref` directory at first (then build your own).
 cp ref/scores.json .
 ```
 
+Because scripts are written in Coffee Script 2, you should either install `coffeescript` globally and run scripts directly, or use `npx coffee` to run.
+
+Node v10.x sometimes runs `regress` very slowly. I use v8.x.
+
 ### Bootstrapping
 
 This section describes how to train your own `scores.json` from scratch.
