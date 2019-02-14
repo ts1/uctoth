@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-./dump_nodes | ./nodes_to_single_indexes -
+npx coffee dump_nodes | npx coffee nodes_to_single_indexes -
 for i in $(seq 0 9); do
     npx coffee --nodejs --max-old-space-size=4096 regress $@ tmp/indexes$i tmp/coeffs$i
 done
