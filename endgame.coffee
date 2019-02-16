@@ -5,12 +5,13 @@ uct = require './uct'
 { PatternBoard } = require './pattern'
 minmax = require './minmax'
 
-CACHE_MIN = 11
-EARLY_CACHE_MIN = 16
-ORDER_MIN = 10
 CACHE_EXACT = 0
 CACHE_UBOUND = 1
 CACHE_LBOUND = -1
+
+CACHE_MIN = 10
+EARLY_CACHE_MIN = 16
+ORDER_MIN = 10
 MOBILITY_SCORE = 3300
 MINMAX_1_DEPTH = 17
 MINMAX_2_DEPTH = 26
