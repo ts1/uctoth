@@ -10,6 +10,7 @@ ORDER_MIN = 10
 CACHE_EXACT = 0
 CACHE_UBOUND = 1
 CACHE_LBOUND = -1
+MOBILITY_SCORE = 3300
 
 defaults =
   cache_size: 500000
@@ -191,8 +192,7 @@ module.exports = (options={}) ->
         if flips.length
           moves.push
             move: pos
-            mobility: board.count_moves(-me)
-            value: opt.evaluate(board, me)
+            score: board.count_moves(-me)*-MOBILITY_SCORE + opt.evaluate(board, me)
           board.undo me, pos, flips
 
       unless moves.length
@@ -204,7 +204,7 @@ module.exports = (options={}) ->
         else
           return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
-      moves.sort (a, b) -> a.mobility - b.mobility or b.value - a.value
+      moves.sort (a, b) -> b.score - a.score
 
       if left >= EARLY_CACHE_MIN
         for {move} in moves
