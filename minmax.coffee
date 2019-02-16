@@ -165,7 +165,7 @@ module.exports = (options={}) ->
       guess = value
     value
 
-  main = (board, me, moves=null) ->
+  minmax_main = (board, me, moves=null) ->
     board = new board_class board
 
     moves or= board.list_moves(me)
@@ -222,7 +222,7 @@ module.exports = (options={}) ->
 
     {value: max, move: best, solved: null}
 
-  main.minmax = minmax
-  main.simple_minmax = simple_minmax
+  minmax_main.minmax = minmax
+  minmax_main.simple_minmax = simple_minmax
 
-  main
+  minmax_main

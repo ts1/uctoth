@@ -3,6 +3,7 @@
 uct = require './uct'
 { INFINITY, lru_cache } = require './util'
 { PatternBoard } = require './pattern'
+minmax = require './minmax'
 
 CACHE_MIN = 11
 EARLY_CACHE_MIN = 16
@@ -11,6 +12,8 @@ CACHE_EXACT = 0
 CACHE_UBOUND = 1
 CACHE_LBOUND = -1
 MOBILITY_SCORE = 3300
+MINMAX_1_DEPTH = 17
+MINMAX_2_DEPTH = 26
 
 defaults =
   cache_size: 500000
@@ -21,6 +24,10 @@ defaults =
 
 module.exports = (options={}) ->
   opt = {defaults..., options...}
+
+  {simple_minmax} = minmax
+    evaluate: opt.evaluate
+    verbose: false
   
   calc_outcome = (score, left) ->
     if score > 0
@@ -190,9 +197,15 @@ module.exports = (options={}) ->
       board.each_empty (pos) ->
         flips = board.move me, pos
         if flips.length
+          if left >= MINMAX_2_DEPTH
+            val = -simple_minmax(board, -me, -INFINITY, INFINITY, false, 2)
+          else if left >= MINMAX_1_DEPTH
+            val = -simple_minmax(board, -me, -INFINITY, INFINITY, false, 1)
+          else
+            val = opt.evaluate(board, me)
           moves.push
             move: pos
-            score: board.count_moves(-me)*-MOBILITY_SCORE + opt.evaluate(board, me)
+            score: board.count_moves(-me) * -MOBILITY_SCORE + val
           board.undo me, pos, flips
 
       unless moves.length
