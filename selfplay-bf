@@ -36,10 +36,12 @@ argv = require 'yargs'
       type: 'number'
       default: 14000
       requiresArg: true
-    balance:
-      desc: 'Balance outcome (--no-balance to disable)'
-      default: true
-      requiresArg: false
+    b:
+      alias: 'balance'
+      desc: 'Tolerance of outcome balance'
+      type: 'number'
+      default: 400
+      requiresArg: true
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
@@ -122,9 +124,9 @@ find_unplayed_opening = (book, depth, cb) ->
       leaf = true
     else if d == depth
       leaf = true
-      if argv.balance
-        if ((depth&1) and balance < 0) or ((depth&1)==0 and balance > 0)
-          leaf = false
+      if ((depth&1) and balance < -argv.balance) or
+          ((depth&1)==0 and balance > argv.balance)
+        leaf = false
 
     if leaf
       data = await book.get(board)
