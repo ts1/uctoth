@@ -5,6 +5,7 @@ uct = require './uct'
 { PatternBoard } = require './pattern'
 
 CACHE_MIN = 11
+EARLY_CACHE_MIN = 16
 ORDER_MIN = 10
 CACHE_EXACT = 0
 CACHE_UBOUND = 1
@@ -204,6 +205,15 @@ module.exports = (options={}) ->
           return -solve_sub(-me, -upper, -lower, -base_score, 1, left)
 
       moves.sort (a, b) -> a.mobility - b.mobility or b.value - a.value
+
+      if left >= EARLY_CACHE_MIN
+        for {move} in moves
+          flips = board.move me, move, false
+          c = cache_get(-me, board)
+          board.undo me, move, flips, false
+          if c and c.type != CACHE_LBOUND and -c.value >= upper
+            cache_put(me, board, -c.value, CACHE_LBOUND)
+            return -c.value
 
       max = -INFINITY
       for {move} in moves
