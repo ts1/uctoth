@@ -15,10 +15,15 @@
       @click="level = l.toLowerCase()"
     ) {{ i18n[l] }}
 
-  .guide.select(@click="guide = !guide")
+  .guide.checkbox.select(@click="guide = !guide")
     CheckboxMarked(v-if="guide")
     CheckboxBlankOutline(v-if="!guide")
     span.label {{ i18n.show_guide }}
+
+  .moves.checkbox.select(@click="moves = !moves")
+    CheckboxMarked(v-if="moves")
+    CheckboxBlankOutline(v-if="!moves")
+    span.label {{ i18n.show_moves }}
 
   .langs
     a.lang.select(href="?lang=en" :class="i18n.lang=='en' && 'is-active'")
@@ -39,10 +44,10 @@ import Button from './Button'
 import i18n from '../i18n'
 
 set_pref = (key, value) ->
-  localStorage['_oth_'+key] = JSON.stringify(value)
+  localStorage['uctoth_'+key] = JSON.stringify(value)
 
 get_pref = (key, fallback) ->
-  value = localStorage['_oth_'+key]
+  value = localStorage['uctoth_'+key]
   if value?
     JSON.parse(value)
   else
@@ -55,6 +60,7 @@ export default
     color: get_pref('color', BLACK)
     level: get_pref('level', 'normal')
     guide: get_pref('guide', true)
+    moves: get_pref('moves', false)
     BLACK
     WHITE
     i18n
@@ -64,7 +70,8 @@ export default
       set_pref 'color', @color
       set_pref 'level', @level
       set_pref 'guide', @guide
-      @start @color, @level, @guide
+      set_pref 'moves', @moves
+      @start @color, @level, @guide, @moves
   components: { Disc, CheckboxMarked, CheckboxBlankOutline, Button }
 </script>
 
@@ -111,9 +118,10 @@ export default
 .is-active
   border-color #ccc
 
-.guide
+.checkbox
   padding 5px
   .label
     margin-left 5px
+.moves
   margin-bottom 25px
 </style>

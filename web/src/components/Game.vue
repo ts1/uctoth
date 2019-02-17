@@ -22,7 +22,7 @@
       @undo="undo_move"
       @reset-moves="reset_moves"
     )
-    Moves.moves(:moves="moves" @enter-moves="enter_moves($event)")
+    Moves.moves(:moves="moves" @enter-moves="enter_moves($event)" v-if="show_moves")
     .msg-box-wrapper
       transition(name='msg')
         MessageBox(v-bind="msg" :key="msg_key" v-if="msg" class="msg-box")
@@ -41,7 +41,7 @@ import i18n from '../i18n'
 import * as sound from '../sound.coffee'
 
 export default
-  props: ['user', 'level', 'guide', 'back']
+  props: ['user', 'level', 'guide', 'show_moves', 'back']
   data: -> {
     msg: null
     msg_key: 0

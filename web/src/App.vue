@@ -2,7 +2,14 @@
   #app
     h1(v-if="mode=='setting'") UCTOTH
     Setting(v-if="mode=='setting'" :start="start" class="setting")
-    Game(v-if="mode=='game'" :user="color" :level="level" :guide="guide" :back="back")
+    Game(
+      v-if="mode=='game'"
+      :user="color"
+      :level="level"
+      :guide="guide"
+      :show_moves="moves"
+      :back="back"
+    )
     .link
       a(href="https://github.com/ts1/uctoth" target="_blank") Source code
 </template>
@@ -19,11 +26,13 @@
       color: null
       level: null
       guide: null
+      moves: null
     methods:
-      start: (color, level, guide) ->
+      start: (color, level, guide, moves) ->
         @color = color
         @level = level
         @guide = guide
+        @moves = moves
         @mode = 'game'
       back: ->
         @mode = 'setting'

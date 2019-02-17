@@ -6,6 +6,7 @@
       :value="moves"
       @input="moves_ = $event.target.value"
       @keypress.enter="$emit('enter-moves', moves_)"
+      ref="input"
     )
 </template>
 
@@ -16,6 +17,8 @@
     data: ->
       moves_: ''
       i18n: require '../i18n'
+    watch:
+      moves: -> @$nextTick => @$refs.input.scrollLeft = 9999
 
 </script>
 
@@ -39,4 +42,5 @@
       color #999
       padding 10px
       font-size 14px
+      word-break keep-all
 </style>
