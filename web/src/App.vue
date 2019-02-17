@@ -1,7 +1,7 @@
 <template lang="pug">
   #app
     h1(v-if="mode=='setting'") UCTOTH
-    Setting(v-if="mode=='setting'" :start="start")
+    Setting(v-if="mode=='setting'" :start="start" class="setting")
     Game(v-if="mode=='game'" :user="color" :level="level" :guide="guide" :back="back")
     .link
       a(href="https://github.com/ts1/uctoth" target="_blank") Source code
@@ -41,7 +41,6 @@
     line-height 1.5
     -webkit-font-smoothing antialiased
     -moz-osx-font-smoothing grayscale
-    font-feature-settings "palt"
 
   #app
     min-height 100vh
@@ -57,12 +56,14 @@
     letter-spacing .35em
     font-family 'Lato', sans-serif
 
+  .setting
+    margin-bottom 10px
+
   .link
     display flex
     justify-content center
     font-size 12px
     line-height 1
-    margin-top 10px
     a
       color #ccc
       text-decoration none

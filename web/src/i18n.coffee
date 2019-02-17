@@ -20,6 +20,8 @@ translations =
     hard: 'Hard'
     hardest: 'Very hard'
     mode: '${mode} mode'
+    moves: 'Moves'
+    invalid_moves: 'Incorrect moves.'
   ja:
     first_move: '先手'
     second_move: '後手'
@@ -42,6 +44,8 @@ translations =
     hardest: '超ハード'
     mode: '${mode}モード'
     description: 'UctothはWebブラウザで遊べるシンプルなオセロ(リバーシ)ゲームです。'
+    moves: '棋譜'
+    invalid_moves: '棋譜に誤りがあります'
 
 parse_qs = (qs=window.location.search)->
   if qs[0] == '?'

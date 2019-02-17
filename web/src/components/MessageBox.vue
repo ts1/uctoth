@@ -1,5 +1,5 @@
 <template lang="pug">
-.box
+.box(:class="error && 'error'")
   .text
     Spinner.spinner(v-if="spin")
     | {{ text }}
@@ -13,20 +13,24 @@ import Spinner from './Spinner'
 import Button from './Button'
 import i18n from '../i18n'
 export default
-  props: ['text', 'pass', 'back', 'spin']
+  props: ['text', 'pass', 'back', 'spin', 'error']
   data: -> { i18n }
   components: { Spinner, Button }
 </script>
 
 <style lang="stylus" scoped>
 .box
-  width 480px
-  max-width 90vw
+  width 100%
+  max-width 95vw
   border-radius 10px
   background #ccc
   color #333
   font-size 24px
   padding 20px
+  box-shadow 0 5px 30px rgba(0, 0, 0, .5)
+  &.error
+    background #933
+    color #ccc
 .text
   display flex
   justify-content center

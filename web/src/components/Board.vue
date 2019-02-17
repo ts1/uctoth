@@ -29,6 +29,7 @@
     pos_from_xy
     pos_to_str
     pos_from_str
+    pos_array_from_str
     BLACK
     WHITE
   } from '@oth/board'
@@ -40,7 +41,8 @@
   worker = new Player
 
   export default
-    props: ['user', 'level', 'guide', 'message', 'back', 'set_undo_btn']
+    props: ['user', 'level', 'guide', 'message', 'back', 'set_undo_btn',
+      'entered_moves']
 
     data: -> {
       board: new Board
@@ -130,10 +132,14 @@
         flips = @board.move @turn, pos
         return unless flips.length
         sound 'move'
+        @$emit 'add-move', pos_to_str(pos, @turn)
         @undo_stack.push [@turn, pos, flips]
         if @turn == @user
           @user_moves++
         @turn = -@turn
+        @after_move()
+
+      after_move: ->
         if @board.any_moves @turn
           if @turn == @user
             @message text:  @i18n.your_turn
@@ -192,6 +198,7 @@
         loop
           [turn, pos, flips] = @undo_stack.pop()
           @board.undo turn, pos, flips
+          @$emit 'undo'
           break if turn == @user
         @user_moves--
         if @turn != @user
@@ -203,6 +210,7 @@
         @board.board.pop()
 
       keypress: (e) ->
+        return if e.target.nodeName == 'INPUT'
         @keys.push(e.key)
         @keys = @keys.slice(-2)
         str = @keys.join('')
@@ -216,6 +224,27 @@
 
     watch:
       can_undo: -> @set_undo_btn(@can_undo, @undo)
+
+      entered_moves: ->
+        moves = pos_array_from_str(@entered_moves)
+        @$emit 'reset-moves'
+        @board = new Board
+        success = false
+        turn = BLACK
+        for move in moves
+          flips = @board.move turn, move
+          if flips.length == 0
+            success = false
+            break
+          @$emit 'add-move', pos_to_str(move, turn)
+          success = true
+          if @board.any_moves(-turn)
+            turn = -turn
+        if success
+          @turn = turn
+          @after_move()
+        else
+          @message text: @i18n.invalid_moves, error: true
 
     components: { Disc }
 </script>

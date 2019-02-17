@@ -17,10 +17,16 @@
       :message="show_message"
       :back="back"
       :set_undo_btn="set_undo_btn"
+      :entered_moves="entered_moves"
+      @add-move="add_move($event)"
+      @undo="undo_move"
+      @reset-moves="reset_moves"
     )
     .msg-box-wrapper
       transition(name='msg')
         MessageBox(v-bind="msg" :key="msg_key" v-if="msg" class="msg-box")
+  .filler
+  Moves(:moves="moves" @enter-moves="enter_moves($event)")
 </template>
 
 <script lang="coffee">
@@ -30,6 +36,7 @@ import MuteIcon from '@icons/VolumeOff'
 import Board from './Board'
 import MessageBox from './MessageBox'
 import Button from './Button'
+import Moves from './Moves'
 import i18n from '../i18n'
 import * as sound from '../sound.coffee'
 
@@ -42,6 +49,8 @@ export default
     undo: ->
     muted: sound.is_muted()
     sound_supported: sound.is_supported()
+    moves: ''
+    entered_moves: ''
     i18n
   }
   mounted: -> window.scrollTo 0, 0
@@ -59,7 +68,24 @@ export default
     mute: ->
       @muted = not @muted
       sound.mute(@muted)
-  components: { BackIcon, SoundIcon, MuteIcon, Board, MessageBox, Button }
+    add_move: (move) ->
+      @moves += move
+    undo_move: ->
+      @moves = @moves.substr(0, @moves.length-2)
+    enter_moves: (moves) ->
+      @entered_moves = moves
+    reset_moves: ->
+      @moves = ''
+
+  components: {
+    BackIcon
+    SoundIcon
+    MuteIcon
+    Board
+    MessageBox
+    Button
+    Moves
+  }
 </script>
 
 <style lang="stylus" scoped>
@@ -68,6 +94,7 @@ export default
     max-width: 480px
     display flex
     flex-direction column
+    flex-grow 1
 
   header
     display flex
@@ -113,4 +140,8 @@ export default
     opacity 0
   .msg-enter-active, .msg-leave-active
     transition all .7s cubic-bezier(.7,0,.3,1)
+
+
+  .filler
+    flex-grow: 1
 </style>
