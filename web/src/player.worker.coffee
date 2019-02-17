@@ -11,8 +11,8 @@ param_table =
     search: 2000
     random: 0
     invert: true
-    wld: 18
-    full: 16
+    wld: 15
+    full: 13
   easy:
     search: 1
     random: .1
