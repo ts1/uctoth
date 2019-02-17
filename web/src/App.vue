@@ -37,7 +37,7 @@
   body, html
     background #333
   #app
-    font-family -apple-system,BlinkMacSystemFont,Helvetica Neue,Segoe UI,sans-serif;
+    font-family Lato,'Noto Sans JP',sans-serif;
     font-size 16px
     line-height 1.5
     -webkit-font-smoothing antialiased
@@ -52,8 +52,8 @@
 
   h1
     font-weight lighter
-    letter-spacing .25em
-    font-family 'Montserrat', sans-serif
+    letter-spacing .35em
+    font-family 'Lato', sans-serif
 
   .link
     display flex

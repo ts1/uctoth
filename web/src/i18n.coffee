@@ -14,11 +14,11 @@ translations =
     lose: 'You lost by ${discs}!'
     draw: 'Draw!'
     play_again: 'Play Again'
-    easiest: 'Easiest'
+    easiest: 'Very easy'
     easy: 'Easy'
     normal: 'Normal'
     hard: 'Hard'
-    hardest: 'Hardest'
+    hardest: 'Very hard'
     mode: '${mode} mode'
   ja:
     first_move: '先手'

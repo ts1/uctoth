@@ -8,11 +8,11 @@ player = null
 
 param_table =
   easiest:
-    search: 1000
+    search: 2000
     random: 0
     invert: true
-    wld: 13
-    full: 15
+    wld: 18
+    full: 16
   easy:
     search: 1
     random: .1
@@ -27,17 +27,17 @@ param_table =
     full: 0
   hard:
     book: true
-    book_random: .5
-    search: 6
+    book_random: .7
+    search: 5
     random: 0
-    wld: 8
-    full: 10
+    wld: 10
+    full: 8
   hardest:
     book: true
-    book_random: 0
+    book_random: .1
     search: 100000
     random: 0
-    wld: 16
+    wld: 20
     full: 18
 
 set_level = (level) ->

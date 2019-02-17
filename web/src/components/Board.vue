@@ -1,6 +1,9 @@
 <template lang="pug">
   .box
-    .row(v-for='row in rows')
+    .label-row
+      .label(v-for="label in 'ABCDEFGH'.split('')") {{ label }}
+    .row(v-for='(row, i) in rows')
+      .label {{ i+1 }}
       .cell(
         v-for='{disc, can_move, is_hover, will_flip, move, enter, leave} in row'
         @mouseenter='enter'
@@ -14,11 +17,21 @@
           :color='turn==BLACK ? "black" : "white"'
           class="hover"
         )
+      .label {{ i+1 }}
+    .label-row
+      .label(v-for="label in 'ABCDEFGH'.split('')") {{ label }}
         
 </template>
 
 <script lang="coffee">
-  import { Board, pos_from_xy, pos_to_str, BLACK, WHITE } from '@oth/board'
+  import {
+    Board
+    pos_from_xy
+    pos_to_str
+    pos_from_str
+    BLACK
+    WHITE
+  } from '@oth/board'
   import Disc from './Disc'
   import Player from '../player.worker'
   import i18n from '../i18n'
@@ -39,6 +52,7 @@
       user_moves: 0
       gameover: false
       will_flip_enabled: false
+      keys: []
       BLACK
       i18n
     }
@@ -52,6 +66,12 @@
       gtag 'event', 'start',
         event_category: 'game'
         event_label: @level
+
+      @key_listener = (e) => @keypress(e)
+      window.addEventListener 'keypress', @key_listener
+
+    beforeDestroy: ->
+      window.removeEventListener 'keypress', @key_listener
 
     updated: -> @$el.classList.add 'animate'
 
@@ -158,6 +178,7 @@
           console.log "#{t} msec"
 
           {move, value} = e.data
+          console.log 'Move', pos_to_str(move)
           console.log 'Estimated value', Math.round(100*value)/100 if value?
           setTimeout (=>
             @move move
@@ -180,6 +201,19 @@
         # BLACK MAGIC TO LET VUE UPDATE
         @board.board.push(0)
         @board.board.pop()
+
+      keypress: (e) ->
+        @keys.push(e.key)
+        @keys = @keys.slice(-2)
+        str = @keys.join('')
+        console.log str
+        try
+          move = pos_from_str(str)
+        catch
+          move = 0
+
+        if (move and @turn==@user and @board.can_move(@user, move))
+          @move move
 
     watch:
       can_undo: -> @set_undo_btn(@can_undo, @undo)
@@ -244,4 +278,35 @@
       transition all .3s cubic-bezier(.0, 1, .7, 1.2)
     .flip-leave-active
       transition all .3s cubic-bezier(.7, 0, 1, .3)
+
+  .label-row
+    display flex
+    margin-left 25px
+    .label
+      width 60px
+      height 15px
+      max-width (100/8)vw
+      margin 5px 0
+  .row
+    .label
+      display flex
+      justify-content center
+      align-items center
+      width 15px
+      height 60px
+      max-height (100/8)vw
+      margin 0 5px
+  .label
+    color #666
+    font-size 12px
+    text-align center
+
+  @media screen and (max-width: 600px)
+    .label-row
+      display none
+    .row, .label-row
+      .label
+        display none
+
+
 </style>

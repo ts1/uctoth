@@ -21,7 +21,7 @@ export default
 <style lang="stylus" scoped>
 .box
   width 480px
-  max-width 100vw
+  max-width 90vw
   border-radius 10px
   background #ccc
   color #333
