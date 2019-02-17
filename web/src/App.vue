@@ -34,21 +34,23 @@
 </script>
 
 <style lang="stylus">
-  body, html
+  body
     background #333
-  #app
-    font-family Lato,'Noto Sans JP',sans-serif;
+    font-family Lato, 'Noto Sans JP', sans-serif;
     font-size 16px
     line-height 1.5
     -webkit-font-smoothing antialiased
     -moz-osx-font-smoothing grayscale
     font-feature-settings "palt"
+
+  #app
     min-height 100vh
     display flex
     align-items center
     justify-content space-between
     flex-direction column
     color #ccc
+    user-select none
 
   h1
     font-weight lighter

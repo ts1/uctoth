@@ -206,7 +206,6 @@
         @keys.push(e.key)
         @keys = @keys.slice(-2)
         str = @keys.join('')
-        console.log str
         try
           move = pos_from_str(str)
         catch
@@ -261,8 +260,8 @@
     to
       opacity 0
 
-  svg.hover
-    opacity .5
+  .hover
+    opacity .4
     cursor pointer
 
   .disc
