@@ -200,7 +200,7 @@ module.exports = class Book
       turn = -turn
     {board, moves, turn, value: last_value}
 
-  add_game: (moves) ->
+  add_game: (moves, learn=false) ->
     board = new PatternBoard
     history = []
     for {move, turn, solved} in moves
@@ -220,9 +220,9 @@ module.exports = class Book
     data.pri_value = outcome_to_eval(outcome, turn)
     data.n_visited++
     await @set board, data
-    await @add_to_tree board, history
+    await @add_to_tree board, history, learn
 
-  add_to_tree: (board, history) ->
+  add_to_tree: (board, history, learn) ->
     #await @db.run 'begin'
     while history.length
       {move, turn, flips, solved} = history.pop()
@@ -250,7 +250,7 @@ module.exports = class Book
         else
           unevaled.push m
 
-      if not solved and not have_leaf and unevaled.length
+      if learn and not solved and not have_leaf and unevaled.length
         ev = await @evaluate(board, turn, unevaled)
         flips = board.move turn, ev.move
         throw new Error 'invalid move' unless flips.length
@@ -325,7 +325,7 @@ module.exports = class Book
       console.log ": #{data.pub_value}"
       await @set board, data
 
-    await @add_to_tree board, history
+    await @add_to_tree board, history, true
 
   count_games: (me=null) ->
     sql = 'select count(*) as c from games'

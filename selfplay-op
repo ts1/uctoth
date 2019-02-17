@@ -105,7 +105,7 @@ do ->
     {moves, outcome} = await play player, opening
     moves_str = pos_array_to_str(moves)
     n_play++
-    await book.add_game moves
+    await book.add_game moves, true
     if argv.n?
       n_games = (await book.count_games()) % argv.n or argv.n
       console.log 'played', n_games
