@@ -40,7 +40,7 @@
       box-shadow inset 1px 1px 5px rgba(0, 0, 0, .5)
       border-radius 4px
       color #999
-      padding 10px
+      padding 5px 10px
       font-size 14px
       word-break keep-all
 </style>
