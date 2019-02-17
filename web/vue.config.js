@@ -1,7 +1,7 @@
 path = require('path')
 
 module.exports = {
-  baseUrl: '/uctoth/',
+  publicPath: '/uctoth/',
   outputDir: path.resolve(__dirname, '..', 'docs'),
   configureWebpack: {
     resolve: {
