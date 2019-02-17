@@ -27,6 +27,7 @@
     display flex
     align-items center
     label
+      color #999
       margin-right 5px
     input
       flex-grow 1
@@ -35,7 +36,7 @@
       outline none
       box-shadow inset 1px 1px 5px rgba(0, 0, 0, .5)
       border-radius 4px
-      color #ccc
+      color #999
       padding 10px
       font-size 14px
 </style>

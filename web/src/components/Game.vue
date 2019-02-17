@@ -22,11 +22,11 @@
       @undo="undo_move"
       @reset-moves="reset_moves"
     )
+    Moves.moves(:moves="moves" @enter-moves="enter_moves($event)")
     .msg-box-wrapper
       transition(name='msg')
         MessageBox(v-bind="msg" :key="msg_key" v-if="msg" class="msg-box")
   .filler
-  Moves(:moves="moves" @enter-moves="enter_moves($event)")
 </template>
 
 <script lang="coffee">
@@ -117,7 +117,10 @@ export default
     align-items center
 
   .board
-    margin-bottom 20px
+    margin-bottom 10px
+
+  .moves
+    margin-bottom 10px
 
   .msg-box-wrapper
     position relative
@@ -141,7 +144,7 @@ export default
   .msg-enter-active, .msg-leave-active
     transition all .7s cubic-bezier(.7,0,.3,1)
 
-
   .filler
-    flex-grow: 1
+    flex-grow 1
+    min-height 100px
 </style>
