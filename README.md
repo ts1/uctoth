@@ -21,9 +21,9 @@ Starting from random plays, strengthens itself by a loop of self playing and
 machine learning.
 Uses no existing records of games.
 
-Included `scores.json` file is a result of 30 iterations of 1,000 self-plays
+Included `scores.json` file is a result of ~~30 iterations of 1,000 self-plays
 and learnings.
-10 days work of a MacBook Pro.
+10 days work of a MacBook Pro.~~ 52,000 self-played games.
 
 ### Game tree search
 
