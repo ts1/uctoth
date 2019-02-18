@@ -27,6 +27,7 @@
     width 100%
     max-width 95vw
     margin 0 auto
+    padding-bottom 5px
     display flex
     align-items center
     label
@@ -43,4 +44,6 @@
       padding 5px 10px
       font-size 14px
       word-break keep-all
+      &::-ms-clear
+        display none
 </style>

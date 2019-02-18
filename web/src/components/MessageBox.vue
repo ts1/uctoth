@@ -23,13 +23,14 @@ export default
   width 100%
   max-width 95vw
   border-radius 10px
-  background #ccc
+  background linear-gradient(transparent, rgba(0, 0, 0, .1))
+  background-color #ccc
   color #333
   font-size 24px
   padding 20px
   box-shadow 0 5px 30px rgba(0, 0, 0, .5)
   &.error
-    background #933
+    background-color #933
     color #ccc
 .text
   display flex

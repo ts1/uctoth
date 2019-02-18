@@ -309,12 +309,15 @@
 
   .label-row
     display flex
-    margin-left 25px
+    justify-content center
+    &:first-child
+      margin-bottom 5px
+    &:last-child
+      margin-top 5px
     .label
       width 60px
       height 15px
-      max-width (100/8)vw
-      margin 5px 0
+
   .row
     .label
       display flex
@@ -322,11 +325,11 @@
       align-items center
       width 15px
       height 60px
-      max-height (100/8)vw
       margin 0 5px
   .label
     color #666
     font-size 12px
+    line-height 15px
     text-align center
 
   @media screen and (max-width: 600px)
