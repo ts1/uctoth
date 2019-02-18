@@ -40,7 +40,7 @@ argv = require 'yargs'
       alias: 'balance'
       desc: 'Tolerance of outcome balance'
       type: 'number'
-      default: 400
+      default: 0
       requiresArg: true
     w:
       alias: 'wld'
