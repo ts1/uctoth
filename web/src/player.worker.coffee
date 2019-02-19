@@ -23,6 +23,7 @@ param_table =
     book: true
     book_random: 1
     search: 1
+    random: 0
     wld: 0
     full: 0
   hard:

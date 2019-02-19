@@ -137,7 +137,7 @@ module.exports = (options={}) ->
     unless root.children.length
       return {moves:[]}
 
-    if options.random == 0
+    unless options.random
       max_n = -INFINITY
       max_value = -INFINITY
       best = null
