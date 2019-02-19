@@ -11,6 +11,7 @@ defaults =
   board_class: PatternBoard
   random: 0
   inverted: false
+  show_cache: false
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -112,7 +113,7 @@ module.exports = (options={}) ->
         return max
 
     root = restore_cache(board) or {value:0, n:0, children:[]}
-    console.log 'cached', root.n if options.verbose
+    console.log 'cached', root.n if options.verbose or options.show_cache
 
     for i from [0...options.max_search]
       grew = false
