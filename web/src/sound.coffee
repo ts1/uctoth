@@ -8,7 +8,7 @@ AudioContext = window.AudioContext or window.webkitAudioContext
 load_sounds = (loader) ->
   sounds.move = loader require './sound/move.mp3'
 
-if AudioContext and (new AudioContext).resume?
+if AudioContext?.prototype?.resume?
   init = ->
     return if context
     context = new AudioContext
