@@ -209,11 +209,11 @@ module.exports = (options={}) ->
             best = pos
           else
             if depth > 1
-              score = -999999
+              score = -99999
               process.stdout.write " " if verbose
             else
               process.stdout.write ":#{score} " if verbose
-          move_scores[pos] *= .001
+          move_scores[pos] *= .00001
           move_scores[pos] += score
           guess = max
       process.stdout.write '\n' if verbose
