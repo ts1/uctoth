@@ -4,8 +4,8 @@
     Spinner.spinner(v-if="spin")
     | {{ text }}
   .action(v-if="pass || back")
-    Button(v-if="pass" theme="light" @click="pass") {{i18n.pass}}
-    Button(v-if="back" theme="light" @click="back") {{i18n.play_again}}
+    Button(v-if="pass" theme="light" @click="pass") {{i18n.t.pass}}
+    Button(v-if="back" theme="light" @click="back") {{i18n.t.play_again}}
 </template>
 
 <script lang="coffee">

@@ -62,7 +62,7 @@
     mounted: ->
       worker.postMessage type:'set_level', level:@level
       if @turn == @user
-        @message text: @i18n.your_turn
+        @message text: @i18n.t.your_turn
       else
         @worker_move()
       gtag 'event', 'start',
@@ -142,16 +142,16 @@
       after_move: ->
         if @board.any_moves @turn
           if @turn == @user
-            @message text:  @i18n.your_turn
+            @message text:  @i18n.t.your_turn
           else
             @worker_move()
         else
           @turn = -@turn
           if @board.any_moves(@turn)
             if @turn == @user
-              @message text: @i18n.i_pass
+              @message text: @i18n.t.i_pass
             else
-              @message text: @i18n.you_pass, pass: => @worker_move()
+              @message text: @i18n.t.you_pass, pass: => @worker_move()
           else
             @gameover = true
             outcome = @board.outcome(@user)
@@ -169,14 +169,14 @@
                 event_label: @level
                 value: outcome
             else
-              @message text: @i18n.draw, back: @back
+              @message text: @i18n.t.draw, back: @back
               gtag 'event', 'draw',
                 event_category: 'game'
                 event_label: @level
                 value: outcome
 
       worker_move: ->
-        @message text: @i18n.thinking, spin: true
+        @message text: @i18n.t.thinking, spin: true
         t = Date.now()
         worker.onmessage = (e) =>
           worker.onmessage = null
@@ -203,7 +203,7 @@
         @user_moves--
         if @turn != @user
           @turn = @user
-          @message text:  @i18n.your_turn
+          @message text:  @i18n.t.your_turn
 
         # BLACK MAGIC TO LET VUE UPDATE
         @board.board.push(0)
@@ -244,7 +244,7 @@
           @turn = turn
           @after_move()
         else
-          @message text: @i18n.invalid_moves, error: true
+          @message text: @i18n.t.invalid_moves, error: true
 
     components: { Disc }
 </script>

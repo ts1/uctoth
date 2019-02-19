@@ -3,6 +3,11 @@ path = require('path')
 module.exports = {
   publicPath: '/uctoth/',
   outputDir: path.resolve(__dirname, '..', 'docs'),
+  pages: {
+    index: 'src/main.js',
+    en: 'src/lang_main.coffee',
+    ja: 'src/lang_main.coffee',
+  },
   configureWebpack: {
     resolve: {
       extensions: [ '.coffee' ],

@@ -45,45 +45,32 @@ translations =
     hard: 'ハード'
     hardest: '超ハード'
     mode: '${mode}モード'
-    description: 'UctothはWebブラウザで遊べるシンプルなオセロ(リバーシ)ゲームです。'
     moves: '棋譜'
     invalid_moves: '棋譜に誤りがあります'
 
-parse_qs = (qs=window.location.search)->
-  if qs[0] == '?'
-    qs = qs.substr(1)
-  result = {}
-  for keyval in qs.split('&')
-    [key, val] = keyval.split('=')
-    key = decodeURIComponent(key)
-    val = decodeURIComponent(val)
-    result[key] = val
-  result
-
-params = parse_qs()
-lang = params.lang
-if lang
-  localStorage._oth_lang = params.lang
-else
-  lang = localStorage._oth_lang or
-      window.navigator.languages?[0] or
-      window.navigator.language or
-      window.navigator.userLanguage or
-      window.navigator.browserLanguage
+lang = localStorage.uctoth_lang or
+    window.navigator.languages?[0] or
+    window.navigator.language or
+    window.navigator.userLanguage or
+    window.navigator.browserLanguage
 
 lang = 'en' unless translations[lang]
 translation = translations[lang]
 
-if lang != 'en'
-  document.querySelector('html').setAttribute('lang', lang)
-  document.querySelector('meta[name="description"]')
-    .setAttribute('content', translation.description)
+module.exports = {
+  t: translation
+  lang
+  expand: (name, params) ->
+    text = @t[name]
+    throw new Error 'no translation' unless text
+    text.replace /\$\{(\w+)\}/g, (match, key) -> params[key]
+  set: (lang) ->
+    t = translations[lang]
+    if t
+      @lang = lang
+      @t = t
+      localStorage.uctoth_lang = lang
+      history.replaceState null, '', '.' if window.history?.replaceState?
+      document.querySelector('html').setAttribute('lang', lang)
+}
 
-expand = (name, params) ->
-  text = translation[name]
-  throw new Error 'no translation' unless text
-  text.replace /\$\{(\w+)\}/g, (match, key) -> params[key]
-
-module.exports = translation
-module.exports.lang = lang
-module.exports.expand = expand

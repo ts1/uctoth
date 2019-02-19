@@ -8,7 +8,7 @@
         SoundIcon(v-if="!muted")
         MuteIcon(v-if="muted")
     .level {{ level_title }}
-    Button.undo(:disabled="!undo_enabled" @click="undo") {{ i18n.undo }}
+    Button.undo(:disabled="!undo_enabled" @click="undo") {{ i18n.t.undo }}
   main
     Board.board(
       :user="user"
@@ -56,7 +56,7 @@ export default
   mounted: -> window.scrollTo 0, 0
   computed:
     level_title: ->
-      mode = i18n[@level]
+      mode = i18n.t[@level]
       i18n.expand('mode', {mode})
   methods:
     show_message: (params) ->

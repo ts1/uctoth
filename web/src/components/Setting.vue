@@ -3,35 +3,43 @@
   .colors
     .color.select(:class="color==BLACK && 'is-active'" @click="color = BLACK")
       Disc(color="black")
-      span {{ i18n.first_move }}
+      span {{ i18n.t.first_move }}
     .color.select(:class="color==WHITE && 'is-active'" @click="color = WHITE")
       Disc(color="white")
-      span {{ i18n.second_move}}
+      span {{ i18n.t.second_move}}
 
   .levels
     .level.select(
       v-for="l in levels"
       :class="level==l.toLowerCase() && 'is-active'"
       @click="level = l.toLowerCase()"
-    ) {{ i18n[l] }}
+    ) {{ i18n.t[l] }}
 
   .guide.checkbox.select(@click="guide = !guide")
     CheckboxMarked(v-if="guide")
     CheckboxBlankOutline(v-if="!guide")
-    span.label {{ i18n.show_guide }}
+    span.label {{ i18n.t.show_guide }}
 
   .moves.checkbox.select(@click="moves = !moves")
     CheckboxMarked(v-if="moves")
     CheckboxBlankOutline(v-if="!moves")
-    span.label {{ i18n.show_moves }}
+    span.label {{ i18n.t.show_moves }}
 
   .langs
-    a.lang.select(href="?lang=en" :class="i18n.lang=='en' && 'is-active'")
+    a.lang.select(
+      href="en.html"
+      :class="i18n.lang=='en' && 'is-active'"
+      @click.prevent="i18n.set('en')"
+    )
       | English
-    a.lang.select(href="?lang=ja" :class="i18n.lang=='ja' && 'is-active'")
+    a.lang.select(
+      href="ja.html"
+      :class="i18n.lang=='ja' && 'is-active'"
+      @click.prevent="i18n.set('ja')"
+    )
       | 日本語
   
-  Button(@click="submit") {{ i18n.start }}
+  Button(@click="submit") {{ i18n.t.start }}
 </template>
 
 <script lang="coffee">

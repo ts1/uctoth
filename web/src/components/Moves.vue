@@ -1,6 +1,6 @@
 <template lang="pug">
   div
-    label {{ i18n.moves }}
+    label {{ i18n.t.moves }}
     input(
       spellcheck="false"
       :value="moves"
