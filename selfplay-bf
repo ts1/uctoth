@@ -119,22 +119,23 @@ find_unplayed_opening = (book, depth, cb) ->
   moves = [{move:pos_from_str('f5'), turn:BLACK}]
 
   sub = (turn, d) ->
-    leaf = false
-    if d > depth
-      leaf = true
-    else if d == depth
-      leaf = true
-      if ((depth&1) and balance < -argv.balance) or
-          ((depth&1)==0 and balance > argv.balance)
-        leaf = false
-
-    if leaf
+    if d >= depth
       data = await book.get(board)
-      unless data?.outcome?
-        if d > depth
-          console.log 'extending for balance'
-        await cb moves
-      return
+      if data?.outcome?
+        outcome = data.outcome
+      else
+        outcome = await cb moves
+      if d > depth
+        return
+      if ((depth&1) and balance >= -argv.balance) or
+          ((depth&1)==0 and balance <= argv.balance)
+        return
+      console.log 'extending needed'
+      console.log 'outcome was', outcome
+      if ((depth&1) and outcome < 0) or
+          ((depth&1)==0 and outcome > 0)
+        console.log 'current move is weak, skip extending'
+        return
 
     unless board.any_moves(turn)
       turn = -turn
@@ -171,3 +172,5 @@ do ->
         n_games = (await book.count_games()) % argv.n or argv.n
         console.log 'played', n_games
         process.exit 0 if n_games >= argv.n
+
+      outcome
