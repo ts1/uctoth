@@ -130,11 +130,11 @@ find_unplayed_opening = (book, depth, cb) ->
       if ((depth&1) and balance >= -argv.balance) or
           ((depth&1)==0 and balance <= argv.balance)
         return
-      console.log 'extending needed'
-      console.log 'outcome was', outcome
+      #console.log 'extending needed'
+      #console.log 'outcome was', outcome
       if ((depth&1) and outcome < 0) or
           ((depth&1)==0 and outcome > 0)
-        console.log 'current move is weak, skip extending'
+        #console.log 'current move is weak, skip extending'
         return
 
     unless board.any_moves(turn)
