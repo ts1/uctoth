@@ -5,6 +5,11 @@
 yarn install
 ```
 
+### Generate ico and html (require ImageMagick)
+```
+yarn run generate
+```
+
 ### Compiles and hot-reloads for development
 ```
 yarn run serve
