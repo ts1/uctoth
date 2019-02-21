@@ -50,16 +50,7 @@ import CheckboxMarked from '@icons/CheckboxMarked'
 import CheckboxBlankOutline from '@icons/CheckboxBlankOutline'
 import Button from './Button'
 import i18n from '../i18n'
-
-set_pref = (key, value) ->
-  localStorage['uctoth_'+key] = JSON.stringify(value)
-
-get_pref = (key, fallback) ->
-  value = localStorage['uctoth_'+key]
-  if value?
-    JSON.parse(value)
-  else
-    fallback
+import { get_pref, set_pref } from '../prefs'
 
 export default
   props: ['start']
