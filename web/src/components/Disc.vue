@@ -20,11 +20,17 @@
     color #111
     &.flip
       animation-name flip-black
+    &:not(.flip)
+      circle
+        fill url("#disc-black")
 
   .white
     color #ccc
     &.flip
       animation-name flip-white
+    &:not(.flip)
+      circle
+        fill url("#disc-white")
 
   @keyframes flip-black
     from
