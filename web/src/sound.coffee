@@ -1,7 +1,9 @@
+import { get_pref, set_pref } from './prefs'
+
 sounds = {}
 context = null
 
-muted = false
+muted = get_pref 'mute', false
 
 AudioContext = window.AudioContext or window.webkitAudioContext
 
@@ -55,4 +57,6 @@ export default (name) ->
 
 export is_supported = -> true
 export is_muted = -> muted
-export mute = (mute) -> muted = mute
+export mute = (mute) ->
+  muted = mute
+  set_pref 'mute', mute
