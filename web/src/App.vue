@@ -12,15 +12,6 @@
     )
     .link
       a(href="https://github.com/ts1/uctoth" target="_blank") Source code
-
-    svg#svg-defs
-      defs
-        linearGradient#disc-black(x1="0" y1="0" x2="0" y2="1")
-          stop(offset="0" stop-color="#181818")
-          stop(offset="1" stop-color="#080808")
-        linearGradient#disc-white(x1="0" y1="0" x2="0" y2="1")
-          stop(offset="0" stop-color="#ddd")
-          stop(offset="1" stop-color="#bbb")
 </template>
 
 <script lang="coffee">
@@ -86,7 +77,4 @@
       color #ccc
       text-decoration none
       padding 15px
-
-  #svg-defs
-    height 0
 </style>
