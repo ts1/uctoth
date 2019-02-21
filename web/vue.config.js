@@ -5,7 +5,6 @@ module.exports = {
   outputDir: path.resolve(__dirname, '..', 'docs'),
   pages: {
     index: 'src/main.js',
-    en: 'src/lang_main.coffee',
     ja: 'src/lang_main.coffee',
   },
   configureWebpack: {

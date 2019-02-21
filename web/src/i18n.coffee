@@ -1,3 +1,5 @@
+{ get_pref, set_pref } = require './prefs'
+
 translations =
   en:
     first_move: 'First move'
@@ -48,18 +50,17 @@ translations =
     moves: '棋譜'
     invalid_moves: '棋譜に誤りがあります'
 
-lang = localStorage.uctoth_lang or
+lang = (get_pref('lang') or
     window.navigator.languages?[0] or
     window.navigator.language or
     window.navigator.userLanguage or
-    window.navigator.browserLanguage
+    window.navigator.browserLanguage).split('-')[0]
 
 lang = 'en' unless translations[lang]
-translation = translations[lang]
 
 module.exports = {
-  t: translation
   lang
+  t: translations[lang]
   expand: (name, params) ->
     text = @t[name]
     throw new Error 'no translation' unless text
@@ -69,7 +70,7 @@ module.exports = {
     if t
       @lang = lang
       @t = t
-      localStorage.uctoth_lang = lang
+      set_pref 'lang', lang
       history.replaceState null, '', '.' if window.history?.replaceState?
       document.querySelector('html').setAttribute('lang', lang)
 }
