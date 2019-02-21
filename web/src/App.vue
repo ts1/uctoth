@@ -16,8 +16,8 @@
     svg#svg-defs
       defs
         linearGradient#disc-black(x1="0" y1="0" x2="0" y2="1")
-          stop(offset="0" stop-color="#222")
-          stop(offset="1" stop-color="#000")
+          stop(offset="0" stop-color="#181818")
+          stop(offset="1" stop-color="#080808")
         linearGradient#disc-white(x1="0" y1="0" x2="0" y2="1")
           stop(offset="0" stop-color="#ddd")
           stop(offset="1" stop-color="#bbb")
