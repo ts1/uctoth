@@ -278,7 +278,12 @@
     height 100%
 
   .box:hover .move
-    background-color: rgba(255, 255, 0, .1)
+    background-image: radial-gradient(
+      closest-side,
+      rgba(255, 255, 0, .15) 0%,
+      rgba(255, 255, 0, .15) 30%,
+      transparent 70%
+    )
     animation flash 2s infinite
 
   @keyframes flash
