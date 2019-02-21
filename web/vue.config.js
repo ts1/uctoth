@@ -1,7 +1,7 @@
 path = require('path')
 
 module.exports = {
-  publicPath: '/uctoth/',
+  publicPath: '',
   outputDir: path.resolve(__dirname, '..', 'docs'),
   pages: {
     index: 'src/main.js',
