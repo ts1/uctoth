@@ -18,10 +18,20 @@ yargs = require 'yargs'
       default: null
       type: 'number'
       requiresArg: true
+    d:
+      alias: 'duration'
+      desc: 'Duration of delta average'
+      default: 120
+      type: 'number'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
 
 argv = yargs.argv
 
-D_FACTOR = 120
+argv.duration = 120
 
 index_size = get_single_index_size()
 
@@ -121,14 +131,14 @@ regress = (index_file) ->
     coeffs = new_coeffs
 
     d = last_loss - loss
-    if step <= D_FACTOR
+    if step <= argv.duration
       d_avg = (d_avg * (step - 1) + d) / step
     else
-      d_avg = (d_avg * (D_FACTOR - 1) + d) / D_FACTOR
+      d_avg = (d_avg * (argv.duration - 1) + d) / argv.duration
     console.log 'step', step, 'loss', loss,
       'rate', round_value(rate*train_set.length),
       'd', d_avg
-    break if step >= D_FACTOR and d_avg < argv.threshold
+    break if step >= argv.duration and d_avg < argv.threshold
 
     step++
 
