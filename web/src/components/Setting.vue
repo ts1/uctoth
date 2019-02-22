@@ -83,6 +83,7 @@ export default
   display flex
   justify-content space-around
   .color
+    flex-grow 1
     display flex
     flex-direction column
     align-items center
@@ -105,6 +106,8 @@ export default
     text-decoration none
     color #ccc
     padding 5px 10px
+    flex-grow 1
+    text-align center
 
 .select
   border 1px solid transparent
@@ -113,6 +116,12 @@ export default
   transition all .2s ease-in-out
   &:hover
     background rgba(255, 255, 255, 0.1)
+    color #fff
+  &:active
+    background none
+    &:not(.checkbox)
+      border-color #fff
+
 
 .is-active
   border-color #ccc
