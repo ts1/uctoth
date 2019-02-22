@@ -46,7 +46,7 @@ argv = require 'yargs'
       alias: 'weak'
       desc: 'Outcome threashold to extend for balance'
       type: 'number'
-      default: 8
+      default: 4
       requiresArg: true
     w:
       alias: 'wld'
@@ -138,8 +138,8 @@ find_unplayed_opening = (book, depth, cb) ->
         return
       #console.log 'extending needed'
       #console.log 'outcome was', outcome
-      if ((depth&1) and outcome <= -argv.weak) or
-          ((depth&1)==0 and outcome >= argv.weak)
+      if ((depth&1) and outcome < -argv.weak) or
+          ((depth&1)==0 and outcome > argv.weak)
         #console.log 'current move is weak, skip extending'
         return
 
