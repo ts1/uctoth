@@ -33,9 +33,10 @@ export default
       color #333
       &:hover
         background-color rgba(0, 0, 0, .1)
-      &:active
         border-color #000
         color #000
+      &:active
+        background-color transparent
 
     &.dark
       border-color #ccc

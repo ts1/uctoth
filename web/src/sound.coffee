@@ -9,6 +9,8 @@ AudioContext = window.AudioContext or window.webkitAudioContext
 
 load_sounds = (loader) ->
   sounds.move = loader require './sound/move.mp3'
+  sounds.alert = loader require './sound/alert.mp3'
+  sounds.undo = loader require './sound/undo.mp3'
 
 if AudioContext?.prototype?.resume?
   init = ->
@@ -37,7 +39,7 @@ if AudioContext?.prototype?.resume?
 else
   load_sounds (url) ->
     el = document.createElement('audio')
-    el.src = require './sound/move.mp3'
+    el.src = url
     el.preload = 'auto'
     document.body.appendChild el
     el

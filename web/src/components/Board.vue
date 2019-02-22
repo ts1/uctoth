@@ -205,12 +205,22 @@
           @turn = @user
           @message text:  @i18n.t.your_turn
 
+        sound 'undo'
+
         # BLACK MAGIC TO LET VUE UPDATE
         @board.board.push(0)
         @board.board.pop()
 
       keypress: (e) ->
         return if e.target.nodeName == 'INPUT'
+
+        if e.key == 'u'
+          if @can_undo
+            @undo()
+          else
+            sound 'alert'
+          return
+
         @keys.push(e.key)
         @keys = @keys.slice(-2)
         str = @keys.join('')
@@ -219,8 +229,11 @@
         catch
           move = 0
 
-        if (move and @turn==@user and @board.can_move(@user, move))
-          @move move
+        if move
+          if @turn==@user and @board.can_move(@user, move)
+            @move move
+          else
+            sound 'alert'
 
     watch:
       can_undo: -> @set_undo_btn(@can_undo, @undo)
@@ -242,9 +255,11 @@
             turn = -turn
         if success
           @turn = turn
+          @gameover = false
           @after_move()
         else
           @message text: @i18n.t.invalid_moves, error: true
+          sound 'alert'
 
     components: { Disc }
 </script>
