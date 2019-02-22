@@ -268,7 +268,8 @@ module.exports = class Book
           data.pub_value = value
         data.is_leaf = true
         await @set board, data
-        #console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
+        if @verbose
+          console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
         board.undo turn, ev.move, flips
         pri = data.pri_value * turn
         if pri > max_pri

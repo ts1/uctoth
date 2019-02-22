@@ -8,6 +8,7 @@ make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
+{ watch_file } = require './util'
 
 argv = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options...]"
@@ -38,7 +39,12 @@ argv = require 'yargs'
       alias: 'scope'
       desc: 'UCT constant'
       type: 'number'
-      default: 2
+      default: .5
+      requiresArg: true
+    d:
+      alias: 'depth'
+      desc: 'Depth of minimax evaluation of leafs'
+      default: 5
       requiresArg: true
     w:
       alias: 'wld'
@@ -50,6 +56,10 @@ argv = require 'yargs'
       desc: 'Depth of full endgame search'
       default: 18
       requiresArg: true
+    v:
+      alias: 'verbose'
+      type: 'boolean'
+      default: false
     h:
       alias: 'help'
   .version false
@@ -93,13 +103,16 @@ play = (player, opening) ->
   {moves, outcome}
 
 do ->
-  book = new Book argv.book
+  book = new Book argv.book,
+    eval_depth: argv.depth
+    solve_wld: argv.wld
+    solve_full: argv.full
+    verbose: argv.verbose
   await book.init()
 
   n_play = 0
-  loop
-    if fs.existsSync('.reload-selfplay')
-      break
+  reload = watch_file('.reload-selfplay')
+  until reload()
     opening = await book.find_opening(argv.scope,
       pos_array_from_str(argv.opening))
     {moves, outcome} = await play player, opening
