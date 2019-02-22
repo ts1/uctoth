@@ -26,16 +26,14 @@
     span.label {{ i18n.t.show_moves }}
 
   .langs
-    a.lang.select(
-      href="en.html"
+    .lang.select(
       :class="i18n.lang=='en' && 'is-active'"
-      @click.prevent="i18n.set('en')"
+      @click="i18n.set('en')"
     )
       | English
-    a.lang.select(
-      href="ja.html"
+    .lang.select(
       :class="i18n.lang=='ja' && 'is-active'"
-      @click.prevent="i18n.set('ja')"
+      @click="i18n.set('ja')"
     )
       | 日本語
   
@@ -116,9 +114,9 @@ export default
   transition all .2s ease-in-out
   &:hover
     background rgba(255, 255, 255, 0.1)
-    color #fff
   &:active
     background none
+    color #fff
     &:not(.checkbox)
       border-color #fff
 

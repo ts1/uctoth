@@ -33,20 +33,20 @@ export default
       color #333
       &:hover
         background-color rgba(0, 0, 0, .1)
-        border-color #000
-        color #000
       &:active
         background-color transparent
+        border-color #000
+        color #000
 
     &.dark
       border-color #ccc
       color #ccc
       &:hover
         background-color rgba(255, 255, 255, .1)
-        border-color #fff
-        color #fff
       &:active
         background-color transparent
+        border-color #fff
+        color #fff
 
     &[disabled]
       cursor not-allowed
