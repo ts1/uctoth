@@ -77,4 +77,9 @@
       color #ccc
       text-decoration none
       padding 15px
+
+  p.intro
+    max-height 0
+    overflow hidden
+    margin 0
 </style>
