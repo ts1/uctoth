@@ -82,4 +82,8 @@
     max-height 0
     overflow hidden
     margin 0
+
+  #svg-defs
+    height 0
+    position absolute
 </style>
