@@ -3,6 +3,7 @@
 require './rejection_handler'
 { readlines, gzwriter, round_value, shuffle } = require './util'
 { get_single_index_size } = require './pattern'
+
 yargs = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options] indexes coeffs"
   .options
@@ -20,10 +21,15 @@ yargs = require 'yargs'
       requiresArg: true
     d:
       alias: 'duration'
-      desc: 'Duration of delta average'
+      desc: 'Duration of moving average of difference'
       default: 120
       type: 'number'
       requiresArg: true
+    b:
+      alias: 'balance'
+      desc: 'Thin out samples to get average closer to zero'
+      type: 'boolean'
+      default: false
     h:
       alias: 'help'
   .version false
@@ -77,17 +83,49 @@ read_rows = (filename) ->
   rows = []
   await readlines filename, (line) ->
     rows.push JSON.parse line
-  if argv.split
-    n_train = Math.round(argv.split * rows.length)
-    rows = shuffle rows
-    train_set = rows.slice(0, n_train)
-    test_set = rows.slice(n_train)
-    {train_set, test_set}
-  else
-    train_set = test_set = rows
-    {train_set, test_set}
+  rows
 
-split_rows = (rows) ->
+binary_search = (samples, target) ->
+  lbound = 0
+  return lbound if target <= samples[lbound][0]
+  ubound = samples.length - 1
+  return ubound if target >= samples[ubound][0]
+  while lbound < ubound
+    mid = Math.round((lbound + ubound) / 2)
+    value = samples[mid][0]
+    return mid if value == target
+    if value < target
+      lbound = mid + 1
+    else
+      ubound = mid - 1
+  mid
+
+thin_out = (samples) ->
+  balance = 0
+  for sample in samples
+    balance += sample[0]
+  console.log 'balance', balance
+  orig_balance = balance
+  samples.sort (a, b) -> a[0] - b[0]
+  n_killed = 0
+  while balance != 0
+    #console.log 'balance', balance
+    i = binary_search(samples, balance)
+    value = samples[i][0]
+    #console.log 'killing', value
+    samples.splice i, 1
+    n_killed++
+    balance -= value
+    #break if (balance < 0) != (orig_balance < 0)
+  console.log 'thinned out', n_killed, 'samples'
+  samples
+
+split_rows = (rows, ratio) ->
+  n_train = Math.round(ratio * rows.length)
+  rows = shuffle rows
+  train_set = rows.slice(0, n_train)
+  test_set = rows.slice(n_train)
+  {train_set, test_set}
 
 average = (rows) ->
   sum = 0
@@ -96,10 +134,16 @@ average = (rows) ->
   sum / rows.length
 
 regress = (index_file) ->
-  {train_set, test_set} = await read_rows index_file
+  samples = await read_rows index_file
+  if argv.balance
+    samples = thin_out(samples)
+  if argv.split
+    {train_set, test_set} = split_rows(samples, argv.split)
+  else
+    train_set = test_set = samples
 
-  console.log "train set #{train_set.length}"
-  console.log "test set #{test_set.length}"
+  console.log "train set #{train_set.length} samples"
+  console.log "test set #{test_set.length} samples"
   avg = average train_set
   console.log "train set avg #{avg}"
   coeffs = (0 for i in [0...index_size] by 1)
