@@ -11,7 +11,7 @@ fs = require 'fs'
   pos_array_to_str
   pos_array_from_str
 } = require './board'
-{ shuffle } = require './util'
+{ shuffle, watch_file } = require './util'
 make_player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
@@ -160,18 +160,17 @@ find_unplayed_opening = (book, depth, cb) ->
 do ->
   book = new Book 'book.db'
   await book.init()
-  balance = await book.sum_outcome() or 0
-  console.log 'balance', balance
 
+  balance = await book.sum_outcome() or 0
+  reload = watch_file('.reload-selfplay')
   for depth in [argv.depth..60]
     await find_unplayed_opening book, depth, (opening) ->
-      if fs.existsSync('.reload-selfplay')
-        process.exit 0
+      process.exit 0 if reload()
       console.log pos_array_to_str(opening)
       {moves, outcome} = await play(player, opening)
       moves_str = pos_array_to_str(moves)
       await book.add_game moves
-      balance += outcome
+      balance = await book.sum_outcome() or 0
       console.log 'balance', balance
 
       if argv.n?
