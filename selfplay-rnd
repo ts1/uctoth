@@ -8,7 +8,7 @@ Player = require './player'
 uct = require './uct'
 pattern_eval = require('./pattern_eval')('scores.json')
 Book = require './book'
-{ int } = require './util'
+{ int, watch_file } = require './util'
 
 argv = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options...]"
@@ -141,10 +141,8 @@ do ->
   n_play = 0
   n_skip = 0
   avg_col = (argv.min_col + argv.max_col) / 2
-  loop
-    if fs.existsSync('.reload-selfplay')
-      break
-
+  reload = watch_file('.reload-selfplay')
+  until reload()
     {moves, outcome} = await play player
     moves_str = pos_array_to_str(moves)
 

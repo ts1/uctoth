@@ -111,6 +111,22 @@ unique_moves = (board, me, moves=null) ->
       result.push move
   result
 
+watch_file = (filename) ->
+  fs = require 'fs'
+  get_mtime = ->
+    if fs.existsSync(filename)
+      fs.statSync(filename).mtime.getTime()
+    else
+      null
+  last_mtime = get_mtime()
+  ->
+    mtime = get_mtime()
+    if mtime != last_mtime
+      last_mtime = mtime
+      true
+    else
+      false
+
 module.exports = {
   shuffle
   memoize
@@ -121,4 +137,5 @@ module.exports = {
   round_value
   INFINITY
   unique_moves
+  watch_file
 }
