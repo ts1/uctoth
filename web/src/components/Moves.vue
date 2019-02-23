@@ -4,8 +4,7 @@
     input(
       spellcheck="false"
       :value="moves"
-      @input="moves_ = $event.target.value"
-      @keypress.enter="$emit('enter-moves', moves_)"
+      @keypress.enter="$emit('enter-moves', $event.target.value)"
       ref="input"
     )
 </template>
@@ -15,7 +14,6 @@
     props:
       moves: required: true
     data: ->
-      moves_: ''
       i18n: require '../i18n'
     watch:
       moves: -> @$nextTick => @$refs.input.scrollLeft = 9999

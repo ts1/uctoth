@@ -61,10 +61,7 @@
 
     mounted: ->
       worker.postMessage type:'set_level', level:@level
-      if @turn == @user
-        @message text: @i18n.t.your_turn
-      else
-        @worker_move()
+      @proceed()
       gtag 'event', 'start',
         event_category: 'game'
         event_label: @level
@@ -126,20 +123,22 @@
         rows
 
     methods:
-      move: (pos) ->
+      move: (pos, move_only=false) ->
         @flips = []
         @hover_at = null
         flips = @board.move @turn, pos
-        return unless flips.length
-        sound 'move'
+        return false unless flips.length
+        sound 'move' unless move_only
         @$emit 'add-move', pos_to_str(pos, @turn)
         @undo_stack.push [@turn, pos, flips]
         if @turn == @user
           @user_moves++
         @turn = -@turn
-        @after_move()
+        unless move_only
+          @proceed()
+        true
 
-      after_move: ->
+      proceed: ->
         if @board.any_moves @turn
           if @turn == @user
             @message text:  @i18n.t.your_turn
@@ -239,27 +238,26 @@
       can_undo: -> @set_undo_btn(@can_undo, @undo)
 
       entered_moves: ->
-        moves = pos_array_from_str(@entered_moves)
+        @undo_stack = []
+        @user_moves = 0
         @$emit 'reset-moves'
         @board = new Board
-        success = false
-        turn = BLACK
-        for move in moves
-          flips = @board.move turn, move
-          if flips.length == 0
+        success = true
+        @turn = BLACK
+        @gameover = false
+
+        for move in pos_array_from_str(@entered_moves)
+          unless @move move, true
             success = false
             break
-          @$emit 'add-move', pos_to_str(move, turn)
-          success = true
-          if @board.any_moves(-turn)
-            turn = -turn
+          @turn = -@turn unless @board.any_moves(@turn)
+
         if success
-          @turn = turn
-          @gameover = false
-          @after_move()
+          @proceed()
         else
           @message text: @i18n.t.invalid_moves, error: true
           sound 'alert'
+          setTimeout (=> @proceed()), 2000
 
     components: { Disc }
 </script>
