@@ -5,7 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "icon": "convert -density 180 public/icon.svg public/icon.png",
+    "icon": "convert -density 960 -resize 192x192 public/icon.svg public/icon.png",
     "html": "pug -O src/html/en.json < src/html/index.pug > public/index.html && pug -O src/html/ja.json < src/html/index.pug > public/ja.html",
     "generate": "yarn icon && yarn html"
   },
