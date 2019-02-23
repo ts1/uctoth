@@ -19,6 +19,10 @@
   import Setting from './components/Setting'
   import Game from './components/Game'
 
+  update_win_height = ->
+    height = document.documentElement.clientHeight
+    document.documentElement.style.setProperty '--win-height', "#{height}px"
+
   export default
     name: 'app'
     data: ->
@@ -40,6 +44,12 @@
       Setting
       Game
     }
+    mounted: ->
+      if document.documentElement?.style?.setProperty?
+        window.addEventListener 'resize', update_win_height, passive: true
+        @$nextTick update_win_height
+    beforeDestroy:
+      window.removeEventListener 'resize', update_win_height
 </script>
 
 <style lang="stylus">
@@ -52,7 +62,8 @@
     -moz-osx-font-smoothing grayscale
 
   #app
-    min-height 100vh
+    min-height 100vh // For IE
+    min-height var(--win-height, 100vh) // Set by JS
     display flex
     align-items center
     justify-content space-between

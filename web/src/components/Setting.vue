@@ -120,7 +120,6 @@ export default
     &:not(.checkbox)
       border-color #fff
 
-
 .is-active
   border-color #ccc
 
