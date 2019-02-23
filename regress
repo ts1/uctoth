@@ -25,11 +25,10 @@ yargs = require 'yargs'
       default: 120
       type: 'number'
       requiresArg: true
-    b:
-      alias: 'balance'
+    balance:
       desc: 'Thin out samples to get average closer to zero'
       type: 'boolean'
-      default: false
+      default: true
     h:
       alias: 'help'
   .version false
@@ -104,21 +103,23 @@ thin_out = (samples) ->
   balance = 0
   for sample in samples
     balance += sample[0]
-  console.log 'balance', balance
+  #console.log 'balance', balance
   orig_balance = balance
   samples.sort (a, b) -> a[0] - b[0]
-  n_killed = 0
+  n_removed = 0
   while balance != 0
     #console.log 'balance', balance
     i = binary_search(samples, balance)
     value = samples[i][0]
+    if value == 0
+      #console.log 'abount to kill zero'
+      break
     #console.log 'killing', value
     samples.splice i, 1
-    n_killed++
+    n_removed++
     balance -= value
-    #break if (balance < 0) != (orig_balance < 0)
-  console.log 'thinned out', n_killed, 'samples'
-  samples
+  console.log 'thinned out', n_removed, 'samples'
+  {samples, n_removed}
 
 split_rows = (rows, ratio) ->
   n_train = Math.round(ratio * rows.length)
@@ -135,8 +136,13 @@ average = (rows) ->
 
 regress = (index_file) ->
   samples = await read_rows index_file
+  n_samples = samples.length
+  console.log 'loaded', n_samples, 'samples'
+  raw_avg = average samples
+  console.log 'samples avg', raw_avg
+
   if argv.balance
-    samples = thin_out(samples)
+    {samples, n_removed} = thin_out(samples)
   if argv.split
     {train_set, test_set} = split_rows(samples, argv.split)
   else
@@ -196,7 +202,7 @@ regress = (index_file) ->
   r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
 
-  {coeffs, r2, step, loss:last_loss, avg}
+  {coeffs, r2, step, loss:last_loss, avg, n_samples, raw_avg, n_removed}
 
 if argv._.length == 2
   [index_file, outfile] = argv._
