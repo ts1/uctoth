@@ -5,9 +5,9 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "favicon": "convert -density 128 src/favicon.svg public/favicon.ico",
+    "icon": "convert -density 180 public/icon.svg public/icon.png",
     "html": "pug -O src/html/en.json < src/html/index.pug > public/index.html && pug -O src/html/ja.json < src/html/index.pug > public/ja.html",
-    "generate": "yarn favicon && yarn html"
+    "generate": "yarn icon && yarn html"
   },
   "dependencies": {
     "sanitize.css": "^8.0.0",
