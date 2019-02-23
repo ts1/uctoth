@@ -1,0 +1,25 @@
+#!/bin/sh -e
+
+basedir=`dirname $0`
+srcdir=$basedir/src
+dstdir=$basedir/public/img/icons
+baseimg=$dstdir/android-chrome-512x512.png
+src=$srcdir/icon.svg
+
+convert -density 1024 -resize 512x512 $src $baseimg
+
+convert -resize 192x192 $baseimg $dstdir/android-chrome-192x192.png
+
+for size in 120x120 152x152 180x180 60x60 76x76; do
+    convert -resize $size $baseimg $dstdir/apple-touch-icon-$size.png
+done
+
+for size in 16x16 32x32; do
+    convert -resize $size $baseimg $dstdir/favicon-$size.png
+done
+
+convert -resize 144x144 $baseimg $dstdir/msapplication-icon-144x144.png
+convert -resize 150x150 $baseimg $dstdir/mstile-150x150.png
+
+cp $dstdir/apple-touch-icon-180x180.png $dstdir/apple-touch-icon.png
+cp $srcdir/icon-mask.svg $dstdir/safari-pinned-tab.svg

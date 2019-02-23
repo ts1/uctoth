@@ -1,21 +1,22 @@
 {
-  "name": "web",
+  "name": "uctoth-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "icon": "convert -density 960 -resize 192x192 public/icon.svg public/icon.png",
     "html": "pug -O src/html/en.json < src/html/index.pug > public/index.html && pug -O src/html/ja.json < src/html/index.pug > public/ja.html",
-    "generate": "yarn icon && yarn html"
+    "icon": "./make-icons"
   },
   "dependencies": {
+    "register-service-worker": "^1.5.2",
     "sanitize.css": "^8.0.0",
     "vue": "^2.5.17",
     "vue-material-design-icons": "^2.5.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.2.0",
+    "@vue/cli-plugin-pwa": "^3.4.1",
     "@vue/cli-service": "^3.2.0",
     "coffee-loader": "^0.9.0",
     "coffeescript": "^2.3.2",
