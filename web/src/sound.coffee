@@ -31,10 +31,8 @@ if AudioContext?.prototype?.resume?
             reject new Error "error loading #{url}"
         req.send()
 
-    window.removeEventListener 'touchstart', init
     window.removeEventListener 'click', init
 
-  window.addEventListener 'touchstart', init
   window.addEventListener 'click', init
 else
   load_sounds (url) ->
