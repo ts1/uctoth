@@ -1,25 +1,28 @@
 <template lang="pug">
 .box
   .colors
-    Button.color(:selected="color==BLACK" @click="color = BLACK")
+    Button.color(:selected="prefs.user==BLACK" @click="prefs.user = BLACK")
       Disc(color="black")
       span {{ i18n.t.first_move }}
-    Button.color(:selected="color==WHITE" @click="color = WHITE")
+    Button.color(:selected="prefs.user==WHITE" @click="prefs.user = WHITE")
       Disc(color="white")
       span {{ i18n.t.second_move}}
 
   .levels
     Button.level(
       v-for="l in levels"
-      :selected="level==l.toLowerCase()"
-      @click="level = l.toLowerCase()"
+      :selected="prefs.level==l.toLowerCase()"
+      @click="prefs.level = l.toLowerCase()"
     )
       | {{ i18n.t[l] }}
 
-  Button.guide(:checked="guide" @click="guide = !guide")
+  Button.guide(:checked="prefs.guide" @click="prefs.guide = !prefs.guide")
     | {{ i18n.t.show_guide }}
 
-  Button.moves(:checked="moves" @click="moves = !moves")
+  Button.moves(
+    :checked="prefs.show_moves"
+    @click="prefs.show_moves = !prefs.show_moves"
+  )
     | {{ i18n.t.show_moves }}
 
   .langs
@@ -40,30 +43,29 @@
 <script lang="coffee">
 import { BLACK, WHITE } from '@oth/board'
 import Disc from './Disc'
-import '@icons/styles.css'
 import Button from './Button'
 import i18n from '../i18n'
-import { get_pref, set_pref } from '../prefs'
+import { get_prefs, set_prefs } from '../prefs'
+
+defaults =
+  user: BLACK
+  level: 'normal'
+  guide: true
+  show_moves: false
 
 export default
-  props: ['start']
   data: -> {
     levels: ['easiest', 'easy', 'normal', 'hard', 'hardest']
-    color: get_pref('color', BLACK)
-    level: get_pref('level', 'normal')
-    guide: get_pref('guide', true)
-    moves: get_pref('moves', false)
+    prefs: {defaults..., get_prefs()...}
     BLACK
     WHITE
     i18n
   }
   methods:
     submit: ->
-      set_pref 'color', @color
-      set_pref 'level', @level
-      set_pref 'guide', @guide
-      set_pref 'moves', @moves
-      @start @color, @level, @guide, @moves
+      set_prefs @prefs
+      {user, level, guide, show_moves} = @prefs
+      @$emit 'start', {user, level, guide, show_moves}
   components: { Disc, Button }
 </script>
 

@@ -6,21 +6,15 @@
     :class="in_touch && 'in-touch'"
   )
     h1(v-if="mode=='setting'") UCTOTH
-    Setting.setting(v-if="mode=='setting'" :start="start")
-    Game(
-      v-if="mode=='game'"
-      :user="color"
-      :level="level"
-      :guide="guide"
-      :show_moves="moves"
-      :back="back"
-    )
+    Setting.setting(v-if="mode=='setting'" @start="start")
+    Game(v-if="mode=='game'" v-bind="prefs" @back="back")
     .link
       a(href="https://github.com/ts1/uctoth" target="_blank") Source code
 </template>
 
 <script lang="coffee">
   import 'sanitize.css'
+  import '@icons/styles.css'
   import './no_bounce'
   import Setting from './components/Setting'
   import Game from './components/Game'
@@ -33,17 +27,11 @@
     name: 'app'
     data: ->
       mode: 'setting'
-      color: null
-      level: null
-      guide: null
-      moves: null
       in_touch: true
+      prefs: {}
     methods:
-      start: (color, level, guide, moves) ->
-        @color = color
-        @level = level
-        @guide = guide
-        @moves = moves
+      start: (prefs) ->
+        @prefs = prefs
         @mode = 'game'
       back: ->
         @mode = 'setting'

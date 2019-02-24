@@ -2,7 +2,7 @@
 .screen
   header
     .icons
-      Button(@click="back" :border="false")
+      Button(@click="() => $emit('back')" :border="false")
         BackIcon
       Button(v-if="sound_supported" @click="mute" :border="false")
         SoundIcon(v-if="!muted")
@@ -14,15 +14,19 @@
       :user="user"
       :level="level"
       :guide="guide"
-      :message="show_message"
-      :back="back"
-      :set_undo_btn="set_undo_btn"
       :entered_moves="entered_moves"
+      @message="show_message"
+      @set-undo-btn="set_undo_btn"
       @add-move="add_move($event)"
       @undo="undo_move"
-      @reset-moves="reset_moves"
+      @reset-moves="moves = ''"
+      @back="$emit('back')"
     )
-    Moves.moves(:moves="moves" @enter-moves="enter_moves($event)" v-if="show_moves")
+    Moves.moves(
+      :moves="moves"
+      @enter-moves="entered_moves = $event"
+      v-if="show_moves"
+    )
     .msg-box-wrapper
       transition(name='msg')
         MessageBox(v-bind="msg" :key="msg_key" v-if="msg" class="msg-box")
@@ -41,7 +45,7 @@ import i18n from '../i18n'
 import * as sound from '../sound.coffee'
 
 export default
-  props: ['user', 'level', 'guide', 'show_moves', 'back']
+  props: ['user', 'level', 'guide', 'show_moves']
   data: -> {
     msg: null
     msg_key: 0
@@ -62,20 +66,14 @@ export default
     show_message: (params) ->
       @msg_key++
       @msg = params
-    set_undo_btn: (enabled, undo) ->
-      @undo_enabled = enabled
-      @undo = undo
+    set_undo_btn: (e) ->
+      @undo_enabled = e.enabled
+      @undo = e.undo
     mute: ->
       @muted = not @muted
       sound.mute(@muted)
-    add_move: (move) ->
-      @moves += move
-    undo_move: ->
-      @moves = @moves.substr(0, @moves.length-2)
-    enter_moves: (moves) ->
-      @entered_moves = moves
-    reset_moves: ->
-      @moves = ''
+    add_move: (move) -> @moves += move
+    undo_move: -> @moves = @moves.substr(0, @moves.length-2)
 
   components: {
     BackIcon

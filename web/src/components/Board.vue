@@ -41,8 +41,7 @@
   worker = new Player
 
   export default
-    props: ['user', 'level', 'guide', 'message', 'back', 'set_undo_btn',
-      'entered_moves']
+    props: ['user', 'level', 'guide', 'entered_moves']
 
     data: -> {
       board: new Board
@@ -126,6 +125,8 @@
         rows
 
     methods:
+      message: (args) -> @$emit 'message', args
+
       move: (pos, move_only=false) ->
         @flips = []
         @hover_at = null
@@ -159,19 +160,20 @@
             outcome = @board.outcome(@user)
             discs = "#{@board.count(@user)}:#{@board.count(-@user)}"
             if outcome > 0
-              @message text: i18n.expand('win', {discs}), back: @back
+              @message text: i18n.expand('win', {discs}), back: => @$emit 'back'
               gtag 'event', 'win',
                 event_category: 'game'
                 event_label: @level
                 value: outcome
             else if outcome < 0
-              @message text: i18n.expand('lose', {discs}), back: @back
+              @message
+                text: i18n.expand('lose', {discs}), back: => @$emit 'back'
               gtag 'event', 'lose',
                 event_category: 'game'
                 event_label: @level
                 value: outcome
             else
-              @message text: @i18n.t.draw, back: @back
+              @message text: @i18n.t.draw, back: => @$emit 'back'
               gtag 'event', 'draw',
                 event_category: 'game'
                 event_label: @level
@@ -238,7 +240,7 @@
             sound 'alert'
 
     watch:
-      can_undo: -> @set_undo_btn(@can_undo, @undo)
+      can_undo: -> @$emit 'set-undo-btn', enabled: @can_undo, undo: @undo
 
       entered_moves: ->
         @undo_stack = []
