@@ -1,19 +1,18 @@
 <template lang="pug">
 .box
-  .colors
-    Button.color(:selected="prefs.user==BLACK" @click="prefs.user = BLACK")
+  Select.colors(v-model:value="prefs.user")
+    SelectItem.color(:value="BLACK")
       Disc(color="black")
       span {{ i18n.t.first_move }}
-    Button.color(:selected="prefs.user==WHITE" @click="prefs.user = WHITE")
+    SelectItem.color(:value="WHITE")
       Disc(color="white")
       span {{ i18n.t.second_move}}
 
-  .levels
-    Button.level(
+  Select.levels(v-model:value="prefs.level")
+    SelectItem.level(
       v-for="l in levels"
       :key="l"
-      :selected="prefs.level==l.toLowerCase()"
-      @click="prefs.level = l.toLowerCase()"
+      :value="l"
     )
       | {{ i18n.t[l] }}
 
@@ -26,11 +25,9 @@
   )
     | {{ i18n.t.show_moves }}
 
-  .langs
-    Button.lang(:selected="i18n.lang=='en'" @click="i18n.set('en')")
-      | English
-    Button.lang(:selected="i18n.lang=='ja'" @click="i18n.set('ja')")
-      | 日本語
+  Select.langs(:value="i18n.lang" @input="(val) => i18n.set(val)")
+    SelectItem.lang(value="en") English
+    SelectItem.lang(value="ja") 日本語
   
   Button(@click="submit") {{ i18n.t.start }}
 </template>
@@ -39,6 +36,8 @@
 import { BLACK, WHITE } from '@oth/board'
 import Disc from './Disc'
 import Button from './Button'
+import Select from './Select'
+import SelectItem from './SelectItem'
 import i18n from '../i18n'
 import { get_prefs, set_prefs } from '../prefs'
 
@@ -61,7 +60,7 @@ export default
       set_prefs @prefs
       {user, level, guide, show_moves} = @prefs
       @$emit 'start', {user, level, guide, show_moves}
-  components: { Disc, Button }
+  components: { Disc, Button, Select, SelectItem }
 </script>
 
 <style lang="stylus" scoped>
