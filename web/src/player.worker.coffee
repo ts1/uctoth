@@ -31,8 +31,8 @@ param_table =
     book_random: .7
     search: 5
     random: .01
-    wld: 10
-    full: 8
+    wld: 8
+    full: 6
   hardest:
     book: true
     book_random: .1

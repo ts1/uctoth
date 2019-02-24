@@ -2,8 +2,8 @@
   button(:class="className" @click="$emit('click')")
     span.content
       span.check(v-if="checked != null")
-        CheckboxMarked(v-if="checked")
-        CheckboxBlankOutline(v-if="checked==false")
+        CheckboxMarked(v-show="checked")
+        CheckboxBlankOutline(v-show="checked==false")
       slot
 </template>
 
@@ -18,6 +18,7 @@
         @theme or 'dark'
         (@border ? true and not @checked? and @selected != false) and 'border'
         @checked? and 'left'
+        @selected and 'selected'
       ]
     components: {
       CheckboxMarked
@@ -34,26 +35,27 @@
     padding .25em 1em
     border-radius 3px
     outline none
-    border 1px solid
+    border 1px solid transparent
 
     &.light
-      border-color #333
+      &.border
+        border-color #333
       color #333
       &:active:not([disabled])
-        background-color transparent
-        border-color #000
+        background-color rgba(0, 0, 0, .15)
         color #000
+        &.border
+          border-color #000
 
     &.dark
-      border-color #ccc
+      &.border
+        border-color #ccc
       color #ccc
       &:active:not([disabled])
-        background-color transparent
-        border-color #fff
+        background-color rgba(255, 255, 255, .15)
         color #fff
-
-    &:not(.border)
-      border-color transparent
+        &.border
+          border-color #fff
 
     &[disabled]
       cursor not-allowed
@@ -71,7 +73,10 @@
   .in-touch
     button:hover:not(:active):not([disabled])
       &.light
-        background-color rgba(0, 0, 0, .1)
+        background-color rgba(0, 0, 0, .075)
       &.dark
-        background-color rgba(255, 255, 255, .1)
+        background-color rgba(255, 255, 255, .075)
+
+  .selected
+    pointer-events none
 </style>

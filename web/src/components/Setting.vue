@@ -11,6 +11,7 @@
   .levels
     Button.level(
       v-for="l in levels"
+      :key="l"
       :selected="prefs.level==l.toLowerCase()"
       @click="prefs.level = l.toLowerCase()"
     )
@@ -26,15 +27,9 @@
     | {{ i18n.t.show_moves }}
 
   .langs
-    Button.lang(
-      :selected="i18n.lang=='en'"
-      @click="i18n.set('en')"
-    )
+    Button.lang(:selected="i18n.lang=='en'" @click="i18n.set('en')")
       | English
-    Button.lang(
-      :selected="i18n.lang=='ja'"
-      @click="i18n.set('ja')"
-    )
+    Button.lang(:selected="i18n.lang=='ja'" @click="i18n.set('ja')")
       | 日本語
   
   Button(@click="submit") {{ i18n.t.start }}
