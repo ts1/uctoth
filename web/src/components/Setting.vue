@@ -1,38 +1,35 @@
 <template lang="pug">
 .box
   .colors
-    .color.select(:class="color==BLACK && 'is-active'" @click="color = BLACK")
+    Button.color(:selected="color==BLACK" @click="color = BLACK")
       Disc(color="black")
       span {{ i18n.t.first_move }}
-    .color.select(:class="color==WHITE && 'is-active'" @click="color = WHITE")
+    Button.color(:selected="color==WHITE" @click="color = WHITE")
       Disc(color="white")
       span {{ i18n.t.second_move}}
 
   .levels
-    .level.select(
+    Button.level(
       v-for="l in levels"
-      :class="level==l.toLowerCase() && 'is-active'"
+      :selected="level==l.toLowerCase()"
       @click="level = l.toLowerCase()"
-    ) {{ i18n.t[l] }}
+    )
+      | {{ i18n.t[l] }}
 
-  .guide.checkbox.select(@click="guide = !guide")
-    CheckboxMarked(v-if="guide")
-    CheckboxBlankOutline(v-if="!guide")
-    span.label {{ i18n.t.show_guide }}
+  Button.guide(:checked="guide" @click="guide = !guide")
+    | {{ i18n.t.show_guide }}
 
-  .moves.checkbox.select(@click="moves = !moves")
-    CheckboxMarked(v-if="moves")
-    CheckboxBlankOutline(v-if="!moves")
-    span.label {{ i18n.t.show_moves }}
+  Button.moves(:checked="moves" @click="moves = !moves")
+    | {{ i18n.t.show_moves }}
 
   .langs
-    .lang.select(
-      :class="i18n.lang=='en' && 'is-active'"
+    Button.lang(
+      :selected="i18n.lang=='en'"
       @click="i18n.set('en')"
     )
       | English
-    .lang.select(
-      :class="i18n.lang=='ja' && 'is-active'"
+    Button.lang(
+      :selected="i18n.lang=='ja'"
       @click="i18n.set('ja')"
     )
       | 日本語
@@ -44,8 +41,6 @@
 import { BLACK, WHITE } from '@oth/board'
 import Disc from './Disc'
 import '@icons/styles.css'
-import CheckboxMarked from '@icons/CheckboxMarked'
-import CheckboxBlankOutline from '@icons/CheckboxBlankOutline'
 import Button from './Button'
 import i18n from '../i18n'
 import { get_pref, set_pref } from '../prefs'
@@ -69,7 +64,7 @@ export default
       set_pref 'guide', @guide
       set_pref 'moves', @moves
       @start @color, @level, @guide, @moves
-  components: { Disc, CheckboxMarked, CheckboxBlankOutline, Button }
+  components: { Disc, Button }
 </script>
 
 <style lang="stylus" scoped>
@@ -95,6 +90,8 @@ export default
 
 .levels
   margin-bottom 20px
+  display flex
+  flex-direction column
 
 .langs
   display flex
@@ -107,27 +104,6 @@ export default
     flex-grow 1
     text-align center
 
-.select
-  border 1px solid transparent
-  border-radius 3px
-  cursor pointer
-  transition all .2s ease-in-out
-  &:active
-    background none
-    color #fff
-    &:not(.checkbox)
-      border-color #fff
-
-.in-touch .select:hover:not(:active)
-  background rgba(255, 255, 255, 0.1)
-
-.is-active
-  border-color #ccc
-
-.checkbox
-  padding 5px
-  .label
-    margin-left 5px
 .moves
   margin-bottom 25px
 </style>
