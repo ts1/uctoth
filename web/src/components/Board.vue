@@ -1,5 +1,5 @@
 <template lang="pug">
-  .box
+  .box(@touchstart="is_touch = true")
     .label-row
       .label(v-for="label in 'ABCDEFGH'.split('')") {{ label }}
     .row(v-for='(row, i) in rows')
@@ -9,10 +9,10 @@
         @mouseenter='enter'
         @mouseleave='leave'
         @click='move'
+        :class="guide && can_move && !hover_at && 'guide'"
       )
         transition(name="flip" v-if="disc" mode='out-in' appear)
           Disc.disc(:color="disc" :will_flip="will_flip" :key="disc")
-        .guide(v-if='guide && can_move && !hover_at')
         Disc(v-if="is_hover"
           :color='turn==BLACK ? "black" : "white"'
           class="hover"
@@ -55,6 +55,7 @@
       gameover: false
       will_flip_enabled: false
       keys: []
+      is_touch: false
       BLACK
       i18n
     }
@@ -108,7 +109,7 @@
                 if @turn == @user
                   @move pos
               enter: =>
-                if @turn == @user
+                if @turn == @user and not @is_touch
                   @flips = @board.move(@turn, pos)
                   if @flips.length
                     @board.undo @turn, pos, @flips
@@ -285,22 +286,23 @@
   .row:nth-child(even) .cell:nth-child(even)
     background-color #3e3e3e
 
-  .guide
-    position absolute
-    top 0
-    left 0
-    width 100%
-    height 100%
-
-  .in-touch .box:hover .guide,
-  #app:not(.in-touch) .guide
-    background-image: radial-gradient(
-      closest-side,
-      rgba(255, 255, 0, .15) 0%,
-      rgba(255, 255, 0, .15) 50%,
-      transparent 100%
-    )
-    animation flash 2s infinite
+  .in-touch .box:hover, #app:not(.in-touch)
+    .guide
+      position relative
+    .guide::after
+      content ''
+      position absolute
+      top 0
+      left 0
+      width 100%
+      height 100%
+      background-image radial-gradient(
+        closest-side,
+        rgba(255, 255, 0, .15) 0%,
+        rgba(255, 255, 0, .15) 50%,
+        transparent 100%
+      )
+      animation flash 2s infinite
 
   @keyframes flash
     from
