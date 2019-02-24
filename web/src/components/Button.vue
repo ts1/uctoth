@@ -31,8 +31,6 @@ export default
     &.light
       border-color #333
       color #333
-      &:hover
-        background-color rgba(0, 0, 0, .1)
       &:active
         background-color transparent
         border-color #000
@@ -41,8 +39,6 @@ export default
     &.dark
       border-color #ccc
       color #ccc
-      &:hover
-        background-color rgba(255, 255, 255, .1)
       &:active
         background-color transparent
         border-color #fff
@@ -50,7 +46,13 @@ export default
 
     &[disabled]
       cursor not-allowed
+      pointer-events: none
       opacity .3
-      &:hover
-        background-color transparent
+
+  .in-touch
+    button:not(:active)
+      &.light:hover
+        background-color rgba(0, 0, 0, .1)
+      &.dark:hover
+        background-color rgba(255, 255, 255, .1)
 </style>

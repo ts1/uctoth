@@ -1,7 +1,12 @@
 <template lang="pug">
-  #app
+  #app(
+    @touchstart="in_touch = true"
+    @touchend="in_touch = false"
+    @touchcancel="in_touch = false"
+    :class="in_touch && 'in-touch'"
+  )
     h1(v-if="mode=='setting'") UCTOTH
-    Setting(v-if="mode=='setting'" :start="start" class="setting")
+    Setting.setting(v-if="mode=='setting'" :start="start")
     Game(
       v-if="mode=='game'"
       :user="color"
@@ -16,6 +21,7 @@
 
 <script lang="coffee">
   import 'sanitize.css'
+  import './no_bounce'
   import Setting from './components/Setting'
   import Game from './components/Game'
 
@@ -31,6 +37,7 @@
       level: null
       guide: null
       moves: null
+      in_touch: true
     methods:
       start: (color, level, guide, moves) ->
         @color = color
@@ -60,6 +67,7 @@
     line-height 1.5
     -webkit-font-smoothing antialiased
     -moz-osx-font-smoothing grayscale
+    -webkit-tap-highlight-color transparent
 
   #app
     min-height 100vh // For IE

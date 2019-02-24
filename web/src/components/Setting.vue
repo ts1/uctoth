@@ -112,13 +112,14 @@ export default
   border-radius 3px
   cursor pointer
   transition all .2s ease-in-out
-  &:hover
-    background rgba(255, 255, 255, 0.1)
   &:active
     background none
     color #fff
     &:not(.checkbox)
       border-color #fff
+
+.in-touch .select:hover:not(:active)
+  background rgba(255, 255, 255, 0.1)
 
 .is-active
   border-color #ccc

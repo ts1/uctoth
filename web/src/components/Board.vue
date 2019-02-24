@@ -12,7 +12,7 @@
       )
         transition(name="flip" v-if="disc" mode='out-in' appear)
           Disc.disc(:color="disc" :will_flip="will_flip" :key="disc")
-        .move(v-if='guide && can_move && !hover_at')
+        .guide(v-if='guide && can_move && !hover_at')
         Disc(v-if="is_hover"
           :color='turn==BLACK ? "black" : "white"'
           class="hover"
@@ -85,12 +85,14 @@
             disc = @board.get(pos)
 
             row.push
-              disc: if disc == BLACK
-                      'black'
-                    else if disc == WHITE
-                      'white'
-                    else
-                      null
+              pos: pos
+              disc:
+                if disc == BLACK
+                  'black'
+                else if disc == WHITE
+                  'white'
+                else
+                  null
               can_move:
                 if @turn == @user
                   @board.can_move(@turn, pos)
@@ -283,19 +285,20 @@
   .row:nth-child(even) .cell:nth-child(even)
     background-color #3e3e3e
 
-  .move
+  .guide
     position absolute
     top 0
     left 0
     width 100%
     height 100%
 
-  .box:hover .move
+  .in-touch .box:hover .guide,
+  #app:not(.in-touch) .guide
     background-image: radial-gradient(
       closest-side,
       rgba(255, 255, 0, .15) 0%,
-      rgba(255, 255, 0, .15) 30%,
-      transparent 70%
+      rgba(255, 255, 0, .15) 50%,
+      transparent 100%
     )
     animation flash 2s infinite
 
@@ -356,6 +359,4 @@
     .row, .label-row
       .label
         display none
-
-
 </style>
