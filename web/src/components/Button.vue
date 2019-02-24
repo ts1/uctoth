@@ -1,16 +1,29 @@
 <template lang="pug">
   button(:class="className" @click="$emit('click')")
-    slot
+    span.content
+      span.check(v-if="checked != null")
+        CheckboxMarked(v-if="checked")
+        CheckboxBlankOutline(v-if="checked==false")
+      slot
 </template>
 
 <script lang="coffee">
-export default
-  props: ['theme', 'border']
-  computed:
-    className: -> [
-      @theme or 'dark'
-      if @border ? true then 'border' else null
-    ]
+  import CheckboxMarked from '@icons/CheckboxMarked'
+  import CheckboxBlankOutline from '@icons/CheckboxBlankOutline'
+  import CheckboxIntermediate from '@icons/CheckboxIntermediate'
+  export default
+    props: ['theme', 'border', 'selected', 'checked']
+    computed:
+      className: -> [
+        @theme or 'dark'
+        (@border ? true and not @checked? and @selected != false) and 'border'
+        @checked? and 'left'
+      ]
+    components: {
+      CheckboxMarked
+      CheckboxBlankOutline
+      CheckboxIntermediate
+    }
 </script>
 
 <style lang="stylus" scoped>
@@ -21,17 +34,12 @@ export default
     padding .25em 1em
     border-radius 3px
     outline none
-
-    &.border
-      border 1px solid
-
-    &:not(.border)
-      border none
+    border 1px solid
 
     &.light
       border-color #333
       color #333
-      &:active
+      &:active:not([disabled])
         background-color transparent
         border-color #000
         color #000
@@ -39,20 +47,31 @@ export default
     &.dark
       border-color #ccc
       color #ccc
-      &:active
+      &:active:not([disabled])
         background-color transparent
         border-color #fff
         color #fff
 
+    &:not(.border)
+      border-color transparent
+
     &[disabled]
       cursor not-allowed
-      pointer-events: none
       opacity .3
 
+    &.left
+      text-align left
+
+    .content
+      position relative // Fix for IE
+
+    .check
+      margin-right 5px
+
   .in-touch
-    button:not(:active)
-      &.light:hover
+    button:hover:not(:active):not([disabled])
+      &.light
         background-color rgba(0, 0, 0, .1)
-      &.dark:hover
+      &.dark
         background-color rgba(255, 255, 255, .1)
 </style>
