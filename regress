@@ -25,10 +25,16 @@ yargs = require 'yargs'
       default: 120
       type: 'number'
       requiresArg: true
-    balance:
-      desc: 'Thin out samples to get average closer to zero'
+    b:
+      alias: 'balance'
+      desc: 'Thin out samples to get average closer to zero (not work with -l)'
       type: 'boolean'
       default: true
+    l:
+      alias: 'logistic'
+      desc: 'Use model which predicts probability to win rather than score'
+      type: 'boolean'
+      default: false
     h:
       alias: 'help'
   .version false
@@ -45,10 +51,13 @@ each_index = (row, cb) ->
     cb row[i], row[i+1]
 
 predict = (coeffs, row) ->
-  result = 0
+  sum = 0
   each_index row, (index, value) ->
-    result += coeffs[index] * value
-  result
+    sum += coeffs[index] * value
+  if argv.logistic
+    1 / (1 + Math.exp(-sum*.01))
+  else
+    sum
 
 verify = (rows, coeffs, upper) ->
   if upper?
@@ -81,7 +90,10 @@ read_rows = (filename) ->
   console.log "loading #{filename}"
   rows = []
   await readlines filename, (line) ->
-    rows.push JSON.parse line
+    row = JSON.parse line
+    if argv.logistic
+      row[0] = if row[0] > 0 then 1 else if row[0] < 0 then 0 else 0.5
+    rows.push row
   rows
 
 binary_search = (samples, target) ->
@@ -112,7 +124,7 @@ thin_out = (samples) ->
     i = binary_search(samples, balance)
     value = samples[i][0]
     if value == 0
-      #console.log 'abount to kill zero'
+      #console.log 'about to kill zero'
       break
     #console.log 'killing', value
     samples.splice i, 1
@@ -141,7 +153,7 @@ regress = (index_file) ->
   raw_avg = average samples
   console.log 'samples avg', raw_avg
 
-  if argv.balance
+  if argv.balance and not argv.logistic
     {samples, n_removed} = thin_out(samples)
   if argv.split
     {train_set, test_set} = split_rows(samples, argv.split)
