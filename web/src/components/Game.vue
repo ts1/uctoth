@@ -5,8 +5,8 @@
       Button(@click="() => $emit('back')" :border="false")
         BackIcon
       Button(v-if="sound_supported" @click="mute" :border="false")
-        SoundIcon(v-if="!muted")
-        MuteIcon(v-if="muted")
+        SoundIcon(v-show="!muted")
+        MuteIcon(v-show="muted")
     .level {{ level_title }}
     Button.undo(:disabled="!undo_enabled" @click="undo") {{ i18n.t.undo }}
   main

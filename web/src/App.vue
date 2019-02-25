@@ -5,8 +5,8 @@
     @touchcancel="in_touch = false"
     :class="in_touch && 'in-touch'"
   )
-    h1(v-if="mode=='setting'") UCTOTH
-    Setting.setting(v-if="mode=='setting'" @start="start")
+    h1(v-show="mode=='setting'") UCTOTH
+    Setting.setting(v-show="mode=='setting'" @start="start")
     Game(v-if="mode=='game'" v-bind="prefs" @back="back")
     .link
       a(href="https://github.com/ts1/uctoth" target="_blank") Source code
