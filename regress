@@ -28,7 +28,7 @@ yargs = require 'yargs'
     balance:
       desc: 'Thin out samples to get average closer to zero'
       type: 'boolean'
-      default: true
+      default: false
     h:
       alias: 'help'
   .version false
