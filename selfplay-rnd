@@ -32,7 +32,7 @@ argv = require 'yargs'
       alias: 'randomness'
       desc: 'Initial randomness'
       type: 'number'
-      default: 0.1
+      default: 0.07
       requiresArg: true
     min_col:
       desc: 'Minimum collision rate'
@@ -162,13 +162,14 @@ do ->
       console.log "COLLISION #{n_col}/#{n_play}"
 
     avg_col = (avg_col * (argv.D - 1) + int(collision)) / argv.D
+    orig_randomness = randomness
 
-    if avg_col > argv.max_col
-      randomness *= 1.01
-      player = make_player(randomness)
-      console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
+    if collision and avg_col > argv.max_col
+      randomness *= 1.07
     else if avg_col < argv.min_col
       randomness *= 0.99
+
+    if randomness != orig_randomness
       player = make_player(randomness)
       console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
 
