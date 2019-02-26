@@ -56,6 +56,21 @@ class Database
         else
           resolve result
       )
+  run_retry: (sql, params) ->
+    wait = 1
+    loop
+      try
+        await @run sql, params
+      catch e
+        if e.code == 'SQLITE_BUSY'
+          w = Math.random() * wait
+          console.log "Database is busy, waiting for #{w} sec to retry"
+          await new Promise (resolve) -> setTimeout resolve, w*1000
+          wait *= 2
+          continue
+        else
+          throw e
+      break
 
 defaults =
   readonly: false
@@ -104,7 +119,7 @@ module.exports = class Book
     @verbose = opt.verbose
 
   init: ->
-    await @db.run 'pragma busy_timeout=5000'
+    await @db.run 'pragma busy_timeout=100'
     await @db.run 'pragma journal_mode=WAL'
     await @db.run '''
       create table if not exists nodes (
@@ -136,13 +151,13 @@ module.exports = class Book
   set: (board, data) ->
     code = encode_normalized(board)
     n_moves = 60 - board.count(EMPTY)
-    @db.run '''
+    @db.run_retry '''
       insert or replace into nodes
-        (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf, solved)
-        values (?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
-        [code, n_moves, data.outcome, data.pub_value, data.pri_value,
-          data.n_visited, data.is_leaf, data.solved]
+      (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf, solved)
+      values (?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [code, n_moves, data.outcome, data.pub_value, data.pri_value,
+        data.n_visited, data.is_leaf, data.solved]
 
   find_opening: (scope, opening=DEFAULT_OPENING) ->
     scope *= SCORE_MULT
@@ -212,7 +227,7 @@ module.exports = class Book
     outcome = board.outcome()
 
     s = pos_array_to_str(moves)
-    @db.run 'insert or replace into games values (?, ?)', [s, outcome]
+    @db.run_retry 'insert or replace into games values (?, ?)', [s, outcome]
 
     data = (await @get(board)) or {n_visited:0}
     data.outcome = outcome
