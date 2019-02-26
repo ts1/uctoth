@@ -221,11 +221,10 @@ regress = (index_file) ->
 
     last_loss = loss
 
-    unless argv.sgd
-      n++
-      if n >= 10
-        rate *= 10000
-        n = 0
+    n++
+    if n >= 30
+      rate *= 10000
+      n = 0
 
   r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
