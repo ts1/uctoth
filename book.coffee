@@ -71,6 +71,11 @@ class Database
         else
           throw e
       break
+  serialize: (cb) ->
+    new Promise (resolve) =>
+       @db.serialize ->
+        await cb()
+        resolve()
 
 defaults =
   readonly: false
@@ -131,18 +136,26 @@ module.exports = class Book
         is_leaf integer,
         solved integer,
         n_visited integer)
-        '''
+      '''
 
     await @db.run '''
       create table if not exists games (
         moves text primary key,
         outcome integer)
-        '''
+      '''
+
+    await @db.run '''
+      create table if not exists indexes (
+        code text primary key,
+        indexes text)
+      '''
 
     # migration
     try
       await @db.run '''alter table nodes add column solved integer'''
     catch
+
+  serialize: (cb) -> @db.serialize cb
 
   get_by_code: (code) -> @db.get 'select * from nodes where code=?', [code]
 
@@ -366,8 +379,24 @@ module.exports = class Book
     (await @db.get 'select count(*) as c from games where moves=?',
       [moves_str]).c
 
-  dump_nodes: (cb) -> @db.each 'select * from nodes where outcome is not null', [], (row) -> cb(row)
+  dump_nodes: (cb) ->
+    @db.each 'select * from nodes where outcome is not null', [], cb
 
   get_visited_nodes: (min_visited, cb) ->
-    @db.each 'select * from nodes where n_visited >= ?', [min_visited], (row) ->
-      cb row
+    @db.each 'select * from nodes where n_visited >= ?', [min_visited], cb
+
+  dump_nodes_with_indexes: (limit, last) ->
+    rows = await @db.all '''
+      select nodes.code, nodes.outcome, indexes.indexes
+        from nodes left join indexes on nodes.code = indexes.code
+        where nodes.outcome is not null and nodes.code > ?
+        order by nodes.code
+        limit ?
+      ''', [last, limit]
+    rows.forEach (row) ->
+      row.indexes and= JSON.parse(row.indexes)
+    rows
+
+  store_indexes: (code, indexes) ->
+    @db.run 'insert or replace into indexes (code, indexes) values (?, ?)',
+      [code, JSON.stringify(indexes)]
