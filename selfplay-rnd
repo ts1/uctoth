@@ -47,7 +47,7 @@ argv = require 'yargs'
     D:
       desc: 'Collision average duration'
       type: 'number'
-      default: 10
+      default: 20
       requiresArg: true
     b:
       alias: 'balance'
@@ -140,7 +140,7 @@ do ->
   n_col = 0
   n_play = 0
   n_skip = 0
-  avg_col1 = avg_col2 = (argv.min_col + argv.max_col) / 2
+  avg_col = (argv.min_col + argv.max_col) / 2
   reload = watch_file('.reload-selfplay')
   until reload()
     {moves, outcome} = await play player
@@ -161,17 +161,16 @@ do ->
       n_col++
       console.log "COLLISION #{n_col}/#{n_play}"
 
-    avg_col1 = (avg_col1 * (argv.D - 1) + int(collision)) / argv.D
-    avg_col2 = (avg_col2 * (argv.D - 1) + avg_col1) / argv.D
+    avg_col = (avg_col * (argv.D - 1) + int(collision)) / argv.D
 
-    if avg_col2 > argv.max_col
+    if avg_col > argv.max_col
       randomness *= 1.01
       player = make_player(randomness)
-      console.log 'collision rate', avg_col2, 'randomness', randomness if argv.v
-    else if avg_col2 < argv.min_col
+      console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
+    else if avg_col < argv.min_col
       randomness *= 0.99
       player = make_player(randomness)
-      console.log 'collision rate', avg_col2, 'randomness', randomness if argv.v
+      console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
 
     if collision
       continue
