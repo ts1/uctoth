@@ -124,7 +124,7 @@ module.exports = class Book
     @verbose = opt.verbose
 
   init: ->
-    await @db.run 'pragma busy_timeout=100'
+    await @db.run 'pragma busy_timeout=10000'
     await @db.run 'pragma journal_mode=WAL'
     await @db.run '''
       create table if not exists nodes (
@@ -398,5 +398,6 @@ module.exports = class Book
     rows
 
   store_indexes: (code, indexes) ->
-    @db.run 'insert or replace into indexes (code, indexes) values (?, ?)',
-      [code, JSON.stringify(indexes)]
+    @db.run_retry '''
+      insert or replace into indexes (code, indexes) values (?, ?)
+      ''', [code, JSON.stringify(indexes)]
