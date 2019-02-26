@@ -163,6 +163,7 @@ do ->
 
   balance = await book.sum_outcome() or 0
   reload = watch_file('.reload-selfplay')
+  n_games = 0
   for depth in [argv.depth..60]
     await find_unplayed_opening book, depth, (opening) ->
       process.exit 0 if reload()
@@ -173,9 +174,6 @@ do ->
       balance = await book.sum_outcome() or 0
       console.log 'balance', balance
 
-      if argv.n?
-        n_games = (await book.count_games()) % argv.n or argv.n
-        console.log 'played', n_games
-        process.exit 0 if n_games >= argv.n
+      process.exit 0 if ++n_games >= argv.n
 
       outcome

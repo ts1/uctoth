@@ -110,16 +110,12 @@ do ->
     verbose: argv.verbose
   await book.init()
 
-  n_play = 0
+  n_games = 0
   reload = watch_file('.reload-selfplay')
   until reload()
     opening = await book.find_opening(argv.scope,
       pos_array_from_str(argv.opening))
     {moves, outcome} = await play player, opening
     moves_str = pos_array_to_str(moves)
-    n_play++
     await book.add_game moves, true
-    if argv.n?
-      n_games = (await book.count_games()) % argv.n or argv.n
-      console.log 'played', n_games
-      break if n_games >= argv.n
+    break if ++n_games >= argv.n

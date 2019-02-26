@@ -140,6 +140,7 @@ do ->
   n_col = 0
   n_play = 0
   n_skip = 0
+  n_save = 0
   avg_col = (argv.min_col + argv.max_col) / 2
   reload = watch_file('.reload-selfplay')
   until reload()
@@ -177,9 +178,6 @@ do ->
       continue
 
     await book.add_game moves
-    if argv.n?
-      n_games = (await book.count_games()) % argv.n or argv.n
-      console.log 'played', n_games
-      break if n_games >= argv.n
+    break if ++n_save >= argv.n
   balance = (await book.sum_outcome()) or 0
   console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"
