@@ -29,6 +29,10 @@ yargs = require 'yargs'
       desc: 'Thin out samples to get average closer to zero'
       type: 'boolean'
       default: false
+    sgd:
+      desc: 'Use SGD'
+      type: 'boolean'
+      default: true
     h:
       alias: 'help'
   .version false
@@ -76,6 +80,20 @@ make_gradient = (rows, coeffs) ->
 
 update_coeffs = (coeffs, vector, rate) ->
   coeffs[i] + vector[i] * rate for i in [0...index_size] by 1
+
+sgd = (rows, coeffs, rate, loss) ->
+  prev_sum_e2 = (loss * loss) * rows.length
+  new_coeffs = [coeffs...]
+  sum_e2 = 0
+  sum = 0
+  for row from rows
+    outcome = row[0]
+    e = outcome - predict(new_coeffs, row)
+    sum_e2 += e * e
+    return null if sum_e2 > prev_sum_e2
+    each_index row, (index, value) ->
+      new_coeffs[index] += rate * e * value
+  new_coeffs
 
 read_rows = (filename) ->
   console.log "loading #{filename}"
@@ -159,22 +177,31 @@ regress = (index_file) ->
   n = 0
   step = 1
   d_avg = 0
-  rate = 10 / train_set.length
+  rate = 10
+  rate /= train_set.length unless argv.sgd
   finish = false
   loop
-    vector = make_gradient train_set, coeffs
+    if argv.sgd
+      train_set = shuffle train_set
+      loop
+        new_coeffs = sgd(train_set, coeffs, rate, last_loss)
+        if new_coeffs
+          loss = verify test_set, new_coeffs, last_loss
+          if loss < last_loss
+            break
+        rate *= 0.7
+        if rate < 1e-7
+          finish = true
+          break
+    else
+      vector = make_gradient train_set, coeffs
 
-    try_up = false
-    loop
-      new_coeffs = update_coeffs coeffs, vector, rate
-      loss = verify test_set, new_coeffs, last_loss
-      break if loss < last_loss
-      rate *= 0.7
-      if rate*train_set.length < 1e-5
-        if not try_up
-          try_up = true
-          rate = 1000 / train_set.length
-        else
+      loop
+        new_coeffs = update_coeffs coeffs, vector, rate
+        loss = verify test_set, new_coeffs, last_loss
+        break if loss < last_loss
+        rate *= 0.7
+        if rate*train_set.length < 1e-5
           finish = true
           break
     break if finish
@@ -194,10 +221,11 @@ regress = (index_file) ->
 
     last_loss = loss
 
-    n++
-    if n >= 30
-      rate *= 10000
-      n = 0
+    unless argv.sgd
+      n++
+      if n >= 10
+        rate *= 10000
+        n = 0
 
   r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
