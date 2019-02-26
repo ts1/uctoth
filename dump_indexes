@@ -1,7 +1,6 @@
 #!/usr/bin/env coffee
 
 require './rejection_handler'
-fs = require 'fs'
 { PatternBoard, patterns, N_MOVES_PER_PHASE, N_PHASES } = require './pattern'
 { EMPTY } = require './board'
 { gzwriter, int } = require './util'
@@ -65,7 +64,7 @@ indexify = (book, outfiles) ->
   console.log "dumped #{offset} nodes (#{n_indexed} new nodes)"
 
 do ->
-  console.log "dumping node indexes from #{argv.book}"
+  console.log "dumping indexes from #{argv.book}"
   book = new Book argv.book
   await book.init()
   outfiles = (gzwriter "#{argv.outdir}/indexes#{i}" for i in [0...N_PHASES])
