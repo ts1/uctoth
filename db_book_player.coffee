@@ -19,7 +19,7 @@ module.exports = (options={}) ->
     best = null
     for move in moves or board.list_moves(me)
       flips = board.move me, move
-      data = await book.get(board)
+      data = book.get(board)
       board.undo me, move, flips
       if data
         value = data.pub_value * me

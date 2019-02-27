@@ -119,7 +119,7 @@ play = (player) ->
       turn = -turn
       unless board.any_moves turn
         break
-    {move, solved} = await player board, turn
+    {move, solved} = player board, turn
     flips = board.move turn, move
     console.assert flips.length
     moves.push {move, turn, solved}
@@ -132,7 +132,7 @@ play = (player) ->
 do ->
   book = new Book argv.book,
     solve_wld: argv.wld, solve_full: argv.full, eval_depth: argv.depth
-  await book.init()
+  book.init()
 
   randomness = argv.randomness
   player = make_player(randomness)
@@ -144,10 +144,10 @@ do ->
   avg_col = (argv.min_col + argv.max_col) / 2
   reload = watch_file('.reload-selfplay')
   until reload()
-    {moves, outcome} = await play player
+    {moves, outcome} = play player
     moves_str = pos_array_to_str(moves)
 
-    balance = (await book.sum_outcome()) or 0
+    balance = book.sum_outcome() or 0
     console.log "balance #{balance}"
     b = balance + outcome
     if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
@@ -157,7 +157,7 @@ do ->
 
     n_play++
 
-    collision = await book.has_game(moves_str)
+    collision = book.has_game(moves_str)
     if collision
       n_col++
       console.log "COLLISION #{n_col}/#{n_play}"
@@ -177,7 +177,7 @@ do ->
     if collision
       continue
 
-    await book.add_game moves
+    book.add_game moves
     break if ++n_save >= argv.n
-  balance = (await book.sum_outcome()) or 0
+  balance = book.sum_outcome() or 0
   console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"

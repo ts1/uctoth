@@ -65,7 +65,7 @@ find_openings = (turn, n_moves, move_str, deviation, value, n) ->
   for move in unique_moves(board, turn)
     flips = board.move turn, move
     console.assert flips.length
-    data = await book.get(board)
+    data = book.get(board)
     if data and not data.is_leaf and data.n_visited > argv.min_visited
       moves.push {move, value: data.pub_value * turn, n: data.n_visited}
     board.undo turn, move, flips
@@ -85,13 +85,13 @@ find_openings = (turn, n_moves, move_str, deviation, value, n) ->
         turn
     ms = move_str + pos_to_str(move, turn)
     dev = deviation + (best_value - value)
-    await find_openings t, n_moves+1, ms, dev, value * turn, n
+    find_openings t, n_moves+1, ms, dev, value * turn, n
     board.undo turn, move, flips
 
 do ->
-  await book.init()
+  book.init()
   board.move BLACK, pos_from_str('F5')
-  await find_openings WHITE, 1, 'F5', 0, 0, 0
+  find_openings WHITE, 1, 'F5', 0, 0, 0
   openings.sort (a, b) -> a.deviation - b.deviation
   n = 0
   codes = {}

@@ -57,7 +57,7 @@ module.exports = (options={}) ->
       return solve(board, me, true, unique_moves)
 
     if opts.book
-      move = await opts.book(board, me, unique_moves)
+      move = opts.book(board, me, unique_moves)
       if move
         return move
 

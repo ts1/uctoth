@@ -132,7 +132,7 @@ play = (board, black, white) ->
       switch turn
         when BLACK then player = black
         when WHITE then player = white
-      {move, value} = await player(board, turn)
+      {move, value} = player(board, turn)
       process.stdout.write pos_to_str(move, turn) unless argv.v
       flips = board.move turn, move
       console.assert flips.length
@@ -156,7 +156,7 @@ do ->
     b = decode code
     board = new PatternBoard b
     console.log board.dump true
-    outcome = await play board, players[0], players[1]
+    outcome = play board, players[0], players[1]
     score += outcome
     offset = outcome
     if outcome > 0
@@ -168,7 +168,7 @@ do ->
     n_matches++
 
     board = new PatternBoard b
-    outcome = await play board, players[1], players[0]
+    outcome = play board, players[1], players[0]
     score -= outcome
     offset += outcome
     if outcome > 0

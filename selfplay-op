@@ -92,7 +92,7 @@ play = (player, opening) ->
       turn = -turn
       unless board.any_moves turn
         break
-    {move, solved} = await player board, turn
+    {move, solved} = player board, turn
     flips = board.move turn, move
     console.assert flips.length
     moves.push {move, turn, solved}
@@ -108,14 +108,14 @@ do ->
     solve_wld: argv.wld
     solve_full: argv.full
     verbose: argv.verbose
-  await book.init()
+  book.init()
 
   n_games = 0
   reload = watch_file('.reload-selfplay')
   until reload()
-    opening = await book.find_opening(argv.scope,
+    opening = book.find_opening(argv.scope,
       pos_array_from_str(argv.opening))
-    {moves, outcome} = await play player, opening
+    {moves, outcome} = play player, opening
     moves_str = pos_array_to_str(moves)
-    await book.add_game moves, true
+    book.add_game moves, true
     break if ++n_games >= argv.n

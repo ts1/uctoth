@@ -63,11 +63,11 @@ module.exports = class Book
         verbose: false
 
       (board, me, moves) ->
-        ev = await player1 board, me, moves
+        ev = player1 board, me, moves
         unless ev.value?
-          ev = await player1 board, me, [ev.move]
+          ev = player1 board, me, [ev.move]
         unless ev.solved
-          ev2 = await player2 board, me, [ev.move]
+          ev2 = player2 board, me, [ev.move]
           ev.value = Math.round(ev.value + ev2.value / 2)
         ev
 
@@ -222,7 +222,7 @@ module.exports = class Book
           unevaled.push m
 
       if learn and not solved and not have_leaf and unevaled.length
-        ev = await @evaluate(board, turn, unevaled)
+        ev = @evaluate(board, turn, unevaled)
         flips = board.move turn, ev.move
         throw new Error 'invalid move' unless flips.length
         data = @get(board) or {n_visited:0}
@@ -270,7 +270,7 @@ module.exports = class Book
     process.stdout.write ": #{value} "
     if board.any_moves(-turn)
       turn = -turn
-    ev = await @evaluate(board, turn)
+    ev = @evaluate(board, turn)
     flips = board.move turn, ev.move
     throw new Error 'invalid move' unless flips.length
     process.stdout.write pos_to_str(ev.move, turn)

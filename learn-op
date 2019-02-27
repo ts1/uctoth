@@ -53,7 +53,7 @@ argv = require 'yargs'
 
 do ->
   book = new Book argv.book, eval_depth: argv.depth, solve_wld: argv.wld, solve_full: argv.full
-  await book.init()
+  book.init()
   opening = pos_array_from_str(argv.opening)
   for i in [0...argv.n]
-    await book.extend argv.scope, opening
+    book.extend argv.scope, opening

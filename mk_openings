@@ -50,7 +50,7 @@ add_nodes = (turn, depth, movestr) ->
   for move in unique_moves(board, turn)
     flips = board.move turn, move
     console.assert flips.length
-    data = await book.get(board)
+    data = book.get(board)
     if data and not nodes[data.code]? and not data.is_leaf and data.n_visited
       moves.push {
         move
@@ -71,14 +71,14 @@ add_nodes = (turn, depth, movestr) ->
       flips = board.move turn, move.move
       console.assert flips.length
       if board.any_moves(-turn)
-        await add_nodes -turn, depth+1, new_movestr
+        add_nodes -turn, depth+1, new_movestr
       else if board.any_moves(turn)
-        await add_nodes turn, depth+1, new_movestr
+        add_nodes turn, depth+1, new_movestr
       board.undo turn, move.move, flips
 
 do ->
-  await book.init()
+  book.init()
   board.move BLACK, pos_from_str('F5')
-  await add_nodes WHITE, 1, 'F5'
+  add_nodes WHITE, 1, 'F5'
   console.log "#{Object.keys(nodes).length} nodes"
   fs.writeFileSync argv.output, JSON.stringify nodes

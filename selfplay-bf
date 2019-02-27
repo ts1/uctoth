@@ -90,7 +90,7 @@ play = (player, opening) ->
       turn = -turn
       unless board.any_moves turn
         break
-    {move, solved} = await player board, turn
+    {move, solved} = player board, turn
     flips = board.move turn, move
     unless flips.length
       console.error 'invalid move'
@@ -126,11 +126,11 @@ find_unplayed_opening = (book, depth, cb) ->
 
   sub = (turn, d) ->
     if d >= depth
-      data = await book.get(board)
+      data = book.get(board)
       if data?.outcome?
         outcome = data.outcome
       else
-        outcome = await cb moves
+        outcome = cb moves
       if d > depth
         return
       if ((depth&1) and balance >= -argv.balance) or
@@ -151,27 +151,27 @@ find_unplayed_opening = (book, depth, cb) ->
       flips = board.move turn, move
       throw new Error 'invalid move' unless flips.length
       moves.push {move, turn}
-      await sub -turn, d+1
+      sub -turn, d+1
       moves.pop()
       board.undo turn, move, flips
 
-  await sub WHITE, 1
+  sub WHITE, 1
 
 do ->
   book = new Book 'book.db'
-  await book.init()
+  book.init()
 
-  balance = await book.sum_outcome() or 0
+  balance = book.sum_outcome() or 0
   reload = watch_file('.reload-selfplay')
   n_games = 0
   for depth in [argv.depth..60]
-    await find_unplayed_opening book, depth, (opening) ->
+    find_unplayed_opening book, depth, (opening) ->
       process.exit 0 if reload()
       console.log pos_array_to_str(opening)
-      {moves, outcome} = await play(player, opening)
+      {moves, outcome} = play(player, opening)
       moves_str = pos_array_to_str(moves)
-      await book.add_game moves
-      balance = await book.sum_outcome() or 0
+      book.add_game moves
+      balance = book.sum_outcome() or 0
       console.log 'balance', balance
 
       process.exit 0 if ++n_games >= argv.n
