@@ -37,6 +37,10 @@ yargs = require 'yargs'
       desc: 'Use AdaGrad'
       type: 'boolean'
       default: true
+    ridge:
+      desc: 'L2 regularization parameter'
+      type: 'number'
+      default: 0
     h:
       alias: 'help'
   .version false
@@ -109,6 +113,8 @@ adagrad = (rows, coeffs, g2, rate, max_loss) ->
     each_index row, (index, value) ->
       g = e * value
       if g
+        if argv.ridge
+          g -= argv.ridge * coeffs[index]
         g2[index] += g * g
         coeffs[index] += rate * g / Math.sqrt(g2[index])
   true
