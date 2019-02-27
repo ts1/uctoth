@@ -1,8 +1,8 @@
-sqlite3 = require('sqlite3').verbose()
+sqlite3 = require('better-sqlite3')
 { encode_normalized } = require './encode'
 { BLACK, WHITE, EMPTY, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
 { PatternBoard, SCORE_MULT } = require './pattern'
-{ shuffle, INFINITY, unique_moves } = require './util'
+{ shuffle, INFINITY, unique_moves, int } = require './util'
 pattern_eval = require('./pattern_eval')('scores.json')
 Player = require './player'
 minmax = require './minmax'
@@ -19,63 +19,13 @@ outcome_to_eval = (outcome, me) ->
 
 class Database
   constructor: (filename, readonly) ->
-    mode = if readonly then sqlite3.OPEN_READONLY else undefined
-    @db = new sqlite3.Database filename, mode
+    @db = sqlite3 filename, {readonly, timeout: 100000}
     process.on 'exit', => @db.close()
-  run: (sql, params) ->
-    new Promise (resolve, reject) =>
-      @db.run sql, params, (err, result) ->
-        if err
-          reject err
-        else
-          resolve result
-  get: (sql, params) ->
-    new Promise (resolve, reject) =>
-      @db.get sql, params, (err, result) ->
-        if err
-          reject err
-        else
-          resolve result
-  all: (sql, params) ->
-    new Promise (resolve, reject) =>
-      @db.all sql, params, (err, result) ->
-        if err
-          reject err
-        else
-          resolve result
-  each: (sql, params, cb) ->
-    new Promise (resolve, reject) =>
-      @db.each sql, params, ((err, result) ->
-        if err
-          reject err
-        else
-          cb result
-      ), ((err, result) ->
-        if err
-          reject err
-        else
-          resolve result
-      )
-  run_retry: (sql, params) ->
-    wait = 1
-    loop
-      try
-        await @run sql, params
-      catch e
-        if e.code == 'SQLITE_BUSY'
-          w = Math.random() * wait
-          console.log "Database is busy, waiting for #{w} sec to retry"
-          await new Promise (resolve) -> setTimeout resolve, w*1000
-          wait *= 2
-          continue
-        else
-          throw e
-      break
-  serialize: (cb) ->
-    new Promise (resolve) =>
-       @db.serialize ->
-        await cb()
-        resolve()
+  run: (sql, params) -> @db.prepare(sql).run(params ? [])
+  get: (sql, params) -> @db.prepare(sql).get(params ? [])
+  all: (sql, params) -> @db.prepare(sql).all(params ? [])
+  iterate: (sql, params) -> @db.prepare(sql).iterate(params ? [])
+  each: (sql, params, cb) -> cb(row) for row from @iterate(sql, params)
 
 defaults =
   readonly: false
@@ -124,9 +74,8 @@ module.exports = class Book
     @verbose = opt.verbose
 
   init: ->
-    await @db.run 'pragma busy_timeout=10000'
-    await @db.run 'pragma journal_mode=WAL'
-    await @db.run '''
+    @db.run 'pragma journal_mode=WAL'
+    @db.run '''
       create table if not exists nodes (
         code text primary key,
         n_moves integer,
@@ -138,22 +87,17 @@ module.exports = class Book
         n_visited integer)
       '''
 
-    await @db.run '''
+    @db.run '''
       create table if not exists games (
         moves text primary key,
         outcome integer)
       '''
 
-    await @db.run '''
+    @db.run '''
       create table if not exists indexes (
         code text primary key,
         indexes text)
       '''
-
-    # migration
-    try
-      await @db.run '''alter table nodes add column solved integer'''
-    catch
 
   serialize: (cb) -> @db.serialize cb
 
@@ -164,13 +108,13 @@ module.exports = class Book
   set: (board, data) ->
     code = encode_normalized(board)
     n_moves = 60 - board.count(EMPTY)
-    @db.run_retry '''
+    @db.run '''
       insert or replace into nodes
       (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf, solved)
       values (?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       [code, n_moves, data.outcome, data.pub_value, data.pri_value,
-        data.n_visited, data.is_leaf, data.solved]
+        data.n_visited, int(data.is_leaf), data.solved]
 
   find_opening: (scope, opening=DEFAULT_OPENING) ->
     scope *= SCORE_MULT
@@ -192,7 +136,7 @@ module.exports = class Book
       nodes = []
       for move in unique_moves(board, turn)
         flips = board.move turn, move
-        data = await @get board
+        data = @get board
         board.undo turn, move, flips
         #console.log pos_to_str(move, turn), data
         if data?.pri_value?
@@ -240,18 +184,17 @@ module.exports = class Book
     outcome = board.outcome()
 
     s = pos_array_to_str(moves)
-    @db.run_retry 'insert or replace into games values (?, ?)', [s, outcome]
+    @db.run 'insert or replace into games values (?, ?)', [s, outcome]
 
-    data = (await @get(board)) or {n_visited:0}
+    data = @get(board) or {n_visited:0}
     data.outcome = outcome
     data.pub_value = outcome * SCORE_MULT
     data.pri_value = outcome_to_eval(outcome, turn)
     data.n_visited++
-    await @set board, data
-    await @add_to_tree board, history, learn
+    @set board, data
+    @add_to_tree board, history, learn
 
   add_to_tree: (board, history, learn) ->
-    #await @db.run 'begin'
     while history.length
       {move, turn, flips, solved} = history.pop()
       board.undo turn, move, flips
@@ -260,7 +203,7 @@ module.exports = class Book
       unevaled = []
       for m in board.list_moves(turn)
         flips = board.move turn, m
-        data = await @get(board)
+        data = @get(board)
         board.undo turn, m, flips
         if data
           if data.outcome?
@@ -282,7 +225,7 @@ module.exports = class Book
         ev = await @evaluate(board, turn, unevaled)
         flips = board.move turn, ev.move
         throw new Error 'invalid move' unless flips.length
-        data = (await @get(board)) or {n_visited:0}
+        data = @get(board) or {n_visited:0}
         value = ev.value * turn
         if ev.solved
           if ev.solved == 'full' or (ev.solved == 'wld' and value == 0)
@@ -295,7 +238,7 @@ module.exports = class Book
           data.pri_value = value
           data.pub_value = value
         data.is_leaf = true
-        await @set board, data
+        @set board, data
         if @verbose
           console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
         board.undo turn, ev.move, flips
@@ -306,18 +249,17 @@ module.exports = class Book
         if pub > max_pub
           max_pub = pub
 
-      data = (await @get(board)) or {n_visited:0}
+      data = @get(board) or {n_visited:0}
       if max_outcome > -INFINITY
         data.outcome = max_outcome * turn
       data.pub_value = max_pub * turn
       data.pri_value = max_pri * turn
       data.is_leaf = false
       data.n_visited++
-      await @set board, data
-    #await @db.run 'commit'
+      @set board, data
 
   extend: (scope, opening=DEFAULT_OPENING) ->
-    {moves, value} = await @find_opening(scope, opening)
+    {moves, value} = @find_opening(scope, opening)
     board = new PatternBoard
     history = []
     for {move, turn, solved} in moves
@@ -334,7 +276,7 @@ module.exports = class Book
     process.stdout.write pos_to_str(ev.move, turn)
     history.push {move:ev.move, turn, flips, solved: ev.solved}
 
-    data = await @get(board)
+    data = @get(board)
     if data
       console.log ' transposition'
     else
@@ -352,9 +294,9 @@ module.exports = class Book
         data.pub_value = value
       data.solved = ev.solved
       console.log ": #{data.pub_value}"
-      await @set board, data
+      @set board, data
 
-    await @add_to_tree board, history, true
+    @add_to_tree board, history, true
 
   count_games: (me=null) ->
     sql = 'select count(*) as c from games'
@@ -365,19 +307,18 @@ module.exports = class Book
         sql += ' where outcome < 0'
       else
         sql += ' where outcome = 0'
-    (await @db.get sql).c
+    @db.get(sql).c
 
-  sum_outcome: -> (await @db.get 'select sum(outcome) as s from games', []).s
+  sum_outcome: -> @db.get('select sum(outcome) as s from games').s
 
   get_neutral_positions: (n_moves, n) ->
-    rows = await @db.all '''
+    rows = @db.all '''
       select code from nodes where n_moves=? order by n_visited desc limit ?',
       ''', [n_moves, n]
     rows.map (row) -> row.code
 
   has_game: (moves_str) ->
-    (await @db.get 'select count(*) as c from games where moves=?',
-      [moves_str]).c
+    @db.get('select count(*) as c from games where moves=?', [moves_str]).c
 
   dump_nodes: (cb) ->
     @db.each 'select * from nodes where outcome is not null', [], cb
@@ -386,7 +327,7 @@ module.exports = class Book
     @db.each 'select * from nodes where n_visited >= ?', [min_visited], cb
 
   dump_nodes_with_indexes: (limit, last) ->
-    rows = await @db.all '''
+    rows = @db.all '''
       select nodes.code, nodes.outcome, indexes.indexes
         from nodes left join indexes on nodes.code = indexes.code
         where nodes.outcome is not null and nodes.code > ?
@@ -398,6 +339,6 @@ module.exports = class Book
     rows
 
   store_indexes: (code, indexes) ->
-    @db.run_retry '''
+    @db.run '''
       insert or replace into indexes (code, indexes) values (?, ?)
       ''', [code, JSON.stringify(indexes)]
