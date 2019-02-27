@@ -22,7 +22,7 @@ yargs = require 'yargs'
     d:
       alias: 'duration'
       desc: 'Duration of moving average of difference'
-      default: 120
+      default: 10
       type: 'number'
       requiresArg: true
     balance:
@@ -33,14 +33,16 @@ yargs = require 'yargs'
       desc: 'Use SGD'
       type: 'boolean'
       default: true
+    adagrad:
+      desc: 'Use AdaGrad'
+      type: 'boolean'
+      default: true
     h:
       alias: 'help'
   .version false
   .strict()
 
 argv = yargs.argv
-
-argv.duration = 120
 
 index_size = get_single_index_size()
 
@@ -81,8 +83,8 @@ make_gradient = (rows, coeffs) ->
 update_coeffs = (coeffs, vector, rate) ->
   coeffs[i] + vector[i] * rate for i in [0...index_size] by 1
 
-sgd = (rows, coeffs, rate, loss) ->
-  prev_sum_e2 = (loss * loss) * rows.length
+sgd = (rows, coeffs, rate, max_loss) ->
+  max_sum_e2 = (max_loss * max_loss) * rows.length
   new_coeffs = [coeffs...]
   sum_e2 = 0
   sum = 0
@@ -90,10 +92,26 @@ sgd = (rows, coeffs, rate, loss) ->
     outcome = row[0]
     e = outcome - predict(new_coeffs, row)
     sum_e2 += e * e
-    return null if sum_e2 > prev_sum_e2
+    return null if sum_e2 > max_sum_e2
     each_index row, (index, value) ->
       new_coeffs[index] += rate * e * value
   new_coeffs
+
+adagrad = (rows, coeffs, g2, rate, max_loss) ->
+  max_sum_e2 = (max_loss * max_loss) * rows.length
+  sum_e2 = 0
+  sum = 0
+  for row from rows
+    outcome = row[0]
+    e = outcome - predict(coeffs, row)
+    sum_e2 += e * e
+    return false if sum_e2 > max_sum_e2
+    each_index row, (index, value) ->
+      g = e * value
+      if g
+        g2[index] += g * g
+        coeffs[index] += rate * g / Math.sqrt(g2[index])
+  true
 
 read_rows = (filename) ->
   console.log "loading #{filename}"
@@ -172,28 +190,50 @@ regress = (index_file) ->
   console.log "train set avg #{avg}"
   coeffs = (0 for i in [0...index_size] by 1)
   dev = last_loss = verify train_set, coeffs
-  console.log 'deviation', last_loss
+  console.log 'deviation', dev
 
   n = 0
   step = 1
   d_avg = 0
-  rate = 10
+  rate = 100
   rate /= train_set.length unless argv.sgd
   finish = false
   loop
     if argv.sgd
       train_set = shuffle train_set
-      loop
-        new_coeffs = sgd(train_set, coeffs, rate, last_loss)
-        if new_coeffs
-          loss = verify test_set, new_coeffs, last_loss
-          if loss < last_loss
+      if argv.adagrad
+        if step == 1
+          loop
+            g2 = (0 for i in [0...index_size] by 1)
+            coeffs = (0 for i in [0...index_size] by 1)
+            if adagrad(train_set, coeffs, g2, rate, dev)
+              loss = verify test_set, coeffs, last_loss
+              if loss < last_loss
+                break
+            rate *= 0.7
+            if rate < 1e-3
+              finish = true
+              break
+        else
+          adagrad(train_set, coeffs, g2, rate, Infinity)
+          loss = verify test_set, coeffs, last_loss
+          if argv.split and loss > last_loss
+            rate *= 0.7
+            break if rate < 0.1
+      else
+        loop
+          max_loss = if step==1 then last_loss else Infinity
+          new_coeffs = sgd(train_set, coeffs, rate, max_loss)
+          if new_coeffs
+            loss = verify test_set, new_coeffs, last_loss
+            if loss < last_loss
+              break
+          train_set = shuffle train_set
+          rate *= 0.7
+          if rate < 1e-7
+            finish = true
             break
-        train_set = shuffle train_set
-        rate *= 0.7
-        if rate < 1e-7
-          finish = true
-          break
+        coeffs = new_coeffs
     else
       vector = make_gradient train_set, coeffs
 
@@ -205,16 +245,20 @@ regress = (index_file) ->
         if rate*train_set.length < 1e-5
           finish = true
           break
+      coeffs = new_coeffs
     break if finish
-    coeffs = new_coeffs
 
-    d = last_loss - loss
+    d = Math.abs(last_loss - loss)
     if step <= argv.duration
       d_avg = (d_avg * (step - 1) + d) / step
     else
       d_avg = (d_avg * (argv.duration - 1) + d) / argv.duration
+
+    display_rate = rate
+    unless argv.adagrad
+      display_rate *= train_set.length
     console.log 'step', step, 'loss', loss,
-      'rate', round_value(rate*train_set.length),
+      'rate', round_value(display_rate),
       'd', d_avg
     break if step >= argv.duration and d_avg < argv.threshold
 
@@ -238,6 +282,8 @@ if argv._.length == 2
 else
   yargs.showHelp()
   process.exit 1
+
+argv.sgd = true if argv.adagrad
 
 do ->
   coeffs = await regress index_file
