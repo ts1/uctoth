@@ -24,13 +24,14 @@ argv = require('yargs')
   .argv
 
 indexify = (book, outfiles) ->
-  LIMIT = 1000
+  LIMIT = 10000
   n_indexed = 0
   offset = 0
   last_key = ''
   loop
     n = 0
     rows = book.dump_nodes_with_indexes LIMIT, last_key
+    array = []
     for {code, outcome, indexes} in rows
       board = new PatternBoard decode code
       unless indexes
@@ -49,7 +50,7 @@ indexify = (book, outfiles) ->
             console.assert p.get_single_index(index) != null
             indexes.push p.get_single_index(index)
             indexes.push value
-        book.store_indexes code, indexes
+        array.push {code, indexes}
         n_indexed++
       phase = int((59 - board.count(EMPTY)) / N_MOVES_PER_PHASE)
       json = JSON.stringify([outcome, indexes...])
@@ -58,6 +59,8 @@ indexify = (book, outfiles) ->
           outfiles[ph].write "#{json}\n"
       n++
       last_key = code
+    if array.length
+      book.store_indexes array
     break unless n
     offset += n
     process.stdout.write "#{offset}\r"

@@ -26,6 +26,12 @@ class Database
   all: (sql, params) -> @db.prepare(sql).all(params ? [])
   iterate: (sql, params) -> @db.prepare(sql).iterate(params ? [])
   each: (sql, params, cb) -> cb(row) for row from @iterate(sql, params)
+  run_many: (sql, params_array) ->
+    stmt = @db.prepare(sql)
+    @run 'begin'
+    for params from params_array
+      stmt.run params
+    @run 'commit'
 
 defaults =
   readonly: false
@@ -338,7 +344,6 @@ module.exports = class Book
       row.indexes and= JSON.parse(row.indexes)
     rows
 
-  store_indexes: (code, indexes) ->
-    @db.run '''
-      insert or replace into indexes (code, indexes) values (?, ?)
-      ''', [code, JSON.stringify(indexes)]
+  store_indexes: (array) ->
+    @db.run_many 'insert or replace into indexes (code, indexes) values (?, ?)',
+      do -> yield [code, JSON.stringify(indexes)] for {code, indexes} from array
