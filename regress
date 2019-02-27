@@ -198,6 +198,7 @@ regress = (index_file) ->
   rate = 100
   rate /= train_set.length unless argv.sgd
   finish = false
+  min_loss = dev
   loop
     if argv.sgd
       train_set = shuffle train_set
@@ -217,9 +218,9 @@ regress = (index_file) ->
         else
           adagrad(train_set, coeffs, g2, rate, Infinity)
           loss = verify test_set, coeffs, last_loss
-          if argv.split and loss > last_loss
-            rate *= 0.7
-            break if rate < 0.1
+          if argv.split
+            min_loss = loss if loss < min_loss
+            break if loss > min_loss * (1 + argv.threshold)
       else
         loop
           max_loss = if step==1 then last_loss else Infinity
