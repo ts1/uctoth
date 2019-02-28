@@ -20,17 +20,6 @@ memoize = (fn) ->
 
 int = (f) -> f | 0
 
-readlines = (filename, cb) -> new Promise (resolve) ->
-  if filename == '-'
-    rs = process.stdin
-  else
-    rs = require('fs').createReadStream filename
-    if filename.endsWith '.gz'
-      rs = rs.pipe require('zlib').createGunzip()
-  rl = require('readline').createInterface rs
-  rl.on 'line', (line) -> cb line
-  rl.on 'close', -> resolve()
-
 gzwriter = (filename) ->
   if filename == '-'
     process.stdout
@@ -131,7 +120,6 @@ module.exports = {
   shuffle
   memoize
   int
-  readlines
   gzwriter
   lru_cache
   round_value

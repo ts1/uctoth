@@ -1,7 +1,7 @@
 #!/usr/bin/env coffee
 
 require './rejection_handler'
-{ readlines, gzwriter, round_value, shuffle } = require './util'
+{ gzwriter, round_value, shuffle } = require './util'
 { get_single_index_size } = require './pattern'
 Book = require './book'
 
@@ -301,7 +301,7 @@ do ->
   process.stdout.write "Loading samples of phase #{argv.phase}: "
   samples = []
   samples.push sample for sample from book.iterate_indexes(argv.phase)
-  console.log "#{samples.length} samples loaded"
+  console.log "loaded #{samples.length} samples"
 
   coeffs = regress samples
 
