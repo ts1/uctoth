@@ -71,10 +71,11 @@ round = (scores) ->
       for i in [0...(3**p.len+1)/2]
         tbl[i] = Math.round(tbl[i] * SCORE_MULT)
 
+process.stdout.write 'Wrapping up: '
 scores = init_scores()
 load_coeffs scores
 interpolate scores
 denormalize scores
 round scores
 fs.writeFileSync argv.o, JSON.stringify scores
-console.log argv.o, 'ready'
+console.log "'#{argv.o}' is ready"

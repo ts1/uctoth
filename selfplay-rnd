@@ -49,6 +49,11 @@ argv = require 'yargs'
       type: 'number'
       default: 20
       requiresArg: true
+    a:
+      alias: 'auto_opening'
+      desc: 'Automaticaly select opening according to balance'
+      type: 'boolean'
+      default: false
     b:
       alias: 'balance'
       desc: 'Tolerance of outcome balance'
@@ -104,11 +109,11 @@ make_player = (randomness) ->
     solve_wld: argv.w
     solve_full: argv.f
 
-play = (player) ->
+play = (player, opening) ->
   board = new Board
   turn = BLACK
   moves = []
-  for move in pos_array_from_str(argv.opening)
+  for move in pos_array_from_str(opening)
     flips = board.move turn, move
     throw new Error unless flips.length
     moves.push {move, turn}
@@ -144,11 +149,21 @@ do ->
   avg_col = (argv.min_col + argv.max_col) / 2
   reload = watch_file('.reload-selfplay')
   until reload()
-    {moves, outcome} = play player
-    moves_str = pos_array_to_str(moves)
-
     balance = book.sum_outcome() or 0
     console.log "balance #{balance}"
+
+    opening = argv.opening
+    if argv.auto_opening
+      if balance > 0
+        opening = 'F5d6'
+      else if balance > -argv.balance * .5
+        opening = 'F5f6'
+      else
+        opening = 'F5f4'
+
+    {moves, outcome} = play player, opening
+    moves_str = pos_array_to_str(moves)
+
     b = balance + outcome
     if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
       console.log "NOT ACCEPTED DUE TO BALANCE"
