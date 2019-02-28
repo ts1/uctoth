@@ -77,3 +77,4 @@ interpolate scores
 denormalize scores
 round scores
 fs.writeFileSync argv.o, JSON.stringify scores
+console.log argv.o, 'ready'

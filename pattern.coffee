@@ -1,5 +1,6 @@
 { pos_from_xy, ALL_POSITIONS, Board, BLACK, WHITE, EMPTY } = require './board'
 { memoize, int } = require './util'
+{ decode } = require './encode'
 
 N_PHASES = 10
 N_MOVES_PER_PHASE = 60 / N_PHASES
@@ -185,6 +186,25 @@ get_single_index_size = () ->
     build_single_index_table()
   single_index_table.length
 
+code_to_single_indexes = (code) ->
+  board = new PatternBoard decode(code)
+  indexes = []
+  for p in patterns
+    map = {}
+    for i in p.indexes
+      index = p.normalize(board.indexes[i])
+      abs = Math.abs index
+      value = map[abs] or 0
+      if index >= 0
+        map[abs] = value + 1
+      else
+        map[abs] = value - 1
+    for index, value of map
+      console.assert p.get_single_index(index) != null
+      indexes.push p.get_single_index(index)
+      indexes.push value
+  indexes
+
 init = ->
   index = 0
   for p in patterns
@@ -289,6 +309,7 @@ module.exports = {
   n_indexes
   get_single_index
   get_single_index_size
+  code_to_single_indexes
 }
 
 if 0

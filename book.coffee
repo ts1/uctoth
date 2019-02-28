@@ -1,7 +1,19 @@
 sqlite3 = require('better-sqlite3')
-{ encode_normalized } = require './encode'
-{ BLACK, WHITE, EMPTY, pos_to_str, pos_from_str, pos_array_to_str } = require './board'
-{ PatternBoard, SCORE_MULT } = require './pattern'
+{ encode_normalized, decode } = require './encode'
+{
+  BLACK
+  WHITE
+  EMPTY
+  pos_to_str
+  pos_from_str
+  pos_array_to_str
+} = require './board'
+{
+  PatternBoard
+  SCORE_MULT
+  N_MOVES_PER_PHASE
+  code_to_single_indexes
+} = require './pattern'
 { shuffle, INFINITY, unique_moves, int } = require './util'
 pattern_eval = require('./pattern_eval')('scores.json')
 Player = require './player'
@@ -347,3 +359,34 @@ module.exports = class Book
   store_indexes: (array) ->
     @db.run_many 'insert or replace into indexes (code, indexes) values (?, ?)',
       do -> yield [code, JSON.stringify(indexes)] for {code, indexes} from array
+
+  iterate_indexes: (phase) ->
+    LIMIT = 10000
+    last_key = ''
+    min_moves = 1 + (phase - 1) * N_MOVES_PER_PHASE
+    max_moves = 1 + (phase + 1 + 1) * N_MOVES_PER_PHASE
+    loop
+      rows = @db.iterate '''
+        select n.code, n.outcome, i.indexes
+        from nodes n left join indexes i on n.code = i.code
+        where n.outcome is not null
+        and n.code > :last_key
+        and n.n_moves >= :min_moves
+        and n.n_moves < :max_moves
+        order by n.code
+        limit :LIMIT
+        ''',
+        {last_key, min_moves, max_moves, LIMIT}
+      buf = []
+      n = 0
+      for {code, outcome, indexes} from rows
+        if indexes
+          indexes = JSON.parse(indexes)
+        else
+          indexes = code_to_single_indexes(code)
+          buf.push {code, indexes}
+        yield [outcome, indexes...]
+        last_key = code
+        n++
+      @store_indexes buf if buf.length
+      break if n < LIMIT

@@ -1,8 +1,7 @@
 #!/bin/bash -e
 
-npx coffee dump_indexes
 for i in $(seq 0 9); do
-    npx coffee --nodejs --max-old-space-size=4096 regress $@ tmp/indexes$i tmp/coeffs$i
+    npx coffee --nodejs --max-old-space-size=4096 regress -p $i -o tmp/coeffs$i $@
 done
 cp -p scores.json scores.json.bak
 npx coffee coeffs_to_score

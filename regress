@@ -3,12 +3,30 @@
 require './rejection_handler'
 { readlines, gzwriter, round_value, shuffle } = require './util'
 { get_single_index_size } = require './pattern'
+Book = require './book'
 
-yargs = require 'yargs'
-  .usage "Usage: #{process.argv[1]} [options] indexes coeffs"
+argv = require 'yargs'
   .options
+    p:
+      alias: 'phase'
+      desc: 'Phase (0-9)'
+      type: 'number'
+      requiresArg: true
+      demandOption: true
+    o:
+      alias: 'outfile'
+      desc: 'Output file'
+      type: 'string'
+      requiresArg: true
+      demandOption: true
+    b:
+      alias: 'book'
+      desc: 'Database file to read nodes from'
+      type: 'string'
+      requiresArg: true
+      default: 'book.db'
     t:
-      desc: 'threshold to terminate regression'
+      desc: 'Threshold to terminate regression'
       alias: 'threshold'
       default: 1e-3
       type: 'number'
@@ -45,8 +63,7 @@ yargs = require 'yargs'
       alias: 'help'
   .version false
   .strict()
-
-argv = yargs.argv
+  .argv
 
 index_size = get_single_index_size()
 
@@ -119,13 +136,6 @@ adagrad = (rows, coeffs, g2, rate, max_loss) ->
         coeffs[index] += rate * g / Math.sqrt(g2[index])
   true
 
-read_rows = (filename) ->
-  console.log "loading #{filename}"
-  rows = []
-  await readlines filename, (line) ->
-    rows.push JSON.parse line
-  rows
-
 binary_search = (samples, target) ->
   lbound = 0
   return lbound if target <= samples[lbound][0]
@@ -176,10 +186,8 @@ average = (rows) ->
     sum += row[0]
   sum / rows.length
 
-regress = (index_file) ->
-  samples = await read_rows index_file
+regress = (samples) ->
   n_samples = samples.length
-  console.log 'loaded', n_samples, 'samples'
   raw_avg = average samples
   console.log 'samples avg', raw_avg
 
@@ -284,14 +292,19 @@ regress = (index_file) ->
 
   {coeffs, r2, step, loss:last_loss, avg, n_samples, raw_avg, n_removed}
 
-if argv._.length == 2
-  [index_file, outfile] = argv._
-else
-  yargs.showHelp()
-  process.exit 1
-
-argv.sgd = true if argv.adagrad
-
 do ->
-  coeffs = await regress index_file
-  gzwriter(outfile).end(JSON.stringify coeffs)
+  argv.sgd = true if argv.adagrad
+
+  book = new Book argv.book
+  book.init()
+
+  process.stdout.write "Loading samples of phase #{argv.phase}: "
+  samples = []
+  samples.push sample for sample from book.iterate_indexes(argv.phase)
+  console.log "#{samples.length} samples loaded"
+
+  coeffs = regress samples
+
+  process.stdout.write "Writing coeffs to #{argv.outfile}: "
+  gzwriter(argv.outfile).end(JSON.stringify coeffs)
+  console.log 'done'
