@@ -47,10 +47,14 @@ argv = require 'yargs'
       desc: 'Thin out samples to get average closer to zero'
       type: 'boolean'
       default: false
+    batch:
+      desc: 'Use batch'
+      type: 'boolean'
+      default: false
     sgd:
       desc: 'Use SGD'
       type: 'boolean'
-      default: true
+      default: false
     adagrad:
       desc: 'Use AdaGrad'
       type: 'boolean'
@@ -111,11 +115,14 @@ sgd = (rows, coeffs, rate, max_loss) ->
   sum = 0
   for row from rows
     outcome = row[0]
-    e = outcome - predict(new_coeffs, row)
+    e = predict(new_coeffs, row) - outcome
     sum_e2 += e * e
     return null if sum_e2 > max_sum_e2
     each_index row, (index, value) ->
-      new_coeffs[index] += rate * e * value
+      g = e * value
+      if argv.ridge
+        g += argv.ridge * coeffs[index]
+      new_coeffs[index] -= rate * g
   new_coeffs
 
 adagrad = (rows, coeffs, g2, rate, max_loss) ->
@@ -124,16 +131,16 @@ adagrad = (rows, coeffs, g2, rate, max_loss) ->
   sum = 0
   for row from rows
     outcome = row[0]
-    e = outcome - predict(coeffs, row)
+    e = predict(coeffs, row) - outcome
     sum_e2 += e * e
     return false if sum_e2 > max_sum_e2
     each_index row, (index, value) ->
       g = e * value
       if g
         if argv.ridge
-          g -= argv.ridge * coeffs[index]
+          g += argv.ridge * coeffs[index]
         g2[index] += g * g
-        coeffs[index] += rate * g / Math.sqrt(g2[index])
+        coeffs[index] -= rate * g / Math.sqrt(g2[index])
   true
 
 binary_search = (samples, target) ->
@@ -210,45 +217,49 @@ regress = (samples) ->
   step = 1
   d_avg = 0
   rate = 100
-  rate /= train_set.length unless argv.sgd
+  rate /= train_set.length if argv.batch
   finish = false
   min_loss = dev
   loop
-    if argv.sgd
+    if argv.adagrad
       train_set = shuffle train_set
-      if argv.adagrad
-        if step == 1
-          loop
-            g2 = (0 for i in [0...index_size] by 1)
-            coeffs = (0 for i in [0...index_size] by 1)
-            if adagrad(train_set, coeffs, g2, rate, dev)
-              loss = verify test_set, coeffs, last_loss
-              if loss < last_loss
-                break
-            rate *= 0.7
-            if rate < 1e-3
-              finish = true
-              break
-        else
-          adagrad(train_set, coeffs, g2, rate, Infinity)
-          loss = verify test_set, coeffs, last_loss
-          if argv.split
-            min_loss = loss if loss < min_loss
-            break if loss > min_loss * (1 + argv.threshold)
-      else
+      if step == 1
+        last = false
         loop
-          max_loss = if step==1 then last_loss else Infinity
-          new_coeffs = sgd(train_set, coeffs, rate, max_loss)
-          if new_coeffs
-            loss = verify test_set, new_coeffs, last_loss
+          g2 = (0 for i in [0...index_size] by 1)
+          coeffs = (0 for i in [0...index_size] by 1)
+          if adagrad(train_set, coeffs, g2, rate, dev)
+            loss = verify test_set, coeffs, last_loss
             if loss < last_loss
-              break
-          train_set = shuffle train_set
+              if last
+                break
+              rate *= 0.01 / 0.7
+              last = true
           rate *= 0.7
-          if rate < 1e-7
+          if rate < 1e-3
             finish = true
             break
-        coeffs = new_coeffs
+      else
+        adagrad(train_set, coeffs, g2, rate, Infinity)
+        loss = verify test_set, coeffs, last_loss
+        if argv.split
+          min_loss = loss if loss < min_loss
+          break if loss > min_loss * (1 + argv.threshold)
+    else if argv.sgd
+      train_set = shuffle train_set
+      loop
+        max_loss = if step==1 then last_loss else Infinity
+        new_coeffs = sgd(train_set, coeffs, rate, max_loss)
+        if new_coeffs
+          loss = verify test_set, new_coeffs, last_loss
+          if loss < last_loss
+            break
+        train_set = shuffle train_set
+        rate *= 0.7
+        if rate < 1e-10
+          finish = true
+          break
+      coeffs = new_coeffs
     else
       vector = make_gradient train_set, coeffs
 
@@ -281,7 +292,7 @@ regress = (samples) ->
 
     last_loss = loss
 
-    unless argv.sgd
+    if argv.batch
       n++
       if n >= 30
         rate *= 10000
@@ -293,7 +304,9 @@ regress = (samples) ->
   {coeffs, r2, step, loss:last_loss, avg, n_samples, raw_avg, n_removed}
 
 do ->
-  argv.sgd = true if argv.adagrad
+  argv.adagrad = argv.sgd = false if argv.batch
+  argv.adagrad = argv.batch = false if argv.sgd
+  argv.sgd = argv.batch = false if argv.adagrad
 
   book = new Book argv.book
   book.init()
