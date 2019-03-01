@@ -1,14 +1,4 @@
-#!/bin/bash -e
-
-clear_signal() {
-    rm -f .reload-selfplay
-}
-
-while true; do
-    clear_signal
-    time npx coffee selfplay-bf -d 8
-    clear_signal
-    time npx coffee selfplay-rnd --opening f5f6
-    clear_signal
-    time npx coffee selfplay-rnd --opening f5d6
+#!/bin/bash -ex
+while true ; do
+    npx coffee selfplay-rnd -v $@
 done

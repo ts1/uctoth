@@ -1,0 +1,20 @@
+#!/bin/bash
+
+while true; do
+    if [ scores.json -nt .stamp-scores ]; then
+        ls -l scores.json
+        if type jq >/dev/null 2>&1; then
+            jq .meta[].r2 scores.json
+        fi
+        touch .stamp-scores
+    fi
+    if [ match.log -nt .stamp-match ]; then
+        tail -n 1 match.log
+        touch .stamp-match
+    fi
+    echo $(sqlite3 book.db '
+        select count(moves) from games;
+        select sum(outcome) from games;
+        select sum(outcome) from nodes;')
+    sleep 60 
+done

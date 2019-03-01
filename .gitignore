@@ -10,3 +10,8 @@
 /reg-loop
 /selfplay-loop
 /op-loop
+/match-loop
+/.reload-*
+/.stamp-*
+/watch
+/snapshots
