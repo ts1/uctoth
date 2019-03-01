@@ -75,17 +75,25 @@ argv = require 'yargs'
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
+      type: 'number'
       default: 20
       requireArg: true
     f:
       alias: 'full'
       desc: 'Depth of full endgame search'
+      type: 'number'
       default: 18
       requireArg: true
     d:
       alias: 'depth'
       desc: 'Learn depth'
+      type: 'number'
       default: 5
+      requireArg: true
+    watch:
+      desc: 'Watch the file and exit when it changes'
+      default: 'scores.json'
+      type: 'string'
       requireArg: true
     v:
       alias: 'verbose'
@@ -147,7 +155,7 @@ do ->
   n_skip = 0
   n_save = 0
   avg_col = (argv.min_col + argv.max_col) / 2
-  reload = watch_file('.reload-selfplay')
+  reload = if argv.watch then watch_file(argv.watch) else -> false
   until reload()
     balance = book.sum_outcome() or 0
     console.log "balance #{balance}"

@@ -51,13 +51,19 @@ argv = require 'yargs'
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
+      type: 'number'
       default: 20
-      requireArg: true
+      requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full endgame search'
+      type: 'number'
       default: 18
-      requireArg: true
+      requiresArg: true
+    watch:
+      desc: 'Watch the file and exit when it changes'
+      default: 'scores.json'
+      requiresArg: true
     h:
       alias: 'help'
   .version false
@@ -162,7 +168,7 @@ do ->
   book.init()
 
   balance = book.sum_outcome() or 0
-  reload = watch_file('.reload-selfplay')
+  reload = if argv.watch then watch_file(argv.watch) else -> false
   n_games = 0
   for depth in [argv.depth..60]
     find_unplayed_opening book, depth, (opening) ->

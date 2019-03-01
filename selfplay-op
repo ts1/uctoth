@@ -56,6 +56,10 @@ argv = require 'yargs'
       desc: 'Depth of full endgame search'
       default: 18
       requiresArg: true
+    watch:
+      desc: 'Watch the file and exit when it changes'
+      default: 'scores.json'
+      requiresArg: true
     v:
       alias: 'verbose'
       type: 'boolean'
@@ -111,7 +115,7 @@ do ->
   book.init()
 
   n_games = 0
-  reload = watch_file('.reload-selfplay')
+  reload = if argv.watch then watch_file(argv.watch) else -> false
   until reload()
     opening = book.find_opening(argv.scope,
       pos_array_from_str(argv.opening))
