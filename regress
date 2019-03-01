@@ -233,7 +233,7 @@ regress = (samples) ->
             if loss < last_loss
               if last
                 break
-              rate *= 0.001 / 0.7
+              rate *= 0.1 / 0.7
               last = true
           rate *= 0.7
           if rate < 1e-3
@@ -312,9 +312,11 @@ do ->
   book.init()
 
   process.stdout.write "Loading samples of phase #{argv.phase}: "
+  t = Date.now()
   samples = []
   samples.push sample for sample from book.iterate_indexes(argv.phase)
-  console.log "loaded #{samples.length} samples"
+  t = Date.now() - t
+  console.log "loaded #{samples.length} samples in #{t/1000} seconds"
 
   coeffs = regress samples
 

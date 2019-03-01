@@ -30,7 +30,7 @@ outcome_to_eval = (outcome, me) ->
     -INFINITY * me
 
 class Database
-  constructor: (filename, readonly) ->
+  constructor: (filename, readonly=false) ->
     @db = sqlite3 filename, {readonly, timeout: 100000}
     process.on 'exit', => @db.close()
   run: (sql, params) -> @db.prepare(sql).run(params ? [])
@@ -54,6 +54,7 @@ defaults =
 
 module.exports = class Book
   constructor: (filename, options={}) ->
+    @filename = filename
     opt = {defaults..., options...}
     @db = new Database filename, opt.readonly
 
@@ -104,6 +105,8 @@ module.exports = class Book
         solved integer,
         n_visited integer)
       '''
+
+    @db.run 'create index if not exists nodes_n_moves on nodes (n_moves)'
 
     @db.run '''
       create table if not exists games (
@@ -361,32 +364,34 @@ module.exports = class Book
       do -> yield [code, JSON.stringify(indexes)] for {code, indexes} from array
 
   iterate_indexes: (phase) ->
-    LIMIT = 10000
-    last_key = ''
     min_moves = 1 + (phase - 1) * N_MOVES_PER_PHASE
     max_moves = 1 + (phase + 1 + 1) * N_MOVES_PER_PHASE
-    loop
-      rows = @db.iterate '''
-        select n.code, n.outcome, i.indexes
+
+    db2 = new Database @filename
+
+    rows = @db.iterate '''
+      select n.code, n.outcome, i.indexes
         from nodes n left join indexes i on n.code = i.code
         where n.outcome is not null
-        and n.code > :last_key
         and n.n_moves >= :min_moves
         and n.n_moves < :max_moves
-        order by n.code
-        limit :LIMIT
-        ''',
-        {last_key, min_moves, max_moves, LIMIT}
+      ''', {min_moves, max_moves}
+
+    buf = []
+
+    flush = ->
+      db2.run_many '''
+        insert or replace into indexes (code, indexes) values (?, ?)
+        ''', buf
       buf = []
-      n = 0
-      for {code, outcome, indexes} from rows
-        if indexes
-          indexes = JSON.parse(indexes)
-        else
-          indexes = code_to_single_indexes(code)
-          buf.push {code, indexes}
-        yield [outcome, indexes...]
-        last_key = code
-        n++
-      @store_indexes buf if buf.length
-      break if n < LIMIT
+
+    for {code, outcome, indexes} from rows
+      if indexes
+        indexes = JSON.parse(indexes)
+      else
+        indexes = code_to_single_indexes(code)
+        buf.push [code, JSON.stringify(indexes)]
+        flush() if buf.length >= 10000
+      yield [outcome, indexes...]
+
+    flush() if buf.length
