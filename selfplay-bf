@@ -167,7 +167,7 @@ do ->
   book = new Book 'book.db'
   book.init()
 
-  balance = book.sum_outcome() or 0
+  balance = book.sum_nodes_outcome()
   reload = if argv.watch then watch_file(argv.watch) else -> false
   n_games = 0
   for depth in [argv.depth..60]
@@ -177,7 +177,7 @@ do ->
       {moves, outcome} = play(player, opening)
       moves_str = pos_array_to_str(moves)
       book.add_game moves
-      balance = book.sum_outcome() or 0
+      balance = book.sum_nodes_outcome()
       console.log 'balance', balance
 
       process.exit 0 if ++n_games >= argv.n

@@ -330,7 +330,9 @@ module.exports = class Book
         sql += ' where outcome = 0'
     @db.get(sql).c
 
-  sum_outcome: -> @db.get('select sum(outcome) as s from games').s
+  sum_outcome: -> @db.get('select sum(outcome) as s from games').s or 0
+
+  sum_nodes_outcome: -> @db.get('select sum(outcome) as s from nodes').s or 0
 
   has_game: (moves_str) ->
     @db.get('select count(*) as c from games where moves=?', [moves_str]).c

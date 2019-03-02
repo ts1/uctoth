@@ -157,7 +157,7 @@ do ->
   avg_col = (argv.min_col + argv.max_col) / 2
   reload = if argv.watch then watch_file(argv.watch) else -> false
   until reload()
-    balance = book.sum_outcome() or 0
+    balance = book.sum_outcome()
     console.log "balance #{balance}"
 
     opening = argv.opening
@@ -202,5 +202,5 @@ do ->
 
     book.add_game moves
     break if ++n_save >= argv.n
-  balance = book.sum_outcome() or 0
+  balance = book.sum_outcome()
   console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"
