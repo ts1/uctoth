@@ -284,11 +284,11 @@ module.exports = (options={}) ->
     moves or= board.list_moves(me)
 
     left = board.count(EMPTY)
-    n_search = 10000 * 3**(left - 20)
+    n_search = Math.round(30000 * 3**(left - 20))
     if n_search > 400000
       n_search = 400000
-    if n_search < 10000
-      n_search = 10000
+    if n_search < 100
+      n_search = 100
     console.log 'uct sort', n_search if opt.verbose
 
     uct_eval = uct
