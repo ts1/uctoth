@@ -2,6 +2,8 @@
 while true ; do
     time ./reg
 
+    #time ./match match.log
+
     if [ -f .reload-reg ]; then
         rm .reload-reg
         exec $0

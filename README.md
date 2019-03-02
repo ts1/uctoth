@@ -17,7 +17,7 @@ Works both on Node.js (with ES6+ features) and on [browsers](https://ts1.github.
 
 ### Self learning
 
-Starting from random plays, strengthens itself by a loop of self playing and
+Starting from random plays, strengthens itself by loops of self playing and
 machine learning.
 Uses no existing records of games.
 
@@ -63,10 +63,10 @@ This section describes how to train your own `scores.json` from scratch.
 First off, generate 1,000 randomly played games.
 
 ```
-npx coffee selfplay-rnd -R -n 1000 -w 10 -f 8 -b 10000
+npx coffee selfplay-rnd -R -n 1000 -w 10 -f 8 -b 100000
 ```
 
-They are random but last 8 moves are perfectly played.
+They are random but the last 8 moves are perfectly played.
 Generated games are stored in `book.db` (SQLite3 database).
 
 Next, learn the generated games and make your first `scores.json`.
@@ -104,7 +104,7 @@ Match results are appended to `match.log`.
 Running self-play and regression simultaneously can utilize multi-core CPUs,
 thus can speed up the entire self learning process.
 It's especially useful when the number of games grows large and regression takes
-several hours, and of course when you have idle CPU cores.
+hours, and of course when you have idle CPU cores.
 
 Sample scripts are in `samples` directory, copy them.
 
@@ -114,16 +114,16 @@ cp samples/selfplay-loop samples/reg-loop samples/match-loop .
 
 Edit the scripts as you need.
 Then run `reg-loop` in one terminal, `match-loop` in another, and
-`selfplay-loop` in the third terminal.
+`selfplay-loop` in the third.
 This setup uses 3 CPU threads, but if it isn't enough for your machine,
-you can run `selfplay-loop` as many as you want.
+you may run `selfplay-loop` as many as you want.
 
 The trick is simple.
 All selfplay scripts watches `scores.json` to change.
 When `reg-loop` finished creating a new `scores.json`, selfplay scripts exit
 and invoked again by shell script.
 
-`match-loop` also uses this feature to play games until `scores.json` is
+`match-loop` also uses this feature, it plays games until `scores.json` is
 updated.
 
 `watch` script is useful for watching to see if all the system is working well.
