@@ -35,6 +35,7 @@ module.exports = (options={}) ->
     result
 
   (board, me) ->
+    scope = options.C
     board = new options.board_class board
     max_depth = 0
     grew = false
@@ -82,7 +83,7 @@ module.exports = (options={}) ->
         max = -Infinity
         best = null
         for child in node.children
-          bias = options.C * Math.sqrt(node.n / (child.n + 1))
+          bias = scope * Math.sqrt(node.n / (child.n + 1))
           value = child.value + bias
           #console.log pos_to_str(child.move), child.n, child.value, bias
           if value > max
@@ -118,7 +119,11 @@ module.exports = (options={}) ->
     for i from [0...options.max_search]
       grew = false
       uct_search root, me, false, 0
-      break unless grew
+      unless grew
+        if scope < 100*SCORE_MULT
+          scope *= 1.4
+        else
+          break
 
     save_cache board, me, root
 
