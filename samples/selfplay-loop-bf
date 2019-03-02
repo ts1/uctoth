@@ -1,0 +1,9 @@
+#!/bin/bash -ex
+while true ; do
+    balance=$(sqlite3 book.db 'select sum(outcome) from nodes')
+    if [ $balance -gt 0 ]; then
+        npx coffee selfplay-bf -d 7
+    else
+        npx coffee selfplay-bf -d 8
+    fi
+done

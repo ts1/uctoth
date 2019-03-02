@@ -1,13 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash -ex
+while true ; do
+    time ./reg
 
-SIGNAL_FILE=.reload-selfplay
-
-while true; do
-    time ./reg -t 1e-5
-    if [ -f $SIGNAL_FILE ]; then
-        echo 'games not generated'
-        exit 1
+    if [ -f .reload-reg ]; then
+        rm .reload-reg
+        exec $0
     fi
-    touch $SIGNAL_FILE
-    time npx coffee match match.log
 done
