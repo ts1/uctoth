@@ -20,6 +20,7 @@ corner_zone = do ->
 defaults =
   evaluate: require './simple_eval'
   max_depth: 6
+  max_leafs: 4e6
   verbose: true
   invert: false
   cq: false
@@ -28,11 +29,13 @@ defaults =
   zws: true
   shuffle: true
   use_mtdf: false
+  cache_depth: 5
 
 module.exports = (options={}) ->
   {
     evaluate
     max_depth
+    max_leafs
     verbose
     invert
     cq
@@ -41,14 +44,18 @@ module.exports = (options={}) ->
     zws
     shuffle
     use_mtdf
+    cache_depth
   } = {defaults..., options...}
 
   if invert
     orig_evaluate = evaluate
     evaluate = (board, me) -> -orig_evaluate(board, me)
 
+  n_leafs = 0
+
   simple_minmax = (board, me, lower, upper, pass, depth) ->
     if depth <= 0
+      n_leafs++
       return evaluate(board, me)
 
     any_moves = false
@@ -116,16 +123,12 @@ module.exports = (options={}) ->
         max = score
         if score > lower
           lower = score
-          if score >= upper
-            break
+          break if score >= upper
+      break if n_leafs >= max_leafs
     max
 
   if cache_size
     cache = require('./cache')(cache_size)
-
-    cache_depth = max_depth - 6
-    if cache_depth < 1
-      cache_depth = 1
 
     cached_minmax = (f) ->
       (board, me, lower, upper, pass, depth) ->
@@ -179,7 +182,8 @@ module.exports = (options={}) ->
 
     first_depth = (max_depth & 1) or 2
     guess = 0
-    for depth in [first_depth..max_depth] by 2
+    n_leafs = 0
+    for depth in [first_depth..max_depth] by (if use_mtdf then 2 else 1)
       if depth > left
         break
       process.stdout.write "depth=#{depth}: " if verbose
@@ -216,7 +220,9 @@ module.exports = (options={}) ->
           move_scores[pos] *= .00001
           move_scores[pos] += score
           guess = max
+          break if n_leafs >= max_leafs
       process.stdout.write '\n' if verbose
+      break if n_leafs >= max_leafs
 
     cache.stats() if verbose and cache_size
 

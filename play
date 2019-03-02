@@ -51,7 +51,13 @@ argv = require 'yargs'
       alias: 'd'
       desc: 'Search depth of minimax'
       type: 'number'
-      default: 11
+      default: 60
+      requiresArg: true
+    leafs:
+      alias: 'l'
+      desc: 'Maximum number of leafs to search of minimax'
+      type: 'number'
+      default: 4e6
       requiresArg: true
     wld:
       alias: 'W'
@@ -116,6 +122,7 @@ minmax = Player
   strategy: require('./minmax')
     evaluate: pattern_eval('scores.json')
     max_depth: argv.depth
+    max_leafs: argv.leafs
     shuffle: false
     #cache_size: 0
   solve_wld: argv.wld
