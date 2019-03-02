@@ -332,36 +332,8 @@ module.exports = class Book
 
   sum_outcome: -> @db.get('select sum(outcome) as s from games').s
 
-  get_neutral_positions: (n_moves, n) ->
-    rows = @db.all '''
-      select code from nodes where n_moves=? order by n_visited desc limit ?',
-      ''', [n_moves, n]
-    rows.map (row) -> row.code
-
   has_game: (moves_str) ->
     @db.get('select count(*) as c from games where moves=?', [moves_str]).c
-
-  dump_nodes: (cb) ->
-    @db.each 'select * from nodes where outcome is not null', [], cb
-
-  get_visited_nodes: (min_visited, cb) ->
-    @db.each 'select * from nodes where n_visited >= ?', [min_visited], cb
-
-  dump_nodes_with_indexes: (limit, last) ->
-    rows = @db.all '''
-      select nodes.code, nodes.outcome, indexes.indexes
-        from nodes left join indexes on nodes.code = indexes.code
-        where nodes.outcome is not null and nodes.code > ?
-        order by nodes.code
-        limit ?
-      ''', [last, limit]
-    rows.forEach (row) ->
-      row.indexes and= JSON.parse(row.indexes)
-    rows
-
-  store_indexes: (array) ->
-    @db.run_many 'insert or replace into indexes (code, indexes) values (?, ?)',
-      do -> yield [code, JSON.stringify(indexes)] for {code, indexes} from array
 
   iterate_indexes: (phase) ->
     min_moves = 1 + (phase - 1) * N_MOVES_PER_PHASE
