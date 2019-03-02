@@ -192,7 +192,7 @@ code_to_single_indexes = (code) ->
   for p in patterns
     map = {}
     for i in p.indexes
-      index = p.normalize(board.indexes[i])
+      index = p.normalize(board.indexes[i] - p.offset)
       abs = Math.abs index
       value = map[abs] or 0
       if index >= 0
