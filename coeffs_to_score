@@ -69,7 +69,10 @@ round = (scores) ->
     for phase in [0...N_PHASES]
       tbl = scores[p.name][phase]
       for i in [0...(3**p.len+1)/2]
-        tbl[i] = Math.round(tbl[i] * SCORE_MULT)
+        val = Math.round(tbl[i] * SCORE_MULT)
+        val = 32767 if val > 32767
+        val = -32768 if val < -32768
+        tbl[i] = val
 
 process.stdout.write 'Wrapping up: '
 scores = init_scores()

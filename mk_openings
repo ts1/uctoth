@@ -49,7 +49,7 @@ add_nodes = (turn, depth, movestr) ->
   moves = []
   for move in unique_moves(board, turn)
     flips = board.move turn, move
-    console.assert flips.length
+    #console.assert flips.length
     data = book.get(board)
     if data and not nodes[data.code]? and not data.is_leaf and data.n_visited
       moves.push {
@@ -69,7 +69,7 @@ add_nodes = (turn, depth, movestr) ->
       new_movestr = movestr + pos_to_str(move.move, turn)
       console.log new_movestr, nodes[move.code] if argv.verbose
       flips = board.move turn, move.move
-      console.assert flips.length
+      #console.assert flips.length
       if board.any_moves(-turn)
         add_nodes -turn, depth+1, new_movestr
       else if board.any_moves(turn)

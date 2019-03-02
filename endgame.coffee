@@ -315,7 +315,7 @@ module.exports = (options={}) ->
     best = 0
     for pos from moves
       flips = board.move(me, pos)
-      console.assert flips.length
+      #console.assert flips.length
       process.stdout.write "#{pos_to_str(pos)}" if opt.verbose
       score = -mtdf(board, -me, -upper, -lower, -first_guess)
       board.undo(me, pos, flips)

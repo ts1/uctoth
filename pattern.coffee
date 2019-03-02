@@ -160,8 +160,8 @@ patterns = [
 
 position_updates = []
 n_indexes = 0
-
 single_index_table = null
+offsets = []
 
 build_single_index_table = ->
   single_index_table = []
@@ -200,7 +200,6 @@ code_to_single_indexes = (code) ->
       else
         map[abs] = value - 1
     for index, value of map
-      console.assert p.get_single_index(index) != null
       indexes.push p.get_single_index(index)
       indexes.push value
   indexes
@@ -241,6 +240,16 @@ init = ->
         build_single_index_table()
       p.single_index[i]
 
+  offset = 0
+  for p in patterns
+    l = (3**p.len + 1) / 2
+    offset += l - 1
+    p.offset = offset
+    for i in [0...p.flips.length]
+      offsets.push offset
+    offset += l
+  console.assert offsets.length == n_indexes
+
 init()
 
 class PatternBoard extends Board
@@ -254,7 +263,7 @@ class PatternBoard extends Board
 
   init_indexes: ->
     @n_discs = 0
-    @indexes = (0 for i in [0...n_indexes])
+    @indexes = [offsets...]
     for pos in ALL_POSITIONS
       if @board[pos]
         for [i, u] in position_updates[pos]
