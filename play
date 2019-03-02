@@ -63,13 +63,13 @@ argv = require 'yargs'
       alias: 'W'
       desc: 'Depth of win-loss-draw endgame search'
       type: 'number'
-      default: 22
+      default: 21
       requiresArg: true
     full:
       alias: 'f'
       desc: 'Depth of ful endgame search'
       type: 'number'
-      default: 20
+      default: 19
       requiresArg: true
     h:
       alias: 'help'

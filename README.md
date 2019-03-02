@@ -126,7 +126,7 @@ and invoked again by shell script.
 `match-loop` also uses this feature, it plays games until `scores.json` is
 updated.
 
-`watch` script is useful for watching to see if all the system is working well.
+`watch` script is useful for watching to see if everything is working well.
 
 ## Acknowledgement
 
