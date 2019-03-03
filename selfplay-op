@@ -56,6 +56,11 @@ argv = require 'yargs'
       desc: 'Depth of full endgame search'
       default: 18
       requiresArg: true
+    a:
+      alias: 'auto_opening'
+      desc: 'Automaticaly select opening according to balance'
+      type: 'boolean'
+      default: false
     watch:
       desc: 'Watch the file and exit when it changes'
       default: 'scores.json'
@@ -118,6 +123,15 @@ do ->
   reload = if argv.watch then watch_file(argv.watch) else -> false
   op = pos_array_from_str(argv.opening)
   until reload()
+    if argv.auto_opening
+      balance = book.sum_outcome()
+      if balance >= 0
+        op = pos_array_from_str('f5d6')
+      else if balance >= -200
+        op = pos_array_from_str('f5f6')
+      else
+        op = pos_array_from_str('f5f4')
+
     opening = book.find_opening(argv.scope, op)
     unless book.has_game(pos_array_to_str(opening.moves))
       {moves, outcome} = play(player, opening)
