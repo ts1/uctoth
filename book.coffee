@@ -268,7 +268,7 @@ module.exports = class Book
     @db.run 'commit'
 
   extend: (scope, opening=DEFAULT_OPENING) ->
-    @db.run 'begin immediate'
+    #@db.run 'begin immediate'
     {moves, value} = @find_opening(scope, opening)
     board = new PatternBoard
     history = []
@@ -306,7 +306,7 @@ module.exports = class Book
       @put_op_node board, data
 
     @add_to_tree board, history, true
-    @db.run 'commit'
+    #@db.run 'commit'
 
   add_to_tree: (board, history) ->
     while history.length
