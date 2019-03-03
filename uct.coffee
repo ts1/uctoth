@@ -12,6 +12,7 @@ defaults =
   random: 0
   inverted: false
   show_cache: false
+  tenacious: true
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -120,7 +121,7 @@ module.exports = (options={}) ->
       grew = false
       uct_search root, me, false, 0
       unless grew
-        if scope < 100*SCORE_MULT
+        if options.tenacious and scope < 10*SCORE_MULT
           scope *= 1.4
         else
           break
