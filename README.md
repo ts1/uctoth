@@ -63,10 +63,10 @@ This section describes how to train your own `scores.json` from scratch.
 First off, generate 1,000 randomly played games.
 
 ```
-npx coffee selfplay-rnd -R -n 1000 -w 10 -f 8 -b 100000
+npx coffee selfplay-rnd -R -n 1000 -w 12 -f 10 -b 100000 --min_col=0
 ```
 
-They are random but the last 8 moves are perfectly played.
+They are random but the last 10 moves are perfectly played.
 Generated games are stored in `book.db` (SQLite3 database).
 
 Next, learn the generated games and make your first `scores.json`.
@@ -136,3 +136,4 @@ Sound created by Nobuyuki Honda.
 
 MIT
 
+Copyright © 2018-2019 by Takeshi Sone

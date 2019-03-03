@@ -44,7 +44,7 @@ argv = require 'yargs'
     d:
       alias: 'depth'
       desc: 'Depth of minimax evaluation of leafs'
-      default: 5
+      default: 10
       requiresArg: true
     w:
       alias: 'wld'
@@ -116,10 +116,11 @@ do ->
 
   n_games = 0
   reload = if argv.watch then watch_file(argv.watch) else -> false
+  op = pos_array_from_str(argv.opening)
   until reload()
-    opening = book.find_opening(argv.scope,
-      pos_array_from_str(argv.opening))
-    {moves, outcome} = play player, opening
+    opening = book.find_opening(argv.scope, op)
+    {moves, outcome} = play(player, opening)
     moves_str = pos_array_to_str(moves)
-    book.add_game moves, true
+    book.add_game moves
+    book.extend argv.scope, op
     break if ++n_games >= argv.n

@@ -50,7 +50,7 @@ add_nodes = (turn, depth, movestr) ->
   for move in unique_moves(board, turn)
     flips = board.move turn, move
     #console.assert flips.length
-    data = book.get(board)
+    data = book.get_op_node(board)
     if data and not nodes[data.code]? and not data.is_leaf and data.n_visited
       moves.push {
         move

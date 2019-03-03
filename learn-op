@@ -19,19 +19,19 @@ argv = require 'yargs'
       alias: 'depth'
       desc: 'Evaluation depth'
       type: 'number'
-      default: 6
+      default: 10
       requiresArg: true
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw solve'
       type: 'number'
-      default: 18
+      default: 20
       requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full solve'
       type: 'number'
-      default: 16
+      default: 18
       requiresArg: true
     S:
       alias: 'scope'

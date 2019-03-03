@@ -47,9 +47,9 @@ class Database
 
 defaults =
   readonly: false
-  eval_depth: 5
-  solve_wld: 18
-  solve_full: 16
+  eval_depth: 10
+  solve_wld: 21
+  solve_full: 19
   verbose: false
 
 module.exports = class Book
@@ -91,22 +91,31 @@ module.exports = class Book
         ev
 
     @verbose = opt.verbose
+    @db.run 'pragma journal_mode=WAL'
 
   init: ->
-    @db.run 'pragma journal_mode=WAL'
+    # game nodes
     @db.run '''
-      create table if not exists nodes (
+      create table if not exists game_nodes (
         code text primary key,
         n_moves integer,
-        outcome integer,
+        outcome integer)
+      '''
+    @db.run '''
+      create index if not exists game_nodes__n_moves on game_nodes (n_moves)
+      '''
+
+    # opening nodes
+    @db.run '''
+      create table if not exists op_nodes (
+        code text primary key,
+        n_moves integer,
         pub_value integer,
         pri_value integer,
         is_leaf integer,
         solved integer,
         n_visited integer)
       '''
-
-    @db.run 'create index if not exists nodes_n_moves on nodes (n_moves)'
 
     @db.run '''
       create table if not exists games (
@@ -120,22 +129,54 @@ module.exports = class Book
         indexes text)
       '''
 
-  serialize: (cb) -> @db.serialize cb
+    @migrate()
 
-  get_by_code: (code) -> @db.get 'select * from nodes where code=?', [code]
+  migrate: ->
+    try
+      @db.run '''
+        insert into game_nodes (code, n_moves, outcome)
+          select code, n_moves, outcome from nodes
+        '''
+      console.log 'migrating database'
+      @db.run '''
+        insert into op_nodes (
+          code, n_moves, pub_value, pri_value, is_leaf, solved, n_visited
+        ) select
+          code, n_moves, pub_value, pri_value, is_leaf, solved, n_visited
+        from nodes
+        '''
+      @db.run 'drop table nodes'
+      @db.run 'vacuum'
+    catch
 
-  get: (board) -> @get_by_code(encode_normalized(board))
+  get_game_node: (board) ->
+    code = encode_normalized(board)
+    data = @db.get('select outcome from game_nodes where code=?', [code])
+    data?.outcome
 
-  set: (board, data) ->
+  get_op_node: (board) ->
+    @db.get('select * from op_nodes where code=?', [encode_normalized(board)])
+
+  put_game_node: (board, outcome) ->
     code = encode_normalized(board)
     n_moves = 60 - board.count(EMPTY)
+
     @db.run '''
-      insert or replace into nodes
-      (code, n_moves, outcome, pub_value, pri_value, n_visited, is_leaf, solved)
-      values (?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      [code, n_moves, data.outcome, data.pub_value, data.pri_value,
-        data.n_visited, int(data.is_leaf), data.solved]
+      insert or replace into game_nodes (code, n_moves, outcome)
+      values (:code, :n_moves, :outcome)
+      ''', { code, n_moves, outcome }
+
+  put_op_node: (board, data) ->
+    code = encode_normalized(board)
+    n_moves = 60 - board.count(EMPTY)
+    is_leaf = int(data.is_leaf)
+
+    @db.run '''
+      insert or replace into op_nodes
+        (code, n_moves, pub_value, pri_value, n_visited, is_leaf, solved)
+      values
+        (:code, :n_moves, :pub_value, :pri_value, :n_visited, :is_leaf, :solved)
+      ''', { data..., code, n_moves, is_leaf }
 
   find_opening: (scope, opening=DEFAULT_OPENING) ->
     scope *= SCORE_MULT
@@ -157,7 +198,7 @@ module.exports = class Book
       nodes = []
       for move in unique_moves(board, turn)
         flips = board.move turn, move
-        data = @get board
+        data = @get_op_node board
         board.undo turn, move, flips
         #console.log pos_to_str(move, turn), data
         if data?.pri_value?
@@ -193,93 +234,41 @@ module.exports = class Book
       turn = -turn
     {board, moves, turn, value: last_value}
 
-  add_game: (moves, learn=false) ->
+  add_game: (moves) ->
+    @db.run 'begin immediate'
     board = new PatternBoard
     history = []
-    for {move, turn, solved} in moves
+    for {move, turn} in moves
       flips = board.move turn, move
       throw new Error 'invalid move' unless flips.length
-      history.push {move, turn, flips, solved}
+      history.push {move, turn, flips}
     if board.any_moves(BLACK) or board.any_moves(WHITE)
       throw new Error 'game not finished'
     outcome = board.outcome()
 
     s = pos_array_to_str(moves)
     @db.run 'insert or replace into games values (?, ?)', [s, outcome]
+    @put_game_node board, outcome
 
-    data = @get(board) or {n_visited:0}
-    data.outcome = outcome
-    data.pub_value = outcome * SCORE_MULT
-    data.pri_value = outcome_to_eval(outcome, turn)
-    data.n_visited++
-    @set board, data
-    @add_to_tree board, history, learn
-
-  add_to_tree: (board, history, learn) ->
     while history.length
-      {move, turn, flips, solved} = history.pop()
+      {move, turn, flips} = history.pop()
       board.undo turn, move, flips
-      max_outcome = max_pub = max_pri = -INFINITY
-      have_leaf = false
-      unevaled = []
+      max_outcome = -INFINITY
       for m in board.list_moves(turn)
         flips = board.move turn, m
-        data = @get(board)
+        outcome = @get_game_node(board)
         board.undo turn, m, flips
-        if data
-          if data.outcome?
-            outcome = data.outcome * turn
-            if outcome > max_outcome
-              max_outcome = outcome
-          pri = data.pri_value * turn
-          if pri > max_pri
-            max_pri = pri
-          pub = data.pub_value * turn
-          if pub > max_pub
-            max_pub = pub
-          if data.is_leaf
-            have_leaf = true
-        else
-          unevaled.push m
+        if outcome?
+          outcome *= turn
+          if outcome > max_outcome
+            max_outcome = outcome
 
-      if learn and not solved and not have_leaf and unevaled.length
-        ev = @evaluate(board, turn, unevaled)
-        flips = board.move turn, ev.move
-        throw new Error 'invalid move' unless flips.length
-        data = @get(board) or {n_visited:0}
-        value = ev.value * turn
-        if ev.solved
-          if ev.solved == 'full' or (ev.solved == 'wld' and value == 0)
-            data.pri_value = outcome_to_eval(value, turn)
-            data.outcome = value
-          else
-            data.pri_value = value * SCORE_MULT
-          data.pub_value = value * SCORE_MULT
-        else
-          data.pri_value = value
-          data.pub_value = value
-        data.is_leaf = true
-        @set board, data
-        if @verbose
-          console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
-        board.undo turn, ev.move, flips
-        pri = data.pri_value * turn
-        if pri > max_pri
-          max_pri = pri
-        pub = data.pub_value * turn
-        if pub > max_pub
-          max_pub = pub
-
-      data = @get(board) or {n_visited:0}
       if max_outcome > -INFINITY
-        data.outcome = max_outcome * turn
-      data.pub_value = max_pub * turn
-      data.pri_value = max_pri * turn
-      data.is_leaf = false
-      data.n_visited++
-      @set board, data
+        @put_game_node board, max_outcome * turn
+    @db.run 'commit'
 
   extend: (scope, opening=DEFAULT_OPENING) ->
+    @db.run 'begin immediate'
     {moves, value} = @find_opening(scope, opening)
     board = new PatternBoard
     history = []
@@ -297,7 +286,7 @@ module.exports = class Book
     process.stdout.write pos_to_str(ev.move, turn)
     history.push {move:ev.move, turn, flips, solved: ev.solved}
 
-    data = @get(board)
+    data = @get_op_node(board)
     if data
       console.log ' transposition'
     else
@@ -306,7 +295,6 @@ module.exports = class Book
       if ev.solved
         if ev.solved == 'full' or (ev.solved == 'wld' and value == 0)
           data.pri_value = outcome_to_eval(value, turn)
-          data.outcome = value
         else
           data.pri_value = value * SCORE_MULT
         data.pub_value = value * SCORE_MULT
@@ -315,9 +303,68 @@ module.exports = class Book
         data.pub_value = value
       data.solved = ev.solved
       console.log ": #{data.pub_value}"
-      @set board, data
+      @put_op_node board, data
 
     @add_to_tree board, history, true
+    @db.run 'commit'
+
+  add_to_tree: (board, history) ->
+    while history.length
+      {move, turn, flips, solved} = history.pop()
+      board.undo turn, move, flips
+      max_pub = max_pri = -INFINITY
+      have_leaf = false
+      unevaled = []
+      for m in board.list_moves(turn)
+        flips = board.move turn, m
+        data = @get_op_node(board)
+        board.undo turn, m, flips
+        if data
+          pri = data.pri_value * turn
+          if pri > max_pri
+            max_pri = pri
+          pub = data.pub_value * turn
+          if pub > max_pub
+            max_pub = pub
+          if data.is_leaf
+            have_leaf = true
+        else
+          unevaled.push m
+
+      if not solved and not have_leaf and unevaled.length
+        ev = @evaluate(board, turn, unevaled)
+        flips = board.move turn, ev.move
+        throw new Error 'invalid move' unless flips.length
+        data = @get_op_node(board) or {n_visited:0}
+        value = ev.value * turn
+        if ev.solved
+          if ev.solved == 'full' or (ev.solved == 'wld' and value == 0)
+            data.pri_value = outcome_to_eval(value, turn)
+          else
+            data.pri_value = value * SCORE_MULT
+          data.pub_value = value * SCORE_MULT
+        else
+          data.pri_value = value
+          data.pub_value = value
+        data.is_leaf = true
+        data.solved = ev.solved
+        @put_op_node board, data
+        if @verbose
+          console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
+        board.undo turn, ev.move, flips
+        pri = data.pri_value * turn
+        if pri > max_pri
+          max_pri = pri
+        pub = data.pub_value * turn
+        if pub > max_pub
+          max_pub = pub
+
+      data = @get_op_node(board) or {n_visited:0, solved:solved}
+      data.pub_value = max_pub * turn
+      data.pri_value = max_pri * turn
+      data.is_leaf = false
+      data.n_visited++
+      @put_op_node board, data
 
   count_games: (me=null) ->
     sql = 'select count(*) as c from games'
@@ -332,7 +379,8 @@ module.exports = class Book
 
   sum_outcome: -> @db.get('select sum(outcome) as s from games').s or 0
 
-  sum_nodes_outcome: -> @db.get('select sum(outcome) as s from nodes').s or 0
+  sum_nodes_outcome: ->
+    @db.get('select sum(outcome) as s from game_nodes').s or 0
 
   has_game: (moves_str) ->
     @db.get('select count(*) as c from games where moves=?', [moves_str]).c
@@ -345,7 +393,7 @@ module.exports = class Book
 
     rows = @db.iterate '''
       select n.code, n.outcome, i.indexes
-        from nodes n left join indexes i on n.code = i.code
+        from game_nodes n left join indexes i on n.code = i.code
         where n.outcome is not null
         and n.n_moves >= :min_moves
         and n.n_moves < :max_moves

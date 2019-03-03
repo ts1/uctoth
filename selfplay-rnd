@@ -158,7 +158,7 @@ do ->
   reload = if argv.watch then watch_file(argv.watch) else -> false
   until reload()
     balance = book.sum_outcome()
-    console.log "balance #{balance}"
+    console.log "balance #{balance}" if argv.v
 
     opening = argv.opening
     if argv.auto_opening

@@ -132,10 +132,8 @@ find_unplayed_opening = (book, depth, cb) ->
 
   sub = (turn, d) ->
     if d >= depth
-      data = book.get(board)
-      if data?.outcome?
-        outcome = data.outcome
-      else
+      outcome = book.get_game_node(board)
+      unless outcome?
         outcome = cb moves
       if d > depth
         return
