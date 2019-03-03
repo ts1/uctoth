@@ -191,9 +191,9 @@ do ->
     console.log 'player[0]', wins[0], 'wins'
     console.log 'player[1]', wins[1], 'wins'
     console.log 'draws', draws
-    winrate = (wins[0] + draws/2) / n_matches
+    winrate = Math.round((wins[0] + draws/2) / n_matches * 100) / 100
     console.log 'win rate for player[0]', winrate
-    avg = score / n_matches
+    avg = Math.round(score / n_matches * 10) / 10
     console.log 'avg score for player[0]', avg
 
   console.log 'average offset', Math.sqrt(sum_square_offset / n_matches)

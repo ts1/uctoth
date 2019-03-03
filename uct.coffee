@@ -4,7 +4,7 @@
 { encode } = require './encode'
 
 defaults =
-  C: 1.7*SCORE_MULT
+  C: 1.75*SCORE_MULT
   max_search: 14000
   verbose: true
   evaluate: null
