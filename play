@@ -108,6 +108,9 @@ book =
   else
     null
 
+normal_eval = pattern_eval('scores.json')
+invert_eval = pattern_eval('scores.json', true)
+
 simple = Player
   book: book
   strategy: require('./uct')
@@ -116,35 +119,39 @@ simple = Player
     board_class: Board
   solve_wld: argv.wld
   solve_full: argv.full
+  endgame_eval: normal_eval
 
 minmax = Player
   book: book
   strategy: require('./minmax')
-    evaluate: pattern_eval('scores.json')
+    evaluate: normal_eval
     max_depth: argv.depth
     max_leafs: argv.leafs
     shuffle: false
     #cache_size: 0
   solve_wld: argv.wld
   solve_full: argv.full
+  endgame_eval: normal_eval
 
 uct = Player
   book: book
   strategy: require('./uct')
-    evaluate: pattern_eval('scores.json')
+    evaluate: normal_eval
     max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
+  endgame_eval: normal_eval
 
 invert = Player
   book: null
   strategy: require('./uct')
-    evaluate: pattern_eval('scores.json', true)
+    evaluate: invert_eval
     max_search: argv.search
     inverted: true
   inverted: true
   solve_wld: argv.wld
   solve_full: argv.full
+  endgame_eval: invert_eval
 
 time_tbl = {}
 

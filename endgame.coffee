@@ -1,4 +1,5 @@
-{ Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } = require './board'
+{ Board, EMPTY, pos_from_str, pos_to_xy, pos_from_xy, pos_to_str } =
+  require './board'
 { SCORE_MULT } = require './pattern'
 uct = require './uct'
 { INFINITY, lru_cache } = require './util'

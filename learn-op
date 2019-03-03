@@ -58,7 +58,11 @@ argv = require 'yargs'
   .argv
 
 do ->
-  book = new Book argv.book, eval_depth: argv.depth, solve_wld: argv.wld, solve_full: argv.full
+  book = new Book argv.book,
+    eval_depth: argv.depth
+    solve_wld: argv.wld
+    solve_full: argv.full
+    evaluate: require('./pattern_eval')('scores.json')
   book.init()
   opening = pos_array_from_str(argv.opening)
   reload = if argv.watch then watch_file(argv.watch) else -> false

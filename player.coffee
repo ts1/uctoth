@@ -1,4 +1,4 @@
-{EMPTY, pos_from_str} = require './board'
+{ EMPTY, pos_from_str } = require './board'
 { encode_normalized } = require './encode'
 endgame = require './endgame'
 { shuffle } = require './util'

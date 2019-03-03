@@ -84,6 +84,7 @@ player = make_player
   verbose: false
   solve_wld: argv.w
   solve_full: argv.f
+  endgame_eval: pattern_eval
 
 play = (player, opening) ->
   board = new Board
@@ -117,6 +118,7 @@ do ->
     solve_wld: argv.wld
     solve_full: argv.full
     verbose: argv.verbose
+    evaluate: pattern_eval
   book.init()
 
   n_games = 0

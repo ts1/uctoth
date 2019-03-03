@@ -15,7 +15,6 @@ sqlite3 = require('better-sqlite3')
   code_to_single_indexes
 } = require './pattern'
 { shuffle, INFINITY, unique_moves, int } = require './util'
-pattern_eval = require('./pattern_eval')('scores.json')
 Player = require './player'
 minmax = require './minmax'
 
@@ -57,41 +56,49 @@ module.exports = class Book
     @filename = filename
     opt = {defaults..., options...}
     @db = new Database filename, opt.readonly
+    @db.run 'pragma journal_mode=WAL'
+    @verbose = opt.verbose
 
     @evaluate = do ->
-      player1 = Player
-        book: null
-        strategy: minmax
-          verbose: false
-          max_depth: opt.eval_depth
-          evaluate: pattern_eval
-          #cache_size: 0
-        solve_wld: opt.solve_wld
-        solve_full: opt.solve_full
-        verbose: false
-
-      player2 = Player
-        book: null
-        strategy: minmax
-          verbose: false
-          max_depth: opt.eval_depth - 1
-          evaluate: pattern_eval
-          #cache_size: 0
-        solve_wld: opt.solve_wld
-        solve_full: opt.solve_full
-        verbose: false
-
+      do_evaluate = null
       (board, me, moves) ->
-        ev = player1 board, me, moves
-        unless ev.value?
-          ev = player1 board, me, [ev.move]
-        unless ev.solved
-          ev2 = player2 board, me, [ev.move]
-          ev.value = Math.round(ev.value + ev2.value / 2)
-        ev
+        unless do_evaluate
+          do_evaluate = do ->
+            console.assert opt.evaluate?
+            player1 = Player
+              book: null
+              strategy: minmax
+                verbose: false
+                max_depth: opt.eval_depth
+                evaluate: opt.evaluate
+                #cache_size: 0
+              solve_wld: opt.solve_wld
+              solve_full: opt.solve_full
+              verbose: false
+              endgame_eval: opt.evaluate
 
-    @verbose = opt.verbose
-    @db.run 'pragma journal_mode=WAL'
+            player2 = Player
+              book: null
+              strategy: minmax
+                verbose: false
+                max_depth: opt.eval_depth - 1
+                evaluate: opt.evaluate
+                #cache_size: 0
+              solve_wld: opt.solve_wld
+              solve_full: opt.solve_full
+              verbose: false
+              endgame_eval: opt.evaluate
+
+            (board, me, moves) ->
+              ev = player1 board, me, moves
+              unless ev.value?
+                ev = player1 board, me, [ev.move]
+              unless ev.solved
+                ev2 = player2 board, me, [ev.move]
+                ev.value = Math.round(ev.value + ev2.value / 2)
+              ev
+        do_evaluate(board, me, moves)
+
 
   init: ->
     # game nodes
