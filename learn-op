@@ -1,7 +1,9 @@
 #!/usr/bin/env coffee
 require './rejection_handler'
 { pos_array_from_str } = require './board'
+{ watch_file } = require './util'
 Book = require './book'
+
 argv = require 'yargs'
   .options
     o:
@@ -45,6 +47,10 @@ argv = require 'yargs'
       default: 'book.db'
       type: 'string'
       requiresArg: true
+    watch:
+      desc: 'Watch the file and exit when it changes'
+      default: 'scores.json'
+      requiresArg: true
     h:
       alias: 'help'
   .strict()
@@ -55,5 +61,7 @@ do ->
   book = new Book argv.book, eval_depth: argv.depth, solve_wld: argv.wld, solve_full: argv.full
   book.init()
   opening = pos_array_from_str(argv.opening)
+  reload = if argv.watch then watch_file(argv.watch) else -> false
   for i in [0...argv.n]
     book.extend argv.scope, opening
+    break if reload()
