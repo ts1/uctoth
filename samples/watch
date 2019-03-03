@@ -15,6 +15,6 @@ while true; do
     echo $(sqlite3 book.db '
         select count(moves) from games;
         select sum(outcome) from games;
-        select sum(outcome) from nodes;')
+        select sum(outcome) from game_nodes;')
     sleep 60 
 done

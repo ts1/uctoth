@@ -383,7 +383,10 @@ module.exports = class Book
     @db.get('select sum(outcome) as s from game_nodes').s or 0
 
   has_game: (moves_str) ->
-    @db.get('select count(*) as c from games where moves=?', [moves_str]).c
+    @db.get(
+      'select count(*) c from games where moves like ?',
+      [moves_str + '%']
+    ).c
 
   iterate_indexes: (phase) ->
     min_moves = 1 + (phase - 1) * N_MOVES_PER_PHASE

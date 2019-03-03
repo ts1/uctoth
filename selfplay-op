@@ -119,8 +119,10 @@ do ->
   op = pos_array_from_str(argv.opening)
   until reload()
     opening = book.find_opening(argv.scope, op)
-    {moves, outcome} = play(player, opening)
-    moves_str = pos_array_to_str(moves)
-    book.add_game moves
+    unless book.has_game(pos_array_to_str(opening.moves))
+      {moves, outcome} = play(player, opening)
+      moves_str = pos_array_to_str(moves)
+      book.add_game moves
+      n_games++
     book.extend argv.scope, op
-    break if ++n_games >= argv.n
+    break if n_games >= argv.n
