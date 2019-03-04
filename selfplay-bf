@@ -81,6 +81,7 @@ player = make_player
   verbose: false
   solve_wld: argv.wld
   solve_full: argv.full
+  endgame_eval: pattern_eval
 
 play = (player, opening) ->
   board = new Board

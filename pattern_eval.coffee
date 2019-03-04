@@ -8,6 +8,7 @@ module.exports = (arg, invert=false) ->
   else
     scores = arg
 
+  #console.log 'making single tables', arg
   single_tbl = []
   for phase in [0...N_PHASES]
     tbl = []

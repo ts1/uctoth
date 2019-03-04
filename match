@@ -74,6 +74,9 @@ argv = require 'yargs'
   .version false
   .argv
 
+normal_eval = pattern_eval(argv.scores)
+ref_eval = pattern_eval(argv.ref)
+
 simple = Player
   book: null
   strategy: require('./uct')
@@ -84,11 +87,12 @@ simple = Player
   solve_wld: argv.wld
   solve_full: argv.full
   verbose: argv.verbose
+  endgame_eval: normal_eval
 
 minmax = Player
   book: null
   strategy: require('./minmax')
-    evaluate: pattern_eval(argv.scores)
+    evaluate: normal_eval
     max_depth: argv.depth
     max_leafs: argv.leafs
     shuffle: false
@@ -96,26 +100,29 @@ minmax = Player
   solve_wld: argv.wld
   solve_full: argv.full
   verbose: argv.verbose
+  endgame_eval: normal_eval
 
 uct = Player
   book: null
   strategy: require('./uct')
-    evaluate: pattern_eval(argv.scores)
+    evaluate: normal_eval
     verbose: argv.verbose
     max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
   verbose: argv.verbose
+  endgame_eval: normal_eval
 
 uct_ref = Player
   book: null
   strategy: require('./uct')
-    evaluate: pattern_eval(argv.ref)
+    evaluate: ref_eval
     verbose: argv.verbose
     max_search: argv.search
   solve_wld: argv.wld
   solve_full: argv.full
   verbose: argv.verbose
+  endgame_eval: ref_eval
 
 players = [uct]
 players.push if argv.minimax
