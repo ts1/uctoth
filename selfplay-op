@@ -126,10 +126,10 @@ do ->
   op = pos_array_from_str(argv.opening)
   until reload()
     if argv.auto_opening
-      balance = book.sum_outcome()
+      balance = book.sum_nodes_outcome()
       if balance >= 0
         op = pos_array_from_str('f5d6')
-      else if balance >= -200
+      else if balance >= -5000
         op = pos_array_from_str('f5f6')
       else
         op = pos_array_from_str('f5f4')

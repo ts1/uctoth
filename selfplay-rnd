@@ -58,7 +58,7 @@ argv = require 'yargs'
       alias: 'balance'
       desc: 'Tolerance of outcome balance'
       type: 'number'
-      default: 400
+      default: 10000
       requiresArg: true
     B:
       alias: 'book'
@@ -159,7 +159,7 @@ do ->
   reload = if argv.watch then watch_file(argv.watch) else -> false
   games = {}
   until reload()
-    balance = book.sum_outcome()
+    balance = book.sum_nodes_outcome()
     console.log "balance #{balance}" if argv.v
 
     opening = argv.opening
@@ -198,13 +198,13 @@ do ->
 
     games[moves_str] = true
 
-    b = balance + outcome
-    if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
+    if (balance >= argv.b and outcome > 0) or
+        (balance <= -argv.b and outcome < 0)
       console.log "NOT ACCEPTED DUE TO BALANCE"
       n_skip++
       continue
 
     book.add_game moves
     break if ++n_save >= argv.n
-  balance = book.sum_outcome()
+  balance = book.sum_nodes_outcome()
   console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"
