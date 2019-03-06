@@ -157,6 +157,7 @@ do ->
   n_save = 0
   avg_col = (argv.min_col + argv.max_col) / 2
   reload = if argv.watch then watch_file(argv.watch) else -> false
+  games = {}
   until reload()
     balance = book.sum_outcome()
     console.log "balance #{balance}" if argv.v
@@ -173,15 +174,9 @@ do ->
     {moves, outcome} = play player, opening
     moves_str = pos_array_to_str(moves)
 
-    b = balance + outcome
-    if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
-      console.log "NOT ACCEPTED DUE TO BALANCE"
-      n_skip++
-      continue
-
     n_play++
 
-    collision = book.has_game(moves_str)
+    collision = book.has_game(moves_str) or games[moves_str]
     if collision
       n_col++
       console.log "COLLISION #{n_col}/#{n_play}"
@@ -199,6 +194,14 @@ do ->
       console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
 
     if collision
+      continue
+
+    games[moves_str] = true
+
+    b = balance + outcome
+    if (b > argv.b and outcome > 0) or (b < -argv.b and outcome < 0)
+      console.log "NOT ACCEPTED DUE TO BALANCE"
+      n_skip++
       continue
 
     book.add_game moves
