@@ -59,6 +59,10 @@ argv = require 'yargs'
       desc: 'Use AdaGrad'
       type: 'boolean'
       default: true
+    rmsprop:
+      desc: 'RMSProp parameter (e.g. 0.99)'
+      type: 'number'
+      default: null
     ridge:
       desc: 'L2 regularization parameter'
       type: 'number'
@@ -139,8 +143,11 @@ adagrad = (rows, coeffs, g2, rate, max_loss) ->
       if g
         if argv.ridge
           g += argv.ridge * coeffs[index]
-        g2[index] += g * g
-        coeffs[index] -= rate * g / Math.sqrt(g2[index])
+        if argv.rmsprop
+          gg = g2[index] = g2[index] * argv.rmsprop + g * g * (1 - argv.rmsprop)
+        else
+          gg = g2[index] += g * g
+        coeffs[index] -= rate * g / Math.sqrt(gg)
   true
 
 binary_search = (samples, target) ->
@@ -210,6 +217,7 @@ regress = (samples) ->
   avg = average train_set
   console.log "train set avg #{avg}"
   coeffs = (0 for i in [0...index_size] by 1)
+  best_coeffs = [coeffs...]
   dev = last_loss = verify train_set, coeffs
   console.log 'deviation', dev
 
@@ -236,14 +244,13 @@ regress = (samples) ->
               rate *= 0.1 / 0.7
               last = true
           rate *= 0.7
-          if rate < 1e-3
+          if rate < 1e-4
             finish = true
             break
       else
         adagrad(train_set, coeffs, g2, rate, Infinity)
         loss = verify test_set, coeffs, last_loss
         if argv.split
-          min_loss = loss if loss < min_loss
           break if loss > min_loss * (1 + argv.threshold)
     else if argv.sgd
       train_set = shuffle train_set
@@ -274,6 +281,10 @@ regress = (samples) ->
       coeffs = new_coeffs
     break if finish
 
+    if loss < min_loss
+      min_loss = loss
+      best_coeffs = [coeffs...]
+
     d = Math.abs(last_loss - loss)
     if step <= argv.duration
       d_avg = (d_avg * (step - 1) + d) / step
@@ -285,7 +296,9 @@ regress = (samples) ->
       display_rate *= train_set.length
     console.log 'step', step, 'loss', loss,
       'rate', round_value(display_rate),
-      'd', d_avg
+      'd', d_avg,
+      if loss == min_loss then '*' else ''
+
     break if step >= argv.duration and d_avg < argv.threshold
 
     step++
@@ -301,11 +314,14 @@ regress = (samples) ->
   r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
 
-  {coeffs, r2, step, loss:last_loss, avg, n_samples, raw_avg, n_removed}
+  coeffs = best_coeffs
+  loss = min_loss
+  {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed}
 
 do ->
   argv.adagrad = argv.sgd = false if argv.batch
   argv.adagrad = argv.batch = false if argv.sgd
+  argv.adagrad = true if argv.rmsprop
   argv.sgd = argv.batch = false if argv.adagrad
 
   book = new Book argv.book
