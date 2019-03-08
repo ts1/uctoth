@@ -63,6 +63,10 @@ argv = require 'yargs'
       desc: 'RMSProp parameter (e.g. 0.99)'
       type: 'number'
       default: null
+    rate:
+      desc: 'Learning rate for AdaGrad/RMSProp'
+      type: 'number'
+      default: 0.1
     ridge:
       desc: 'L2 regularization parameter'
       type: 'number'
@@ -241,7 +245,7 @@ regress = (samples) ->
             if loss < last_loss
               if last
                 break
-              rate *= 0.1 / 0.7
+              rate *= argv.rate / 0.7
               last = true
           rate *= 0.7
           if rate < 1e-4
