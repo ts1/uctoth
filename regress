@@ -25,6 +25,11 @@ argv = require 'yargs'
       type: 'string'
       requiresArg: true
       default: 'book.db'
+    steps:
+      desc: 'Number of iterations over samples'
+      type: 'number'
+      requiresArg: true
+      default: 200
     t:
       desc: 'Threshold to terminate regression'
       alias: 'threshold'
@@ -37,24 +42,15 @@ argv = require 'yargs'
       default: null
       type: 'number'
       requiresArg: true
-    d:
-      alias: 'duration'
-      desc: 'Duration of moving average of difference'
-      default: 10
-      type: 'number'
-      requiresArg: true
     balance:
       desc: 'Thin out samples to get average closer to zero'
-      type: 'boolean'
-      default: false
-    batch:
-      desc: 'Use batch'
       type: 'boolean'
       default: false
     sgd:
       desc: 'Use SGD'
       type: 'boolean'
       default: false
+      conflicts: 'rmsprop'
     adagrad:
       desc: 'Use AdaGrad'
       type: 'boolean'
@@ -62,11 +58,12 @@ argv = require 'yargs'
     rmsprop:
       desc: 'RMSProp parameter (e.g. 0.99)'
       type: 'number'
-      default: null
+      default: undefined
+      conflicts: 'sgd'
     rate:
       desc: 'Learning rate for AdaGrad/RMSProp'
       type: 'number'
-      default: 0.1
+      default: 0.03
     ridge:
       desc: 'L2 regularization parameter'
       type: 'number'
@@ -231,14 +228,10 @@ regress = (samples) ->
   dev = last_loss = verify train_set, coeffs
   console.log 'deviation', dev
 
-  n = 0
-  step = 1
-  d_avg = 0
   rate = 100
-  rate /= train_set.length if argv.batch
   finish = false
   min_loss = dev
-  loop
+  for step in [1..argv.steps]
     if argv.adagrad
       train_set = shuffle train_set
       if step == 1
@@ -252,6 +245,7 @@ regress = (samples) ->
               if last
                 break
               rate *= argv.rate / 0.7
+              console.log 'rate', rate
               last = true
           rate *= 0.7
           if rate < 1e-4
@@ -276,18 +270,7 @@ regress = (samples) ->
         if rate < 1e-10
           finish = true
           break
-      coeffs = new_coeffs
-    else
-      vector = make_gradient train_set, coeffs
-
-      loop
-        new_coeffs = update_coeffs coeffs, vector, rate
-        loss = verify test_set, new_coeffs, last_loss
-        break if loss < last_loss
-        rate *= 0.7
-        if rate*train_set.length < 1e-5
-          finish = true
-          break
+      console.log 'rate', rate
       coeffs = new_coeffs
     break if finish
 
@@ -295,31 +278,13 @@ regress = (samples) ->
       min_loss = loss
       best_coeffs = [coeffs...]
 
-    d = Math.abs(last_loss - loss)
-    if step <= argv.duration
-      d_avg = (d_avg * (step - 1) + d) / step
-    else
-      d_avg = (d_avg * (argv.duration - 1) + d) / argv.duration
+    d = last_loss - loss
 
-    display_rate = rate
-    unless argv.adagrad
-      display_rate *= train_set.length
     console.log 'step', step, 'loss', loss,
-      'rate', round_value(display_rate),
-      'd', d_avg,
+      'd', d,
       if loss == min_loss then '*' else ''
 
-    break if step >= argv.duration and d_avg < argv.threshold
-
-    step++
-
     last_loss = loss
-
-    if argv.batch
-      n++
-      if n >= 30
-        rate *= 10000
-        n = 0
 
   r2 = 1 - last_loss**2 / dev**2
   console.log 'r2', r2
@@ -329,14 +294,30 @@ regress = (samples) ->
   logistic = argv.logistic
   {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed, logistic}
 
+format_time = (msec) ->
+  retval = ''
+  s = msec % (60*1000)
+  retval = "#{s/1000}s"
+  m = Math.floor(msec / (60*1000))
+  return retval unless m
+  m = m % 60
+  retval = "#{m}m" + retval
+  h = Math.floor(m / 60)
+  return retval unless h
+  h = h % 24
+  retval = "#{h}h" + retval
+  d = Math.floor(h / 24)
+  return retval unless d
+  return "#{d}d" + retval
+
 do ->
-  argv.adagrad = argv.sgd = false if argv.batch
-  argv.adagrad = argv.batch = false if argv.sgd
-  argv.adagrad = true if argv.rmsprop
-  argv.sgd = argv.batch = false if argv.adagrad
+  argv.adagrad = false if argv.sgd
+  argv.sgd = false if argv.adagrad
 
   book = new Book argv.book
   book.init()
+
+  t0 = Date.now()
 
   process.stdout.write "Loading samples of phase #{argv.phase}: "
   t = Date.now()
@@ -353,3 +334,6 @@ do ->
   process.stdout.write "Writing coeffs to #{argv.outfile}: "
   gzwriter(argv.outfile).end(JSON.stringify coeffs)
   console.log 'done'
+
+  t0 = Date.now() - t0
+  console.log "Elapsed time #{format_time(t0)}"
