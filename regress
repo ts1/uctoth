@@ -25,7 +25,7 @@ argv = require 'yargs'
       type: 'string'
       requiresArg: true
       default: 'book.db'
-    steps:
+    epoch:
       desc: 'Number of iterations over samples'
       type: 'number'
       requiresArg: true
@@ -232,10 +232,10 @@ regress = (samples) ->
   rate = 100
   finish = false
   min_loss = dev
-  for step in [1..argv.steps]
+  for epoch in [1..argv.epoch]
     if argv.adagrad
       train_set = shuffle train_set
-      if step == 1
+      if epoch == 1
         last = false
         loop
           g2 = (0 for i in [0...index_size] by 1)
@@ -260,7 +260,7 @@ regress = (samples) ->
     else if argv.sgd
       train_set = shuffle train_set
       loop
-        max_loss = if step==1 then last_loss else Infinity
+        max_loss = if epoch==1 then last_loss else Infinity
         new_coeffs = sgd(train_set, coeffs, rate, max_loss)
         if new_coeffs
           loss = verify test_set, new_coeffs, last_loss
@@ -281,7 +281,7 @@ regress = (samples) ->
 
     d = last_loss - loss
 
-    console.log 'step', step, 'loss', loss,
+    console.log 'epoch', epoch, 'loss', loss,
       'd', d,
       if loss == min_loss then '*' else ''
 
@@ -294,23 +294,22 @@ regress = (samples) ->
   loss = min_loss
   logistic = argv.logistic
   clip = 16
-  {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed, logistic, clip}
+  {coeffs, r2, epoch, loss, avg, n_samples, raw_avg, n_removed, logistic, clip}
 
 format_time = (msec) ->
   retval = ''
-  s = msec % (60*1000)
-  retval = "#{s/1000}s"
-  m = Math.floor(msec / (60*1000))
+  s = msec / 1000
+  retval = "#{s % 60}s"
+  m = Math.floor(s / 60)
   return retval unless m
-  m = m % 60
-  retval = "#{m}m" + retval
+  retval = "#{m % 60}m" + retval
   h = Math.floor(m / 60)
   return retval unless h
-  h = h % 24
-  retval = "#{h}h" + retval
+  retval = "#{h % 24}h" + retval
   d = Math.floor(h / 24)
   return retval unless d
-  return "#{d}d" + retval
+  retval = "#{d}d" + retval
+  retval
 
 do ->
   argv.adagrad = false if argv.sgd
