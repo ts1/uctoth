@@ -14,6 +14,7 @@ defaults =
   inverted: false
   show_cache: false
   tenacious: true
+  outcome: false
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -71,6 +72,13 @@ module.exports = (options={}) ->
           return max
         else
           if pass
+            unless node.value?
+              node.value =
+                if options.outcome
+                  board.outcome(me) * SCORE_MULT
+                else
+                  options.evaluate(board, me)
+              grew = true
             return node.value
           else
             node.pass = {n:1}
