@@ -151,7 +151,7 @@ adagrad = (rows, coeffs, g2, rate, max_loss) ->
       if g
         if argv.ridge
           g += argv.ridge * coeffs[index]
-        if argv.rmsprop
+        if argv.rmsprop and g2[index]
           gg = g2[index] = g2[index] * argv.rmsprop + g * g * (1 - argv.rmsprop)
         else
           gg = g2[index] += g * g
