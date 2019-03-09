@@ -64,15 +64,12 @@ denormalize = (scores) ->
           else
             tbl[i] = -tbl[-r]
 
-max = 0
 round = (scores) ->
   for p in patterns
     for phase in [0...N_PHASES]
       tbl = scores[p.name][phase]
       for i in [0...(3**p.len+1)/2]
         val = Math.round(tbl[i] * SCORE_MULT)
-        if Math.abs(val) > max
-          max = Math.abs(val)
         val = 32767 if val > 32767
         val = -32768 if val < -32768
         tbl[i] = val
@@ -86,4 +83,3 @@ round scores
 scores.clip = 16
 fs.writeFileSync argv.o, JSON.stringify scores
 console.log "'#{argv.o}' is ready"
-console.log 'max', max
