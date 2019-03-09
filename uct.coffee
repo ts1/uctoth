@@ -5,7 +5,7 @@
 
 defaults =
   C: 1.75*SCORE_MULT
-  C_log: 0.22*SCORE_MULT
+  C_log: 0.25*SCORE_MULT
   max_search: 14000
   verbose: true
   evaluate: null
@@ -71,13 +71,7 @@ module.exports = (options={}) ->
           return max
         else
           if pass
-            #process.stdout.write " #{board.outcome()}\n" if options.verbose
-            unless node.outcome?
-              node.outcome = board.outcome(me) * SCORE_MULT
-              if options.inverted
-                node.outcome = -node.outcome
-              grew = true
-            return node.outcome
+            return node.value
           else
             node.pass = {n:1}
             return -uct_search node.pass, -me, true, depth

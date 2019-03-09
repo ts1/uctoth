@@ -1,7 +1,7 @@
 { EMPTY, pos_from_str, pos_to_str, Board } = require './board'
 { PatternBoard, SCORE_MULT } = require './pattern'
 solve = require './endgame'
-{ INFINITY } = require './util'
+{ INFINITY, format_eval } = require './util'
 
 corner_zone = do ->
   b = new Board
@@ -50,12 +50,6 @@ module.exports = (options={}) ->
   if invert
     orig_evaluate = evaluate
     evaluate = (board, me) -> -orig_evaluate(board, me)
-
-  score_disp = (score) ->
-    if evaluate.logistic
-      Math.round(1 / (1 + Math.exp(-score/SCORE_MULT)) * 1000) / 1000
-    else
-      score
 
   n_leafs = 0
 
@@ -214,7 +208,9 @@ module.exports = (options={}) ->
               score = -minmax(board, -me, -INFINITY, -max, 0, depth-1)
           board.undo(me, pos, flips)
           if score > max
-            process.stdout.write ":#{score_disp(score)} " if verbose
+            if verbose
+              s = format_eval(score, evaluate.logistic)
+              process.stdout.write ":#{s} "
             max = score
             best = pos
           else
@@ -222,7 +218,9 @@ module.exports = (options={}) ->
               score = -99999
               process.stdout.write " " if verbose
             else
-              process.stdout.write ":#{score_disp(score)} " if verbose
+              if verbose
+                s = format_eval(score, evaluate.logistic)
+                process.stdout.write ":#{s} "
           move_scores[pos] *= .00001
           move_scores[pos] += score
           guess = max

@@ -116,6 +116,13 @@ watch_file = (filename) ->
     else
       false
 
+format_eval = (score, logistic, solved) ->
+  { SCORE_MULT } = require './pattern'
+  if logistic and not solved
+    Math.round(1 / (1 + Math.exp(-score/SCORE_MULT)) * 1000) / 1000
+  else
+    score
+
 module.exports = {
   shuffle
   memoize
@@ -126,4 +133,5 @@ module.exports = {
   INFINITY
   unique_moves
   watch_file
+  format_eval
 }

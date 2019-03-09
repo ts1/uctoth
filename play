@@ -13,7 +13,7 @@ readline = require 'readline'
 { PatternBoard, SCORE_MULT } = require './pattern'
 Player = require './player'
 pattern_eval = require './pattern_eval'
-{ round_value } = require './util'
+{ format_eval } = require './util'
 book_player = require './static_book_player'
 
 argv = require 'yargs'
@@ -179,7 +179,7 @@ do ->
     if board.any_moves(turn)
       while true
         t = Date.now()
-        {move, value} = await player(board, turn)
+        {move, value, solved} = await player(board, turn)
         t = Date.now() - t
         time_tbl[turn] = (time_tbl[turn] or 0) + t
         if move == 'undo'
@@ -201,9 +201,7 @@ do ->
       undo_stack.push [turn, move, flips]
       console.log "#{square_to_char turn} moved to #{pos_to_str move}"
       if value?
-        if logistic
-          value = 1 / (1 + Math.exp(-value / SCORE_MULT))
-        console.log "estimated value #{round_value(value)}"
+        console.log "estimated value #{format_eval(value, logistic, solved)}"
     else
       if board.any_moves(-turn)
         console.log 'PASS'
