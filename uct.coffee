@@ -5,6 +5,7 @@
 
 defaults =
   C: 1.75*SCORE_MULT
+  C_log: 0.22*SCORE_MULT
   max_search: 14000
   verbose: true
   evaluate: null
@@ -36,7 +37,7 @@ module.exports = (options={}) ->
     result
 
   (board, me) ->
-    scope = options.C
+    scope = if options.evaluate.logistic then options.C_log else options.C
     board = new options.board_class board
     max_depth = 0
     grew = false

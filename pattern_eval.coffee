@@ -28,6 +28,7 @@ module.exports = (arg, invert=false) ->
     sum
 
   if invert
-    (board, me) -> -pattern_eval(board, me)
-  else
-    pattern_eval
+    pattern_eval = (board, me) -> -pattern_eval(board, me)
+
+  pattern_eval.logistic = scores.meta[0].logistic
+  pattern_eval

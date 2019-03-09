@@ -71,6 +71,9 @@ argv = require 'yargs'
       desc: 'L2 regularization parameter'
       type: 'number'
       default: 0
+    logistic:
+      desc: 'Logistic regression'
+      type: 'boolean'
     h:
       alias: 'help'
   .version false
@@ -87,7 +90,10 @@ predict = (coeffs, row) ->
   result = 0
   each_index row, (index, value) ->
     result += coeffs[index] * value
-  result
+  if argv.logistic
+    1 / (1 + Math.exp(-result))
+  else
+    result
 
 verify = (rows, coeffs, upper) ->
   if upper?
@@ -320,7 +326,8 @@ regress = (samples) ->
 
   coeffs = best_coeffs
   loss = min_loss
-  {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed}
+  logistic = argv.logistic
+  {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed, logistic}
 
 do ->
   argv.adagrad = argv.sgd = false if argv.batch
@@ -334,7 +341,10 @@ do ->
   process.stdout.write "Loading samples of phase #{argv.phase}: "
   t = Date.now()
   samples = []
-  samples.push sample for sample from book.iterate_indexes(argv.phase)
+  for sample from book.iterate_indexes(argv.phase)
+    if argv.logistic
+      sample[0] = if sample[0] > 0 then 1 else 0
+    samples.push sample
   t = Date.now() - t
   console.log "loaded #{samples.length} samples in #{t/1000} seconds"
 

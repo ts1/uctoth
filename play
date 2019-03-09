@@ -10,7 +10,7 @@ readline = require 'readline'
   square_to_char
   pos_to_str
 } = require './board'
-{ PatternBoard } = require './pattern'
+{ PatternBoard, SCORE_MULT } = require './pattern'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 { round_value } = require './util'
@@ -110,6 +110,7 @@ book =
 
 normal_eval = pattern_eval('scores.json')
 invert_eval = pattern_eval('scores.json', true)
+logistic = normal_eval.logistic
 
 simple = Player
   book: book
@@ -199,7 +200,10 @@ do ->
       console.assert flips.length
       undo_stack.push [turn, move, flips]
       console.log "#{square_to_char turn} moved to #{pos_to_str move}"
-      console.log "estimated value #{round_value(value)}" if value?
+      if value?
+        if logistic
+          value = 1 / (1 + Math.exp(-value / SCORE_MULT))
+        console.log "estimated value #{round_value(value)}"
     else
       if board.any_moves(-turn)
         console.log 'PASS'

@@ -51,6 +51,12 @@ module.exports = (options={}) ->
     orig_evaluate = evaluate
     evaluate = (board, me) -> -orig_evaluate(board, me)
 
+  score_disp = (score) ->
+    if evaluate.logistic
+      Math.round(1 / (1 + Math.exp(-score/SCORE_MULT)) * 1000) / 1000
+    else
+      score
+
   n_leafs = 0
 
   simple_minmax = (board, me, lower, upper, pass, depth) ->
@@ -208,7 +214,7 @@ module.exports = (options={}) ->
               score = -minmax(board, -me, -INFINITY, -max, 0, depth-1)
           board.undo(me, pos, flips)
           if score > max
-            process.stdout.write ":#{score} " if verbose
+            process.stdout.write ":#{score_disp(score)} " if verbose
             max = score
             best = pos
           else
@@ -216,7 +222,7 @@ module.exports = (options={}) ->
               score = -99999
               process.stdout.write " " if verbose
             else
-              process.stdout.write ":#{score} " if verbose
+              process.stdout.write ":#{score_disp(score)} " if verbose
           move_scores[pos] *= .00001
           move_scores[pos] += score
           guess = max
