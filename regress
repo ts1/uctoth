@@ -70,6 +70,9 @@ argv = require 'yargs'
     logistic:
       desc: 'Logistic regression'
       type: 'boolean'
+    d:
+      alias: 'duration'
+      desc: 'Depretcated. Ignored.'
     h:
       alias: 'help'
   .version false
