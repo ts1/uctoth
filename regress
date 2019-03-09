@@ -62,7 +62,7 @@ argv = require 'yargs'
     rate:
       desc: 'Learning rate for AdaGrad/RMSProp'
       type: 'number'
-      default: 0.03
+      default: 0.08
     ridge:
       desc: 'L2 regularization parameter'
       type: 'number'
