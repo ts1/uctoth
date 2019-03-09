@@ -2,7 +2,7 @@
 
 require './rejection_handler'
 { gzwriter, round_value, shuffle } = require './util'
-{ get_single_index_size } = require './pattern'
+{ get_single_index_size, SCORE_MULT } = require './pattern'
 Book = require './book'
 
 argv = require 'yargs'
@@ -49,7 +49,6 @@ argv = require 'yargs'
     sgd:
       desc: 'Use SGD'
       type: 'boolean'
-      default: false
       conflicts: 'rmsprop'
     adagrad:
       desc: 'Use AdaGrad'
@@ -79,6 +78,18 @@ argv = require 'yargs'
 
 index_size = get_single_index_size()
 
+
+clip = do ->
+  MAX = 32767 / SCORE_MULT
+  MIN = -32768 / SCORE_MULT
+  (x) ->
+    if x > MAX
+      MAX
+    else if x < MIN
+      MIN
+    else
+      x
+
 each_index = (row, cb) ->
   for i in [1...row.length] by 2
     cb row[i], row[i+1]
@@ -106,19 +117,6 @@ verify = (rows, coeffs, upper) ->
       break
   Math.sqrt(sum_sq_err / rows.length)
 
-make_gradient = (rows, coeffs) ->
-  vector = (0 for i in [0...index_size] by 1)
-  sum = 0
-  for row from rows
-    outcome = row[0]
-    e = outcome - predict(coeffs, row)
-    each_index row, (index, value) ->
-      vector[index] += e * value
-  vector
-
-update_coeffs = (coeffs, vector, rate) ->
-  coeffs[i] + vector[i] * rate for i in [0...index_size] by 1
-
 sgd = (rows, coeffs, rate, max_loss) ->
   max_sum_e2 = (max_loss * max_loss) * rows.length
   new_coeffs = [coeffs...]
@@ -133,7 +131,7 @@ sgd = (rows, coeffs, rate, max_loss) ->
       g = e * value
       if argv.ridge
         g += argv.ridge * coeffs[index]
-      new_coeffs[index] -= rate * g
+      new_coeffs[index] = clip(new_coeffs[index] - rate * g)
   new_coeffs
 
 adagrad = (rows, coeffs, g2, rate, max_loss) ->
@@ -154,7 +152,7 @@ adagrad = (rows, coeffs, g2, rate, max_loss) ->
           gg = g2[index] = g2[index] * argv.rmsprop + g * g * (1 - argv.rmsprop)
         else
           gg = g2[index] += g * g
-        coeffs[index] -= rate * g / Math.sqrt(gg)
+        coeffs[index] = clip(coeffs[index] - rate * g / Math.sqrt(gg))
   true
 
 binary_search = (samples, target) ->
