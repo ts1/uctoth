@@ -15,7 +15,10 @@ module.exports = (arg, invert=false) ->
     for p in patterns
       tbl = tbl.concat(scores[p.name][phase].slice(1).reverse().map((x) -> -x))
       tbl = tbl.concat(scores[p.name][phase])
-    single_tbl[phase] = new Int16Array tbl
+    if scores.clip == 16
+      single_tbl[phase] = new Int16Array tbl
+    else
+      single_tbl[phase] = tbl
 
   pattern_eval = (board, me) ->
     phase = int((board.n_discs - 5) / N_MOVES_PER_PHASE)

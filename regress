@@ -293,7 +293,8 @@ regress = (samples) ->
   coeffs = best_coeffs
   loss = min_loss
   logistic = argv.logistic
-  {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed, logistic}
+  clip = 16
+  {coeffs, r2, step, loss, avg, n_samples, raw_avg, n_removed, logistic, clip}
 
 format_time = (msec) ->
   retval = ''

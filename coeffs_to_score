@@ -83,6 +83,7 @@ load_coeffs scores
 interpolate scores
 denormalize scores
 round scores
+scores.clip = 16
 fs.writeFileSync argv.o, JSON.stringify scores
 console.log "'#{argv.o}' is ready"
 console.log 'max', max
