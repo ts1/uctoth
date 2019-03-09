@@ -298,7 +298,7 @@ regress = (samples) ->
 
 format_time = (msec) ->
   retval = ''
-  s = msec / 1000
+  s = Math.round(msec / 1000)
   retval = "#{s % 60}s"
   m = Math.floor(s / 60)
   return retval unless m
