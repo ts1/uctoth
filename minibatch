@@ -1,0 +1,216 @@
+#!/usr/bin/env coffee
+
+{ get_single_index_size, code_to_single_indexes, SCORE_MULT } =
+  require './pattern'
+{ shuffle } = require './util'
+Book = require './book'
+fs = require 'fs'
+
+argv = require 'yargs'
+  .options
+    p:
+      alias: 'phase'
+      desc: 'Game phase (0-9)'
+      type: 'number'
+      requiresArg: true
+      demandOption: true
+    o:
+      alias: 'outfile'
+      desc: 'Output file'
+      type: 'string'
+      requiresArg: true
+      demandOption: true
+    b:
+      alias: 'book'
+      desc: 'Database file'
+      default: 'book.db'
+      requiresArg: true
+    B:
+      alias: 'batch_size'
+      desc: 'Batch size (default auto)'
+      requiresArg: true
+    e:
+      alias: 'epochs'
+      desc: 'Number of epochs'
+      default: 100
+      requiresArg: true
+    r:
+      alias: 'rate'
+      desc: 'Learning rate (default auto)'
+      requiresArg: true
+    l:
+      alias: 'logistic'
+      desc: 'Logistic regression'
+    ridge:
+      desc: 'L2 regularization parameter'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .strict()
+  .version false
+  .argv
+
+INDEX_SIZE = get_single_index_size()
+
+load_samples = () ->
+  for {code, outcome} from book.fetch_codes_for_phase(argv.phase)
+    [outcome, code_to_single_indexes(code)...]
+
+clip = do ->
+  MAX = 32767 / SCORE_MULT
+  MIN = -32768 / SCORE_MULT
+  (x) ->
+    if x > MAX then MAX
+    else if x < MIN then MIN
+    else x
+
+predict = do ->
+  do_predict = (indexes, coeffs) ->
+    result = 0
+    for i in [1...indexes.length] by 2
+      index = indexes[i]
+      value = indexes[i+1]
+      result += coeffs[index] * value
+    result
+
+  if argv.logistic
+    (indexes, coeffs) -> 1 / (1 + Math.exp(-do_predict(indexes, coeffs)))
+  else
+    do_predict
+
+make_gradient = (batch, coeffs) ->
+  gradient = (0 for i in [0...INDEX_SIZE])
+  e2 = 0
+  for indexes in batch
+    outcome = indexes[0]
+    e = predict(indexes, coeffs) - outcome
+    for i in [1...indexes.length] by 2
+      index = indexes[i]
+      value = indexes[i+1]
+      g = e * value
+      gradient[index] -= g
+    e2 += e * e
+  {gradient, e2}
+
+epoch = (samples, coeffs, g2, rate, batch_size, max_loss=Infinity) ->
+  max_e2 = max_loss**2 * samples.length
+  sum_e2 = 0
+  samples = shuffle(samples)
+  for offset in [0...samples.length] by batch_size
+    batch = samples.slice(offset, offset + batch_size)
+    {gradient, e2} = make_gradient(batch, coeffs)
+    sum_e2 += e2
+    return false if sum_e2 >= max_e2
+    for i in [0...INDEX_SIZE]
+      g = gradient[i]
+      continue unless g
+      if argv.ridge
+        g += argv.ridge * coeffs[i]
+      g2[i] += g * g
+      coeffs[i] = clip(coeffs[i] + rate / Math.sqrt(g2[i]) * g)
+  return true
+
+verify = (samples, coeffs) ->
+  e2 = 0
+  for indexes in samples
+    outcome = indexes[0]
+    e = predict(indexes, coeffs) - outcome
+    e2 += e * e
+  Math.sqrt(e2 / samples.length)
+
+find_rate = (samples, rate, batch_size, dev) ->
+  # course tune
+  min_loss = dev
+  best_rate = null
+  rate = 30
+  n_fail = 0
+  loop
+    coeffs = (0 for i in [0...INDEX_SIZE])
+    g2 = (0 for i in [0...INDEX_SIZE])
+    if epoch(samples, coeffs, g2, rate, batch_size, dev)
+      loss = verify(samples, coeffs)
+      if loss < min_loss
+        min_loss = loss
+        best_rate = rate
+      else
+        if best_rate?
+          if ++n_fail >= 2
+            break
+    else
+      break if best_rate?
+    rate *= .7
+
+  # fine tune
+  min_loss = dev
+  rate = best_rate / .7 * .9
+  best_rate = null
+  n_fail = 0
+  loop
+    coeffs = (0 for i in [0...INDEX_SIZE])
+    g2 = (0 for i in [0...INDEX_SIZE])
+    if epoch(samples, coeffs, g2, rate, batch_size)
+      loss = verify(samples, coeffs)
+      if loss < min_loss
+        min_loss = loss
+        best_rate = rate
+      else
+        if best_rate?
+          if ++n_fail >= 2
+            break
+    else
+      break if best_rate?
+    rate *= .9
+
+  best_rate
+
+regress = (samples, dev, rate, batch_size) ->
+  coeffs = (0 for i in [0...INDEX_SIZE])
+  g2 = (0 for i in [0...INDEX_SIZE])
+  min_loss = dev
+  for ep in [1..argv.epochs]
+    epoch samples, coeffs, g2, rate, batch_size
+    loss = verify(samples, coeffs)
+    if loss < min_loss
+      min_loss = loss
+      best_coeffs = [coeffs...]
+      star = '*'
+    else
+      star = ''
+    console.log "epoch #{ep} loss #{loss} #{star}"
+  {coeffs: best_coeffs, loss: min_loss}
+
+do ->
+  book = new Book argv.book
+  book.init()
+
+  process.stdout.write "Loading samples for phase #{argv.phase}: "
+  samples = (sample for sample from book.iterate_indexes(argv.phase))
+  if argv.logistic
+    samples.forEach (sample) -> sample[0] = if sample[0] > 0 then 1 else 0
+  console.log "loaded #{samples.length} samples"
+  avg = samples.reduce(((a, s) -> a + s[0]), 0) / samples.length
+  console.log "Average: #{avg}"
+  dev = verify(samples, (0 for i in [0...INDEX_SIZE]))
+  console.log "Deviation: #{dev}"
+
+  if argv.batch_size?
+    batch_size = argv.batch_size
+  else
+    batch_size = Math.ceil(samples.length / 10)
+    console.log "Batch size: #{batch_size}"
+
+  if argv.rate?
+    rate = argv.rate
+  else
+    process.stdout.write 'Finding rate: '
+    rate = find_rate(samples, rate, batch_size, dev)
+    console.log "#{rate}"
+
+  {coeffs, loss} = regress(samples, dev, rate, batch_size)
+
+  r2 = 1 - loss**2 / dev**2
+  console.log "r2: #{r2}"
+
+  process.stdout.write "Writing #{argv.outfile}: "
+  fs.writeFileSync argv.outfile, JSON.stringify {coeffs, avg, dev, r2, loss}
+  console.log "done"

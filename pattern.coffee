@@ -255,7 +255,7 @@ init()
 class PatternBoard extends Board
   constructor: (x) ->
     super x
-    @init_indexes()
+    @init_indexes() unless @indexes_inited
 
   load: (s) ->
     super s
@@ -269,6 +269,7 @@ class PatternBoard extends Board
         for [i, u] in position_updates[pos]
           @indexes[i] += @board[pos] * u
         @n_discs++
+    @indexes_inited = true
 
   move: (me, pos) ->
     flips = super(me, pos)
