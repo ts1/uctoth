@@ -104,10 +104,12 @@ epoch = (samples, coeffs, g2, rate, batch_size, max_loss=Infinity) ->
     for i in [0...INDEX_SIZE]
       g = gradient[i]
       continue unless g
-      if argv.ridge
-        g += argv.ridge * coeffs[i]
       g2[i] += g * g
-      coeffs[i] = clip(coeffs[i] + rate / Math.sqrt(g2[i]) * g)
+      w = coeffs[i]
+      if argv.ridge
+        g -= argv.ridge * w
+      w += rate/Math.sqrt(g2[i]) * g
+      coeffs[i] = clip(w)
   return true
 
 verify = (samples, coeffs) ->
