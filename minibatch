@@ -120,8 +120,8 @@ verify = (samples, coeffs) ->
     e2 += e * e
   Math.sqrt(e2 / samples.length)
 
-find_rate = (samples, rate, batch_size, dev) ->
-  # course tune
+find_rate = (samples, batch_size, dev) ->
+  # rough tune
   min_loss = dev
   best_rate = null
   rate = 30
@@ -204,8 +204,8 @@ do ->
   if argv.rate?
     rate = argv.rate
   else
-    process.stdout.write 'Finding rate: '
-    rate = find_rate(samples, rate, batch_size, dev)
+    process.stdout.write 'Finding optimal learning rate: '
+    rate = find_rate(samples, batch_size, dev)
     console.log "#{rate}"
 
   {coeffs, loss} = regress(samples, dev, rate, batch_size)
