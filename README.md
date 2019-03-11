@@ -21,9 +21,7 @@ Starting from random plays, strengthens itself by loops of self playing and
 machine learning.
 Uses no existing records of games.
 
-Included `scores.json` file is a result of ~~30 iterations of 1,000 self-plays
-and learnings.
-10 days work of a MacBook Pro.~~ 52,000 self-played games.
+Included `scores.json` file is a result of learning 100,000 self-played games.
 
 ### Game tree search
 
@@ -39,7 +37,7 @@ He is the god of computer othello for me.
 ### Machine learning
 
 Simple linear regression of 57,000+ sparse features per game position.
-Now using AdaGrad for faster convergence.
+Now using mini-batch with AdaGrad for faster convergence.
 Also written in CoffeeScript.
 
 ## Usage
@@ -54,7 +52,8 @@ cp ref/scores.json .
 To run scripts written in CoffeeScript 2, you should either install
 `coffeescript` globally, or use `npx coffee` to run.
 
-Node v10.x sometimes runs `regress` very slowly. I use v8.x.
+Node v10.x sometimes runs `regress` very slowly. ~~I use v8.x.~~
+v11.x seems to be OK.
 
 ### Bootstrapping
 
