@@ -62,7 +62,7 @@ This section describes how to train your own `scores.json` from scratch.
 First off, generate 1,000 randomly played games.
 
 ```
-npx coffee selfplay-rnd -R -n 1000 -w 12 -f 10 -b 100000 --min_col=0
+npx coffee selfplay-rnd -R -n 1000 -w 12 -f 10 -b 1000000 --min_col=0
 ```
 
 They are random but the last 10 moves are perfectly played.
@@ -71,7 +71,7 @@ Generated games are stored in `book.db` (SQLite3 database).
 Next, learn the generated games and make your first `scores.json`.
 
 ```
-./reg
+./reg --ridge=0.5
 ```
 
 Now you can remove `book.db` of random games.
@@ -87,6 +87,9 @@ cp samples/auto .
 ```
 
 You may edit `auto` as you like.
+`--ridge` parameter is there to avoid overfitting.
+You'll have to decrease this value as the number of generated games increase.
+Always check the match result to see if your change gives better result.
 
 Now you are ready to run automatic self-learning loop.
 
@@ -108,22 +111,18 @@ hours, and of course when you have idle CPU cores.
 Sample scripts are in `samples` directory, copy them.
 
 ```
-cp samples/selfplay-loop samples/reg-loop samples/match-loop .
+cp samples/selfplay-loop samples/reg-loop .
 ```
 
 Edit the scripts as you need.
-Then run `reg-loop` in one terminal, `match-loop` in another, and
-`selfplay-loop` in the third.
-This setup uses 3 CPU threads, but if it isn't enough for your machine,
+Then run `reg-loop` in one terminal, and `selfplay-loop` in another.
+This setup uses 2 CPU threads, but if it isn't enough for your machine,
 you may run `selfplay-loop` as many as you want.
 
 The trick is simple.
 All selfplay scripts watches `scores.json` to change.
 When `reg-loop` finished creating a new `scores.json`, selfplay scripts exit
 and invoked again by shell script.
-
-`match-loop` also uses this feature, it plays games until `scores.json` is
-updated.
 
 `watch` script is useful for watching to see if everything is working well.
 
