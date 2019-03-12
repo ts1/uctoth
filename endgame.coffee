@@ -298,7 +298,6 @@ module.exports = (options={}) ->
       verbose: false
       inverted: opt.inverted
       tenacious: false
-      outcome: true
     uct_result = uct_eval(board, me)
 
     move_values = {}

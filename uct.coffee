@@ -4,7 +4,7 @@
 { encode } = require './encode'
 
 defaults =
-  C: 1.90*SCORE_MULT
+  C: 1.80*SCORE_MULT
   C_log: 0.25*SCORE_MULT
   max_search: 14000
   verbose: true
@@ -14,7 +14,6 @@ defaults =
   inverted: false
   show_cache: false
   tenacious: true
-  outcome: false
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -36,6 +35,8 @@ module.exports = (options={}) ->
     result = cache[encode(board)]
     cache = {}
     result
+
+  outcome_mode = not options.evaluate.logistic or options.tenacious
 
   (board, me) ->
     scope = if options.evaluate.logistic then options.C_log else options.C
@@ -74,7 +75,7 @@ module.exports = (options={}) ->
           if pass
             unless node.value?
               node.value =
-                if options.outcome
+                if outcome_mode
                   board.outcome(me) * SCORE_MULT
                 else
                   options.evaluate(board, me)
@@ -120,7 +121,7 @@ module.exports = (options={}) ->
     root = restore_cache(board) or {value:0, n:0, children:[]}
     console.log 'cached', root.n if options.verbose or options.show_cache
 
-    for i from [0...options.max_search]
+    for i in [0...options.max_search]
       grew = false
       uct_search root, me, false, 0
       unless grew
