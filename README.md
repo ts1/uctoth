@@ -120,7 +120,7 @@ This setup uses 2 CPU threads, but if it isn't enough for your machine,
 you may run `selfplay-loop` as many as you want.
 
 The trick is simple.
-All selfplay scripts watches `scores.json` to change.
+All selfplay scripts watch `scores.json` to change.
 When `reg-loop` finished creating a new `scores.json`, selfplay scripts exit
 and invoked again by shell script.
 

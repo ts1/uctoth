@@ -13,8 +13,7 @@ while true; do
         touch .stamp-match
     fi
     echo $(sqlite3 book.db '
-        select count(moves) from games;
-        select sum(outcome) from games;
+        select max(c) from (select count(*) c from game_nodes group by n_moves);
         select sum(outcome) from game_nodes;')
     sleep 60 
 done

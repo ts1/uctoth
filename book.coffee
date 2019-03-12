@@ -7,6 +7,7 @@ sqlite3 = require('better-sqlite3')
   pos_to_str
   pos_from_str
   pos_array_to_str
+  Board
 } = require './board'
 {
   PatternBoard
@@ -125,12 +126,6 @@ module.exports = class Book
       '''
 
     @db.run '''
-      create table if not exists games (
-        moves text primary key,
-        outcome integer)
-      '''
-
-    @db.run '''
       create table if not exists indexes (
         code text primary key,
         indexes text)
@@ -243,7 +238,7 @@ module.exports = class Book
 
   add_game: (moves) ->
     @db.run 'begin immediate'
-    board = new PatternBoard
+    board = new Board
     history = []
     for {move, turn} in moves
       flips = board.move turn, move
@@ -253,13 +248,16 @@ module.exports = class Book
       throw new Error 'game not finished'
     outcome = board.outcome()
 
+    unique = false
+
     s = pos_array_to_str(moves)
-    @db.run 'insert or replace into games values (?, ?)', [s, outcome]
+    unique = true unless @get_game_node(board)?
     @put_game_node board, outcome
 
     while history.length
       {move, turn, flips} = history.pop()
       board.undo turn, move, flips
+      unique = true unless @get_game_node(board)?
       max_outcome = -INFINITY
       for m in board.list_moves(turn)
         flips = board.move turn, m
@@ -273,6 +271,7 @@ module.exports = class Book
       if max_outcome > -INFINITY
         @put_game_node board, max_outcome * turn
     @db.run 'commit'
+    unique
 
   extend: (scope, opening=DEFAULT_OPENING) ->
     #@db.run 'begin immediate'
@@ -373,27 +372,16 @@ module.exports = class Book
       data.n_visited++
       @put_op_node board, data
 
-  count_games: (me=null) ->
-    sql = 'select count(*) as c from games'
-    if me?
-      if me > 0
-        sql += ' where outcome > 0'
-      else if me < 0
-        sql += ' where outcome < 0'
-      else
-        sql += ' where outcome = 0'
-    @db.get(sql).c
-
-  sum_outcome: -> @db.get('select sum(outcome) as s from games').s or 0
-
   sum_nodes_outcome: ->
     @db.get('select sum(outcome) as s from game_nodes').s or 0
 
-  has_game: (moves_str) ->
-    @db.get(
-      'select count(*) c from games where moves like ?',
-      [moves_str + '%']
-    ).c
+  has_game: (moves) ->
+    board = new Board
+    for {turn, move} in moves
+      flips = board.move turn, move
+      throw new Error 'invalid move' unless flips.length
+      return false unless @get_game_node(board)?
+    true
 
   iterate_indexes: (phase) ->
     min_moves = 1 + (phase - 1) * N_MOVES_PER_PHASE

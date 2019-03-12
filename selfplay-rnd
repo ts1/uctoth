@@ -176,7 +176,13 @@ do ->
 
     n_play++
 
-    collision = book.has_game(moves_str) or games[moves_str]
+    if (balance >= argv.b and outcome > 0) or
+        (balance <= -argv.b and outcome < 0)
+      console.log "NOT ACCEPTED DUE TO BALANCE"
+      n_skip++
+      continue
+
+    collision = not book.add_game(moves)
     if collision
       n_col++
       console.log "COLLISION #{n_col}/#{n_play}"
@@ -193,18 +199,6 @@ do ->
       player = make_player(randomness)
       console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
 
-    if collision
-      continue
-
-    games[moves_str] = true
-
-    if (balance >= argv.b and outcome > 0) or
-        (balance <= -argv.b and outcome < 0)
-      console.log "NOT ACCEPTED DUE TO BALANCE"
-      n_skip++
-      continue
-
-    book.add_game moves
     break if ++n_save >= argv.n
   balance = book.sum_nodes_outcome()
   console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"

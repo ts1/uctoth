@@ -135,7 +135,7 @@ do ->
         op = pos_array_from_str('f5f4')
 
     opening = book.find_opening(argv.scope, op)
-    unless book.has_game(pos_array_to_str(opening.moves))
+    unless book.has_game(opening.moves)
       {moves, outcome} = play(player, opening)
       moves_str = pos_array_to_str(moves)
       book.add_game moves
