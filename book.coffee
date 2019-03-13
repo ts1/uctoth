@@ -155,10 +155,13 @@ module.exports = class Book
       @db.run 'vacuum'
     catch
 
-  get_game_node: (board) ->
-    code = encode_normalized(board)
+  get_game_node_by_code: (code) ->
     data = @stmt_get_game_node.get([code])
     data?.outcome
+
+  get_game_node: (board) ->
+    code = encode_normalized(board)
+    @get_game_node_by_code(code)
 
   get_op_node: (board) ->
     @db.get('select * from op_nodes where code=?', [encode_normalized(board)])

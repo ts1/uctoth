@@ -1,0 +1,57 @@
+#!/usr/bin/env coffee
+
+Book = require './book'
+{
+  Board
+  BLACK
+  WHITE
+  pos_from_str
+  pos_to_str
+  pos_array_to_str
+  pos_array_from_str
+} = require './board'
+{ unique_moves } = require './util'
+{ encode_normalized } = require './encode'
+
+argv = require 'yargs'
+  .options
+    b:
+      alias: 'book'
+      desc: 'Database file'
+      default: 'book.db'
+    h:
+      alias: 'help'
+  .strict()
+  .version false
+  .argv
+
+visited = {}
+book = new Book argv.book, readonly: true
+board = new Board
+moves = []
+
+replay = (turn) ->
+  unique = false
+  for move in unique_moves(board, turn)
+    flips = board.move turn, move
+    throw new Error "invalid move #{pos_to_str(move, turn)}" unless flips.length
+    code = encode_normalized(board)
+    outcome = book.get_game_node_by_code(code)
+    if outcome?
+      unless visited[code]
+        visited[code] = true
+        unique = true
+      moves.push {move, turn}
+      if board.any_moves(-turn)
+        replay -turn
+      else if board.any_moves(turn)
+        replay turn
+      else if unique
+        console.log pos_array_to_str(moves), outcome
+        unique = false
+      moves.pop()
+    board.undo turn, move, flips
+
+board.move BLACK, pos_from_str('F5')
+moves.push { turn:BLACK, move:pos_from_str('F5') }
+replay WHITE
