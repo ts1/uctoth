@@ -174,15 +174,18 @@ do ->
     {moves, outcome} = play player, opening
     moves_str = pos_array_to_str(moves)
 
+    collision = games[moves_str]
+    games[moves_str] = true
+
     n_play++
 
     if (balance >= argv.b and outcome > 0) or
         (balance <= -argv.b and outcome < 0)
       console.log "NOT ACCEPTED DUE TO BALANCE"
       n_skip++
-      continue
+    else
+      collision = not book.add_game(moves) unless collision
 
-    collision = not book.add_game(moves)
     if collision
       n_col++
       console.log "COLLISION #{n_col}/#{n_play}"
