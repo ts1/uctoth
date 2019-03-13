@@ -38,6 +38,7 @@ class Database
   all: (sql, params) -> @db.prepare(sql).all(params ? [])
   iterate: (sql, params) -> @db.prepare(sql).iterate(params ? [])
   each: (sql, params, cb) -> cb(row) for row from @iterate(sql, params)
+  prepare: (sql) -> @db.prepare(sql)
   run_many: (sql, params_array) ->
     stmt = @db.prepare(sql)
     @run 'begin'
@@ -59,6 +60,9 @@ module.exports = class Book
     @db = new Database filename, opt.readonly
     @db.run 'pragma journal_mode=WAL'
     @verbose = opt.verbose
+    @stmt_get_game_node = @db.prepare(
+      'select outcome from game_nodes where code=?'
+    )
 
     @evaluate = do ->
       do_evaluate = null
@@ -153,7 +157,7 @@ module.exports = class Book
 
   get_game_node: (board) ->
     code = encode_normalized(board)
-    data = @db.get('select outcome from game_nodes where code=?', [code])
+    data = @stmt_get_game_node.get([code])
     data?.outcome
 
   get_op_node: (board) ->
