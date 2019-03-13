@@ -36,7 +36,7 @@ module.exports = (options={}) ->
     cache = {}
     result
 
-  outcome_mode = not options.evaluate.logistic or options.tenacious
+  outcome_mode = not options.evaluate.logistic or not options.tenacious
 
   (board, me) ->
     scope = if options.evaluate.logistic then options.C_log else options.C

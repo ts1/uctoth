@@ -96,8 +96,9 @@ epoch = (samples, coeffs, g2, rate, batch_size, max_loss=Infinity) ->
   max_e2 = max_loss**2 * samples.length
   sum_e2 = 0
   samples = shuffle(samples)
-  for offset in [0...samples.length] by batch_size
-    batch = samples.slice(offset, offset + batch_size)
+  n_batches = Math.ceil(samples.length / batch_size)
+  for offset in [0...n_batches]
+    batch = (samples[i] for i in [offset...samples.length] by n_batches)
     {gradient, e2} = make_gradient(batch, coeffs)
     sum_e2 += e2
     return false if sum_e2 >= max_e2
@@ -198,7 +199,7 @@ do ->
   if argv.batch_size?
     batch_size = argv.batch_size
   else
-    batch_size = Math.ceil(samples.length / 10)
+    batch_size = Math.round(samples.length / 10)
     console.log "Batch size: #{batch_size}"
 
   if argv.rate?
@@ -213,6 +214,7 @@ do ->
   r2 = 1 - loss**2 / dev**2
   console.log "r2: #{r2}"
 
+  output = {coeffs, avg, dev, r2, loss, logistic: argv.logistic}
   process.stdout.write "Writing #{argv.outfile}: "
-  fs.writeFileSync argv.outfile, JSON.stringify {coeffs, avg, dev, r2, loss}
+  fs.writeFileSync argv.outfile, JSON.stringify output
   console.log "done"
