@@ -1,7 +1,7 @@
 /tmp
 /memo
 /node_modules
-/scores.json*
+/weights.json*
 .DS_Store
 .*.swp
 /book.db*

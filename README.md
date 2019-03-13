@@ -21,7 +21,7 @@ Starting from random plays, strengthens itself by loops of self playing and
 machine learning.
 Uses no existing records of games.
 
-Included `scores.json` file is a result of learning 100,000 self-played games.
+Included `weights.json` file is a result of learning 100,000 self-played games.
 
 ### Game tree search
 
@@ -42,11 +42,11 @@ Also written in CoffeeScript.
 
 ## Usage
 
-Most scripts expect `scores.json` file existing in this directory.
+Most scripts expect `weights.json` file existing in this directory.
 Copy from `ref` directory at first (then build your own).
 
 ```
-cp ref/scores.json .
+cp ref/weights.json .
 ```
 
 To run scripts written in CoffeeScript 2, you should either install
@@ -57,7 +57,7 @@ v11.x seems to be OK.
 
 ### Bootstrapping
 
-This section describes how to train your own `scores.json` from scratch.
+This section describes how to train your own `weights.json` from scratch.
 
 First off, generate 1,000 randomly played games.
 
@@ -68,7 +68,7 @@ npx coffee selfplay-rnd -R -n 1000 -w 12 -f 10 -b 1000000 --min_col=0
 They are random but the last 10 moves are perfectly played.
 Generated games are stored in `book.db` (SQLite3 database).
 
-Next, learn the generated games and make your first `scores.json`.
+Next, learn the generated games and make your first `weights.json`.
 
 ```
 ./reg --ridge=0.5
@@ -97,7 +97,7 @@ Now you are ready to run automatic self-learning loop.
 ./auto
 ```
 
-It runs regression and 30-game matches against `ref/scores.json`
+It runs regression and 30-game matches against `ref/weights.json`
 every 1,000 games generated.
 Match results are appended to `match.log`.
 
@@ -120,8 +120,8 @@ This setup uses 2 CPU threads, but if it isn't enough for your machine,
 you may run `selfplay-loop` as many as you want.
 
 The trick is simple.
-All selfplay scripts watch `scores.json` to change.
-When `reg-loop` finished creating a new `scores.json`, selfplay scripts exit
+All selfplay scripts watch `weights.json` to change.
+When `reg-loop` finished creating a new `weights.json`, selfplay scripts exit
 and invoked again by shell script.
 
 `watch` script is useful for watching to see if everything is working well.

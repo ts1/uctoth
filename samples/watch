@@ -1,12 +1,12 @@
 #!/bin/bash
 
 while true; do
-    if [ scores.json -nt .stamp-scores ]; then
-        ls -l scores.json
+    if [ weights.json -nt .stamp-weights ]; then
+        ls -l weights.json
         if type jq >/dev/null 2>&1; then
-            jq .meta[].r2 scores.json
+            jq .meta[].r2 weights.json
         fi
-        touch .stamp-scores
+        touch .stamp-weights
     fi
     if [ match.log -nt .stamp-match ]; then
         tail -n 1 match.log

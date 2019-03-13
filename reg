@@ -3,5 +3,5 @@
 for i in $(seq 0 9); do
     npx coffee --nodejs --max-old-space-size=4096 minibatch -p $i -o tmp/coeffs$i $@
 done
-cp -p scores.json scores.json.bak
-npx coffee coeffs_to_score
+cp -p weights.json weights.json.bak
+npx coffee coeffs_to_weights

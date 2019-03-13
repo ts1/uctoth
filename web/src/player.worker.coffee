@@ -3,7 +3,7 @@ import pattern_eval from '@oth/pattern_eval'
 import make_player from '@oth/player'
 import uct from '@oth/uct'
 import minmax from '@oth/minmax'
-import scores from './scores.json'
+import weights from './weights.json'
 
 player = null
 
@@ -47,7 +47,7 @@ set_level = (level) ->
     throw new Error "invalid level #{level}"
   {search, wld, full, invert, random, book, book_random, depth} = params
 
-  evaluate = if invert then pattern_eval(scores, true) else pattern_eval(scores)
+  evaluate = if invert then pattern_eval(weights, true) else pattern_eval(weights)
   if book
     book = require('@oth/static_book_player')
       random: book_random

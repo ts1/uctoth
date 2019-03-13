@@ -108,8 +108,8 @@ book =
   else
     null
 
-normal_eval = pattern_eval('scores.json')
-invert_eval = pattern_eval('scores.json', true)
+normal_eval = pattern_eval('weights.json')
+invert_eval = pattern_eval('weights.json', true)
 logistic = normal_eval.logistic
 
 simple = Player

@@ -1,15 +1,15 @@
 #!/bin/bash -e
 while true ; do
-    # Play until scores.json is updated
-    if [ match.log -nt scores.json ]; then
+    # Play until weights.json is updated
+    if [ match.log -nt weights.json ]; then
         npx coffee selfplay-rnd -av
     fi
 
     d=snapshots/$(date +%Y-%m-%d_%H:%M:%S)
     mkdir -p $d
     sqlite3 book.db 'select count(*) from games' >$d/count
-    cp -p scores.json $d
-    gzip $d/scores.json
+    cp -p weights.json $d
+    gzip $d/weights.json
 
     time npx coffee match match.log
 

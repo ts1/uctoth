@@ -6,7 +6,7 @@ fs = require 'fs'
   require './board'
 Player = require './player'
 uct = require './uct'
-pattern_eval = require('./pattern_eval')('scores.json')
+pattern_eval = require('./pattern_eval')('weights.json')
 Book = require './book'
 { int, watch_file } = require './util'
 
@@ -92,7 +92,7 @@ argv = require 'yargs'
       requireArg: true
     watch:
       desc: 'Watch the file and exit when it changes'
-      default: 'scores.json'
+      default: 'weights.json'
       type: 'string'
       requireArg: true
     v:

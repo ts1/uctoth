@@ -49,7 +49,7 @@ argv = require 'yargs'
       requiresArg: true
     watch:
       desc: 'Watch the file and exit when it changes'
-      default: 'scores.json'
+      default: 'weights.json'
       requiresArg: true
     h:
       alias: 'help'
@@ -62,7 +62,7 @@ do ->
     eval_depth: argv.depth
     solve_wld: argv.wld
     solve_full: argv.full
-    evaluate: require('./pattern_eval')('scores.json')
+    evaluate: require('./pattern_eval')('weights.json')
   book.init()
   opening = pos_array_from_str(argv.opening)
   reload = if argv.watch then watch_file(argv.watch) else -> false

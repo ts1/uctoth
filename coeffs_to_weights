@@ -8,37 +8,37 @@ argv = require 'yargs'
   .options
     o:
       desc: 'Output file'
-      default: 'scores.json'
+      default: 'weights.json'
     h:
       alias: 'help'
   .version false
   .strict()
   .argv
 
-init_scores = ->
-  scores = {}
+init_weights = ->
+  weights = {}
   for p in patterns
-    scores[p.name] = []
+    weights[p.name] = []
     for phase in [0...N_PHASES]
-      scores[p.name][phase] = []
+      weights[p.name][phase] = []
       for i in [0...(3**p.len+1)/2]
-        scores[p.name][phase][i] = 0
-  scores
+        weights[p.name][phase][i] = 0
+  weights
 
-load_coeffs = (scores) ->
+load_coeffs = (weights) ->
   for phase in [0...N_PHASES]
     result = JSON.parse fs.readFileSync "tmp/coeffs#{phase}"
     {coeffs} = result
     for i in [0...get_single_index_size()]
       {pattern, index} = get_single_index(i)
-      scores[pattern][phase][index] = coeffs[i]
-    scores.meta or= []
+      weights[pattern][phase][index] = coeffs[i]
+    weights.meta or= []
     delete result.coeffs
-    scores.meta[phase] = result
+    weights.meta[phase] = result
 
-interpolate = (scores) ->
+interpolate = (weights) ->
   for p in patterns
-    tbl = scores[p.name]
+    tbl = weights[p.name]
     for phase in [0...N_PHASES]
       for i in [0...(3**p.len+1)/2]
         if not tbl[phase][i]
@@ -52,10 +52,10 @@ interpolate = (scores) ->
               #console.log "#{p.name} #{i} #{phase+d}-->#{phase}"
               break
 
-denormalize = (scores) ->
+denormalize = (weights) ->
   for p in patterns
     for phase in [0...N_PHASES]
-      tbl = scores[p.name][phase]
+      tbl = weights[p.name][phase]
       for i in [0...(3**p.len+1)/2]
         r = p.normalize i
         if r != i
@@ -64,10 +64,10 @@ denormalize = (scores) ->
           else
             tbl[i] = -tbl[-r]
 
-round = (scores) ->
+round = (weights) ->
   for p in patterns
     for phase in [0...N_PHASES]
-      tbl = scores[p.name][phase]
+      tbl = weights[p.name][phase]
       for i in [0...(3**p.len+1)/2]
         val = Math.round(tbl[i] * SCORE_MULT)
         val = 32767 if val > 32767
@@ -75,11 +75,11 @@ round = (scores) ->
         tbl[i] = val
 
 process.stdout.write 'Wrapping up: '
-scores = init_scores()
-load_coeffs scores
-interpolate scores
-denormalize scores
-round scores
-scores.clip = 16
-fs.writeFileSync argv.o, JSON.stringify scores
+weights = init_weights()
+load_coeffs weights
+interpolate weights
+denormalize weights
+round weights
+weights.clip = 16
+fs.writeFileSync argv.o, JSON.stringify weights
 console.log "'#{argv.o}' is ready"

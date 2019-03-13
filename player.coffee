@@ -21,12 +21,12 @@ module.exports = (options={}) ->
   solve = if opts.inverted
     endgame
       verbose: opts.verbose
-      evaluate: opts.endgame_eval or require('./pattern_eval')('scores.json', true)
+      evaluate: opts.endgame_eval or require('./pattern_eval')('weights.json', true)
       inverted: true
   else
     endgame
       verbose: opts.verbose
-      evaluate: opts.endgame_eval or require('./pattern_eval')('scores.json')
+      evaluate: opts.endgame_eval or require('./pattern_eval')('weights.json')
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)

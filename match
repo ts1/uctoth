@@ -34,15 +34,15 @@ argv = require 'yargs'
       requiresArg: true
     r:
       alias: 'ref'
-      desc: 'Reference scores.json'
+      desc: 'Reference weights.json'
       type: 'string'
-      default: 'ref/scores.json'
+      default: 'ref/weights.json'
       requiresArg: true
-    S:
-      alias: 'scores'
-      desc: 'scores.json file'
+    W:
+      alias: 'weights'
+      desc: 'weights.json file'
       type: 'string'
-      default: 'scores.json'
+      default: 'weights.json'
       requiresArg: true
     o:
       alias: 'openings'
@@ -74,7 +74,7 @@ argv = require 'yargs'
   .version false
   .argv
 
-normal_eval = pattern_eval(argv.scores)
+normal_eval = pattern_eval(argv.weights)
 ref_eval = pattern_eval(argv.ref)
 
 simple = Player

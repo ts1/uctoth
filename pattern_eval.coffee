@@ -4,18 +4,18 @@ fs = require 'fs'
 
 module.exports = (arg, invert=false) ->
   if typeof arg == 'string'
-    scores = JSON.parse fs.readFileSync arg
+    weights = JSON.parse fs.readFileSync arg
   else
-    scores = arg
+    weights = arg
 
   #console.log 'making single tables', arg
   single_tbl = []
   for phase in [0...N_PHASES]
     tbl = []
     for p in patterns
-      tbl = tbl.concat(scores[p.name][phase].slice(1).reverse().map((x) -> -x))
-      tbl = tbl.concat(scores[p.name][phase])
-    if scores.clip == 16
+      tbl = tbl.concat(weights[p.name][phase].slice(1).reverse().map((x) -> -x))
+      tbl = tbl.concat(weights[p.name][phase])
+    if weights.clip == 16
       single_tbl[phase] = new Int16Array tbl
     else
       single_tbl[phase] = tbl
@@ -33,5 +33,5 @@ module.exports = (arg, invert=false) ->
   if invert
     pattern_eval = (board, me) -> -pattern_eval(board, me)
 
-  pattern_eval.logistic = scores.meta[0].logistic
+  pattern_eval.logistic = weights.meta[0].logistic
   pattern_eval

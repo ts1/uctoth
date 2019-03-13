@@ -14,7 +14,7 @@ fs = require 'fs'
 { shuffle, watch_file } = require './util'
 make_player = require './player'
 uct = require './uct'
-pattern_eval = require('./pattern_eval')('scores.json')
+pattern_eval = require('./pattern_eval')('weights.json')
 Book = require './book'
 { encode_normalized } = require './encode'
 
@@ -56,7 +56,7 @@ argv = require 'yargs'
       requiresArg: true
     watch:
       desc: 'Watch the file and exit when it changes'
-      default: 'scores.json'
+      default: 'weights.json'
       requiresArg: true
     h:
       alias: 'help'
