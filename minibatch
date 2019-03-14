@@ -205,9 +205,11 @@ train = (samples, {quiet}={}) ->
     console.log "epoch #{ep} loss #{loss} #{star}" unless quiet
   {coeffs: best_coeffs, loss: min_loss, dev}
 
-cross_validation = (samples, k, {quiet}={}) ->
+split_groups = (samples, k) ->
   win_set = shuffle samples.filter (sample) -> sample[0] > 0
   loss_set = shuffle samples.filter (sample) -> sample[0] <= 0
+  console.log "win set #{win_set.length}"
+  console.log "loss set #{loss_set.length}"
 
   win_per_group = Math.round(win_set.length / k)
   win_groups =
@@ -223,6 +225,10 @@ cross_validation = (samples, k, {quiet}={}) ->
     for i in [0...k]
       shuffle(win_groups[i].concat(loss_groups[i]))
 
+  groups
+
+cross_validation = (groups, {quiet}={}) ->
+  k = groups.length
   avg_loss = 0
   for i in [0...k]
     test_set = groups[i]
@@ -239,16 +245,16 @@ cross_validation = (samples, k, {quiet}={}) ->
   console.log "loss average: #{avg_loss}" unless quiet
   avg_loss
 
-test_ridge = (samples, k, ridge, min) ->
+test_ridge = (groups, ridge, min) ->
   process.stdout.write "ridge #{ridge}: "
   argv.ridge = ridge
-  loss = cross_validation(samples, k, quiet: true)
+  loss = cross_validation(groups, quiet: true)
   process.stdout.write "loss #{loss}"
   process.stdout.write ' *' if loss < min
   process.stdout.write '\n'
   loss
 
-search_ridge = (samples, k) ->
+search_ridge = (groups) ->
   ubound = argv.ridge or 1
   lbound = 0
   step = 10
@@ -257,7 +263,7 @@ search_ridge = (samples, k) ->
   best = null
   n_fail = 0
   loop
-    loss = test_ridge(samples, k, ridge, min_loss)
+    loss = test_ridge(groups, ridge, min_loss)
 
     if loss < min_loss
       min_loss = loss
@@ -274,13 +280,13 @@ search_ridge = (samples, k) ->
     ridge = best
 
     tmp = ridge * step
-    loss = test_ridge(samples, k, tmp, min_loss)
+    loss = test_ridge(groups, tmp, min_loss)
     if loss < min_loss
       min_loss = loss
       best = tmp
     else
       tmp = ridge / step
-      loss = test_ridge(samples, k, tmp, min_loss)
+      loss = test_ridge(groups, tmp, min_loss)
       if loss < min_loss
         min_loss = loss
         best = tmp
@@ -300,11 +306,14 @@ do ->
   avg = samples.reduce(((a, s) -> a + s[0]), 0) / samples.length
   console.log "Average: #{avg}"
 
+  if argv.cv or argv.search
+    groups = split_groups(samples, argv.cv or 4)
+
   if argv.cv and not argv.search
-    cross_validation(samples, argv.cv)
+    cross_validation(groups)
   else
     if argv.search
-      argv.ridge = search_ridge(samples, argv.cv or 4)
+      argv.ridge = search_ridge(groups)
     if not argv.search and not argv.outfile?
       yargs.showHelp()
       console.error 'outfile is required'
