@@ -1,0 +1,7 @@
+#!/bin/bash -ex
+
+while true; do
+    for i in $(seq 0 9); do
+        ./minibatch -p $i -o L2/$i --search $@
+    done
+done
