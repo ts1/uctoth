@@ -53,7 +53,7 @@ yargs = require 'yargs'
     search_precision:
       desc: 'Precision of L2 parameter search (>1)'
       type: 'number'
-      default: 10
+      default: 1.2
       requiresArg: true
     h:
       alias: 'help'
@@ -260,7 +260,7 @@ test_ridge = (groups, ridge, min) ->
   loss
 
 search_ridge = (groups) ->
-  ubound = argv.ridge or 0.1
+  ubound = argv.ridge or 1
   lbound = 0
   step = 10
   ridge = ubound
@@ -314,31 +314,32 @@ do ->
   if argv.cv or argv.search
     groups = split_groups(samples, argv.cv or 4)
 
-  if argv.cv and not argv.search
+  if argv.search
+    argv.ridge = search_ridge(groups)
+    if argv.outfile?
+      fs.writeFileSync argv.outfile, "#{argv.ridge}\n"
+  else if argv.cv
     cross_validation(groups)
   else
-    if argv.search
-      argv.ridge = search_ridge(groups)
-    else if not argv.outfile?
+    if not argv.outfile?
       yargs.showHelp()
-      console.error 'outfile is required'
+      console.error '--outfile is required'
       process.exit 1
 
-    if argv.outfile?
-      {coeffs, loss, dev, r2} = train(samples)
+    {coeffs, loss, dev, r2} = train(samples)
 
-      r2 = 1 - loss**2 / dev**2
-      console.log "r2: #{r2}"
+    r2 = 1 - loss**2 / dev**2
+    console.log "r2: #{r2}"
 
-      output = {
-        coeffs
-        avg
-        dev
-        r2
-        loss
-        logistic: argv.logistic
-        ridge: argv.ridge
-      }
-      process.stdout.write "Writing #{argv.outfile}: "
-      fs.writeFileSync argv.outfile, JSON.stringify output
-      console.log "done"
+    output = {
+      coeffs
+      avg
+      dev
+      r2
+      loss
+      logistic: argv.logistic
+      ridge: argv.ridge
+    }
+    process.stdout.write "Writing #{argv.outfile}: "
+    fs.writeFileSync argv.outfile, JSON.stringify output
+    console.log "done"
