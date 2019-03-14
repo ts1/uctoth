@@ -107,7 +107,6 @@ make_gradient = (batch, coeffs) ->
 epoch = (samples, coeffs, g2, rate, batch_size, max_loss=Infinity) ->
   max_e2 = max_loss**2 * samples.length
   sum_e2 = 0
-  samples = shuffle(samples)
   n_batches = Math.ceil(samples.length / batch_size)
   for offset in [0...n_batches]
     batch = (samples[i] for i in [offset...samples.length] by n_batches)
@@ -137,8 +136,9 @@ find_rate = (samples, batch_size, dev) ->
   # rough tune
   min_loss = dev
   best_rate = null
-  rate = 30
+  rate = 100
   n_fail = 0
+  step_size = 10
   loop
     coeffs = (0 for i in [0...INDEX_SIZE])
     g2 = (0 for i in [0...INDEX_SIZE])
@@ -153,28 +153,30 @@ find_rate = (samples, batch_size, dev) ->
             break
     else
       break if best_rate?
-    rate *= .7
+    rate /= step_size
 
   # fine tune
-  min_loss = dev
-  rate = best_rate / .7 * .9
-  best_rate = null
-  n_fail = 0
-  loop
+  while step_size >= 1.01
+    step_size **= .5
+
+    rate = best_rate * step_size
     coeffs = (0 for i in [0...INDEX_SIZE])
     g2 = (0 for i in [0...INDEX_SIZE])
-    if epoch(samples, coeffs, g2, rate, batch_size)
-      loss = verify(samples, coeffs)
-      if loss < min_loss
-        min_loss = loss
-        best_rate = rate
-      else
-        if best_rate?
-          if ++n_fail >= 2
-            break
-    else
-      break if best_rate?
-    rate *= .9
+    epoch samples, coeffs, g2, rate, batch_size
+    loss = verify(samples, coeffs)
+    if loss < min_loss
+      min_loss = loss
+      best_rate = rate
+      continue
+
+    rate = best_rate / step_size
+    coeffs = (0 for i in [0...INDEX_SIZE])
+    g2 = (0 for i in [0...INDEX_SIZE])
+    epoch samples, coeffs, g2, rate, batch_size
+    loss = verify(samples, coeffs)
+    if loss < min_loss
+      min_loss = loss
+      best_rate = rate
 
   best_rate
 
@@ -199,7 +201,7 @@ train = (samples, {quiet}={}) ->
   g2 = (0 for i in [0...INDEX_SIZE])
   min_loss = dev
   for ep in [1..argv.epochs]
-    epoch samples, coeffs, g2, rate, batch_size
+    epoch shuffle(samples), coeffs, g2, rate, batch_size
     loss = verify(samples, coeffs)
     if loss < min_loss
       min_loss = loss
@@ -211,8 +213,8 @@ train = (samples, {quiet}={}) ->
   {coeffs: best_coeffs, loss: min_loss, dev}
 
 split_groups = (samples, k) ->
-  win_set = shuffle samples.filter (sample) -> sample[0] > 0
-  loss_set = shuffle samples.filter (sample) -> sample[0] <= 0
+  win_set = shuffle(samples.filter (sample) -> sample[0] > 0)
+  loss_set = shuffle(samples.filter (sample) -> sample[0] <= 0)
 
   win_per_group = Math.round(win_set.length / k)
   win_groups =
@@ -302,7 +304,7 @@ do ->
   book.init()
 
   process.stdout.write "Loading samples for phase #{argv.phase}: "
-  samples = (sample for sample from book.iterate_indexes(argv.phase))
+  samples = shuffle(sample for sample from book.iterate_indexes(argv.phase))
   if argv.logistic
     samples.forEach (sample) -> sample[0] = if sample[0] > 0 then 1 else 0
   console.log "loaded #{samples.length} samples"
@@ -328,7 +330,15 @@ do ->
       r2 = 1 - loss**2 / dev**2
       console.log "r2: #{r2}"
 
-      output = {coeffs, avg, dev, r2, loss, logistic: argv.logistic}
+      output = {
+        coeffs
+        avg
+        dev
+        r2
+        loss
+        logistic: argv.logistic
+        ridge: argv.ridge
+      }
       process.stdout.write "Writing #{argv.outfile}: "
       fs.writeFileSync argv.outfile, JSON.stringify output
       console.log "done"
