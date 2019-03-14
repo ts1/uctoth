@@ -65,21 +65,37 @@ denormalize = (weights) ->
             tbl[i] = -tbl[-r]
 
 round = (weights) ->
+  clip = 0
+  rms = 0
+  zero = 0
+  n = 0
+  MIN = -32768
+  MAX = 32767
   for p in patterns
     for phase in [0...N_PHASES]
       tbl = weights[p.name][phase]
       for i in [0...(3**p.len+1)/2]
+        orig_val = val
         val = Math.round(tbl[i] * SCORE_MULT)
-        val = 32767 if val > 32767
-        val = -32768 if val < -32768
+        val = MAX if val > MAX
+        val = MIN if val < MIN
         tbl[i] = val
+
+        clip++ if val == MIN or val == MAX
+        zero++ if val == 0 and orig_val != 0
+        if val
+          rms += val*val
+          n++
+  rms = Math.sqrt(rms / n)
+  {rms, clip, zero}
 
 process.stdout.write 'Wrapping up: '
 weights = init_weights()
 load_coeffs weights
 interpolate weights
 denormalize weights
-round weights
+stats = round weights
 weights.clip = 16
 fs.writeFileSync argv.o, JSON.stringify weights
 console.log "'#{argv.o}' is ready"
+console.log stats
