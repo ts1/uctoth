@@ -275,7 +275,7 @@ search_ridge = (groups) ->
     
     break if ridge < lbound or (not lbound and n_fail >= 1)
 
-  while step > 1.1
+  while step > 1.2
     step **= 1/2
     ridge = best
 
