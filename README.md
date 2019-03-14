@@ -71,7 +71,7 @@ Generated games are stored in `book.db` (SQLite3 database).
 Next, learn the generated games and make your first `weights.json`.
 
 ```
-./reg --ridge=0.5
+./reg --l2=0.5
 ```
 
 Now you can remove `book.db` of random games.
@@ -87,7 +87,7 @@ cp samples/auto .
 ```
 
 You may edit `auto` as you like.
-`--ridge` parameter is there to avoid overfitting.
+The `--l2` parameter is there to avoid overfitting.
 You'll have to decrease this value as the number of generated games increase.
 Always check the match result to see if your change gives better result.
 

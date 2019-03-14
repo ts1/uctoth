@@ -40,7 +40,7 @@ yargs = require 'yargs'
     l:
       alias: 'logistic'
       desc: 'Logistic regression'
-    ridge:
+    l2:
       desc: 'L2 regularization parameter'
       requiresArg: true
     cv:
@@ -53,7 +53,7 @@ yargs = require 'yargs'
     search_precision:
       desc: 'Precision of L2 parameter search (>1)'
       type: 'number'
-      default: 1.2
+      default: 1.1
       requiresArg: true
     h:
       alias: 'help'
@@ -118,8 +118,8 @@ epoch = (samples, coeffs, g2, rate, batch_size, max_loss=Infinity) ->
       continue unless g
       g2[i] += g * g
       w = coeffs[i]
-      if argv.ridge
-        g -= argv.ridge * w
+      if argv.l2
+        g -= argv.l2 * w
       w += rate/Math.sqrt(g2[i]) * g
       coeffs[i] = clip(w)
   return true
@@ -250,53 +250,53 @@ cross_validation = (groups, {quiet}={}) ->
   console.log "loss average: #{avg_loss}" unless quiet
   avg_loss
 
-test_ridge = (groups, ridge, min) ->
-  process.stdout.write "ridge #{ridge}: "
-  argv.ridge = ridge
+test_l2 = (groups, l2, min) ->
+  process.stdout.write "l2 #{l2}: "
+  argv.l2 = l2
   loss = cross_validation(groups, quiet: true)
   process.stdout.write "loss #{loss}"
   process.stdout.write ' *' if loss < min
   process.stdout.write '\n'
   loss
 
-search_ridge = (groups) ->
-  ubound = argv.ridge or 1
+search_l2 = (groups) ->
+  ubound = argv.l2 or 1
   lbound = 0
   step = 10
-  ridge = ubound
+  l2 = ubound
   min_loss = Infinity
   best = null
   n_fail = 0
   loop
-    loss = test_ridge(groups, ridge, min_loss)
+    loss = test_l2(groups, l2, min_loss)
 
     if loss < min_loss
       min_loss = loss
-      best = ridge
+      best = l2
       n_fail = 0
     else
       n_fail++
-    ridge /= step
+    l2 /= step
     
-    break if ridge < lbound or (not lbound and n_fail >= 1)
+    break if l2 < lbound or (not lbound and n_fail >= 1)
 
   while step > argv.search_precision
     step **= 1/2
-    ridge = best
+    l2 = best
 
-    tmp = ridge * step
-    loss = test_ridge(groups, tmp, min_loss)
+    tmp = l2 * step
+    loss = test_l2(groups, tmp, min_loss)
     if loss < min_loss
       min_loss = loss
       best = tmp
     else
-      tmp = ridge / step
-      loss = test_ridge(groups, tmp, min_loss)
+      tmp = l2 / step
+      loss = test_l2(groups, tmp, min_loss)
       if loss < min_loss
         min_loss = loss
         best = tmp
 
-  console.log "Best ridge: #{best}"
+  console.log "Best L2: #{best}"
   best
 
 do ->
@@ -315,9 +315,9 @@ do ->
     groups = split_groups(samples, argv.cv or 4)
 
   if argv.search
-    argv.ridge = search_ridge(groups)
+    argv.l2 = search_l2(groups)
     if argv.outfile?
-      fs.writeFileSync argv.outfile, "#{argv.ridge}\n"
+      fs.writeFileSync argv.outfile, "#{argv.l2}\n"
   else if argv.cv
     cross_validation(groups)
   else
@@ -338,7 +338,7 @@ do ->
       r2
       loss
       logistic: argv.logistic
-      ridge: argv.ridge
+      l2: argv.l2
     }
     process.stdout.write "Writing #{argv.outfile}: "
     fs.writeFileSync argv.outfile, JSON.stringify output

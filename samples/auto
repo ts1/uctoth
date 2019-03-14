@@ -2,6 +2,6 @@
 while true; do
     time npx coffee selfplay-bf -n 200
     time npx coffee selfplay-rnd -a -n 800
-    time ./reg --ridge=0.5
+    time ./reg --l2=0.5
     time npx coffee match match.log
 done

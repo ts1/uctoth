@@ -6,7 +6,7 @@ while true ; do
         select max(c) from (select count(*) c from game_nodes group by n_moves)
     ' >$snapshotdir/count
 
-    time ./reg --ridge=0.3
+    time ./reg --l2=0.3
 
     cp -p weights.json $snapshotdir
     gzip $snapshotdir/weights.json
