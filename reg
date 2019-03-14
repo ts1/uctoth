@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+LARGE_COFFEE="npx coffee --nodejs --max-old-space-size=4096"
+
 for i in $(seq 0 9); do
     L2=$(cat L2/$i 2>/dev/null || true)
     if [ "$L2" ]; then
@@ -9,7 +11,7 @@ for i in $(seq 0 9); do
         L2ARG="--l2=$DEFAULT_L2"
         echo "Using $L2ARG"
     fi
-    npx coffee --nodejs --max-old-space-size=4096 minibatch -p $i -o tmp/coeffs$i $L2ARG $@
+    $LARGE_COFFEE minibatch -p $i -o tmp/coeffs$i $L2ARG $@
 done
 cp -p weights.json weights.json.bak
 npx coffee coeffs_to_weights
