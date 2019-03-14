@@ -60,9 +60,6 @@ module.exports = class Book
     @db = new Database filename, opt.readonly
     @db.run 'pragma journal_mode=WAL'
     @verbose = opt.verbose
-    @stmt_get_game_node = @db.prepare(
-      'select outcome from game_nodes where code=?'
-    )
 
     @evaluate = do ->
       do_evaluate = null
@@ -136,6 +133,10 @@ module.exports = class Book
       '''
 
     @migrate()
+
+    @stmt_get_game_node = @db.prepare(
+      'select outcome from game_nodes where code=?'
+    )
 
   migrate: ->
     try
