@@ -50,6 +50,11 @@ yargs = require 'yargs'
     search:
       desc: 'Search optimal L2 parameter'
       type: 'boolean'
+    search_precision:
+      desc: 'Precision of L2 parameter search (>1)'
+      type: 'number'
+      default: 10
+      requiresArg: true
     h:
       alias: 'help'
   .strict()
@@ -208,8 +213,6 @@ train = (samples, {quiet}={}) ->
 split_groups = (samples, k) ->
   win_set = shuffle samples.filter (sample) -> sample[0] > 0
   loss_set = shuffle samples.filter (sample) -> sample[0] <= 0
-  console.log "win set #{win_set.length}"
-  console.log "loss set #{loss_set.length}"
 
   win_per_group = Math.round(win_set.length / k)
   win_groups =
@@ -255,7 +258,7 @@ test_ridge = (groups, ridge, min) ->
   loss
 
 search_ridge = (groups) ->
-  ubound = argv.ridge or 1
+  ubound = argv.ridge or 0.1
   lbound = 0
   step = 10
   ridge = ubound
@@ -275,7 +278,7 @@ search_ridge = (groups) ->
     
     break if ridge < lbound or (not lbound and n_fail >= 1)
 
-  while step > 1.2
+  while step > argv.search_precision
     step **= 1/2
     ridge = best
 
