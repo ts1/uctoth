@@ -275,7 +275,7 @@ search_ridge = (groups) ->
     
     break if ridge < lbound or (not lbound and n_fail >= 1)
 
-  while step > 1.05
+  while step > 1.1
     step **= 1/2
     ridge = best
 
@@ -314,17 +314,18 @@ do ->
   else
     if argv.search
       argv.ridge = search_ridge(groups)
-    if not argv.search and not argv.outfile?
+    else if not argv.outfile?
       yargs.showHelp()
       console.error 'outfile is required'
       process.exit 1
 
-    {coeffs, loss, dev, r2} = train(samples)
+    if argv.outfile?
+      {coeffs, loss, dev, r2} = train(samples)
 
-    r2 = 1 - loss**2 / dev**2
-    console.log "r2: #{r2}"
+      r2 = 1 - loss**2 / dev**2
+      console.log "r2: #{r2}"
 
-    output = {coeffs, avg, dev, r2, loss, logistic: argv.logistic}
-    process.stdout.write "Writing #{argv.outfile}: "
-    fs.writeFileSync argv.outfile, JSON.stringify output
-    console.log "done"
+      output = {coeffs, avg, dev, r2, loss, logistic: argv.logistic}
+      process.stdout.write "Writing #{argv.outfile}: "
+      fs.writeFileSync argv.outfile, JSON.stringify output
+      console.log "done"
