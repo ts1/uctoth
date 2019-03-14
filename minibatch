@@ -6,7 +6,7 @@
 Book = require './book'
 fs = require 'fs'
 
-argv = require 'yargs'
+yargs = require 'yargs'
   .options
     p:
       alias: 'phase'
@@ -19,7 +19,6 @@ argv = require 'yargs'
       desc: 'Output file'
       type: 'string'
       requiresArg: true
-      demandOption: true
     b:
       alias: 'book'
       desc: 'Database file'
@@ -44,11 +43,19 @@ argv = require 'yargs'
     ridge:
       desc: 'L2 regularization parameter'
       requiresArg: true
+    cv:
+      desc: 'K-fold cross validation'
+      type: 'number'
+      requiresArg: true
+    search:
+      desc: 'Search optimal L2 parameter'
+      type: 'boolean'
     h:
       alias: 'help'
   .strict()
   .version false
-  .argv
+
+argv = yargs.argv
 
 INDEX_SIZE = get_single_index_size()
 
@@ -166,7 +173,23 @@ find_rate = (samples, batch_size, dev) ->
 
   best_rate
 
-regress = (samples, dev, rate, batch_size) ->
+train = (samples, {quiet}={}) ->
+  dev = verify(samples, (0 for i in [0...INDEX_SIZE]))
+  console.log "Deviation: #{dev}" unless quiet
+
+  if argv.batch_size?
+    batch_size = argv.batch_size
+  else
+    batch_size = Math.round(samples.length / 10)
+    console.log "Batch size: #{batch_size}" unless quiet
+
+  if argv.rate?
+    rate = argv.rate
+  else
+    process.stdout.write 'Finding optimal learning rate: ' unless quiet
+    rate = find_rate(samples, batch_size, dev)
+    console.log "#{rate}" unless quiet
+
   coeffs = (0 for i in [0...INDEX_SIZE])
   g2 = (0 for i in [0...INDEX_SIZE])
   min_loss = dev
@@ -179,8 +202,91 @@ regress = (samples, dev, rate, batch_size) ->
       star = '*'
     else
       star = ''
-    console.log "epoch #{ep} loss #{loss} #{star}"
-  {coeffs: best_coeffs, loss: min_loss}
+    console.log "epoch #{ep} loss #{loss} #{star}" unless quiet
+  {coeffs: best_coeffs, loss: min_loss, dev}
+
+cross_validation = (samples, k, {quiet}={}) ->
+  win_set = shuffle samples.filter (sample) -> sample[0] > 0
+  loss_set = shuffle samples.filter (sample) -> sample[0] <= 0
+
+  win_per_group = Math.round(win_set.length / k)
+  win_groups =
+    for i in [0...k]
+      win_set[i*win_per_group...(i + 1)*win_per_group]
+
+  loss_per_group = Math.round(loss_set.length / k)
+  loss_groups =
+    for i in [0...k]
+      loss_set[i*win_per_group...(i + 1)*loss_per_group]
+
+  groups =
+    for i in [0...k]
+      shuffle(win_groups[i].concat(loss_groups[i]))
+
+  avg_loss = 0
+  for i in [0...k]
+    test_set = groups[i]
+    train_set = []
+    for j in [0...k]
+      train_set = train_set.concat(groups[j]) unless j==i
+    console.log "Cross Validation #{i+1}/#{k}" unless quiet
+    {coeffs} = train(train_set, quiet: true)
+
+    loss = verify(test_set, coeffs)
+    console.log "test set loss: #{loss}" unless quiet
+    avg_loss += loss
+  avg_loss /= k
+  console.log "loss average: #{avg_loss}" unless quiet
+  avg_loss
+
+test_ridge = (samples, k, ridge, min) ->
+  process.stdout.write "ridge #{ridge}: "
+  argv.ridge = ridge
+  loss = cross_validation(samples, k, quiet: true)
+  process.stdout.write "loss #{loss}"
+  process.stdout.write ' *' if loss < min
+  process.stdout.write '\n'
+  loss
+
+search_ridge = (samples, k) ->
+  ubound = argv.ridge or 1
+  lbound = 0
+  step = 10
+  ridge = ubound
+  min_loss = Infinity
+  best = null
+  n_fail = 0
+  loop
+    loss = test_ridge(samples, k, ridge, min_loss)
+
+    if loss < min_loss
+      min_loss = loss
+      best = ridge
+      n_fail = 0
+    else
+      n_fail++
+    ridge /= step
+    
+    break if ridge < lbound or (not lbound and n_fail >= 1)
+
+  while step > 1.05
+    step **= 1/2
+    ridge = best
+
+    tmp = ridge * step
+    loss = test_ridge(samples, k, tmp, min_loss)
+    if loss < min_loss
+      min_loss = loss
+      best = tmp
+    else
+      tmp = ridge / step
+      loss = test_ridge(samples, k, tmp, min_loss)
+      if loss < min_loss
+        min_loss = loss
+        best = tmp
+
+  console.log "Best ridge: #{best}"
+  best
 
 do ->
   book = new Book argv.book
@@ -193,28 +299,23 @@ do ->
   console.log "loaded #{samples.length} samples"
   avg = samples.reduce(((a, s) -> a + s[0]), 0) / samples.length
   console.log "Average: #{avg}"
-  dev = verify(samples, (0 for i in [0...INDEX_SIZE]))
-  console.log "Deviation: #{dev}"
 
-  if argv.batch_size?
-    batch_size = argv.batch_size
+  if argv.cv and not argv.search
+    cross_validation(samples, argv.cv)
   else
-    batch_size = Math.round(samples.length / 10)
-    console.log "Batch size: #{batch_size}"
+    if argv.search
+      argv.ridge = search_ridge(samples, argv.cv or 4)
+    if not argv.search and not argv.outfile?
+      yargs.showHelp()
+      console.error 'outfile is required'
+      process.exit 1
 
-  if argv.rate?
-    rate = argv.rate
-  else
-    process.stdout.write 'Finding optimal learning rate: '
-    rate = find_rate(samples, batch_size, dev)
-    console.log "#{rate}"
+    {coeffs, loss, dev, r2} = train(samples)
 
-  {coeffs, loss} = regress(samples, dev, rate, batch_size)
+    r2 = 1 - loss**2 / dev**2
+    console.log "r2: #{r2}"
 
-  r2 = 1 - loss**2 / dev**2
-  console.log "r2: #{r2}"
-
-  output = {coeffs, avg, dev, r2, loss, logistic: argv.logistic}
-  process.stdout.write "Writing #{argv.outfile}: "
-  fs.writeFileSync argv.outfile, JSON.stringify output
-  console.log "done"
+    output = {coeffs, avg, dev, r2, loss, logistic: argv.logistic}
+    process.stdout.write "Writing #{argv.outfile}: "
+    fs.writeFileSync argv.outfile, JSON.stringify output
+    console.log "done"
