@@ -75,7 +75,7 @@ round = (weights) ->
     for phase in [0...N_PHASES]
       tbl = weights[p.name][phase]
       for i in [0...(3**p.len+1)/2]
-        orig_val = val
+        orig_val = tbl[i]
         val = Math.round(tbl[i] * SCORE_MULT)
         val = MAX if val > MAX
         val = MIN if val < MIN
