@@ -1,9 +1,0 @@
-#!/bin/bash -ex
-
-LARGE_COFFEE="npx coffee --nodejs --max-old-space-size=4096"
-
-while true; do
-    for i in $(seq 0 9); do
-        $LARGE_COFFEE minibatch -p $i -o L2/$i --search $@
-    done
-done
