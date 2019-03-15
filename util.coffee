@@ -118,10 +118,13 @@ watch_file = (filename) ->
 
 format_eval = (score, logistic, solved) ->
   { SCORE_MULT } = require './pattern'
-  if logistic and not solved
-    Math.round(1 / (1 + Math.exp(-score/SCORE_MULT)) * 1000) / 1000
-  else
+  { LOG_MULT, to_probability } = require './logutil'
+  if solved
     score
+  else if logistic
+    Math.round(to_probability(score) * 1000) / 1000
+  else
+    Math.round(score / SCORE_MULT * 100) / 100
 
 module.exports = {
   shuffle

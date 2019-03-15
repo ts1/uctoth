@@ -1,11 +1,12 @@
 { PatternBoard, SCORE_MULT } = require './pattern'
+{ LOG_MULT } = require './logutil'
 { pos_to_str } = require './board'
 { INFINITY } = require './util'
 { encode } = require './encode'
 
 defaults =
   C: 1.80*SCORE_MULT
-  C_log: 0.25*SCORE_MULT
+  C_log: 0.25*LOG_MULT
   max_search: 14000
   verbose: true
   evaluate: null

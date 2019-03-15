@@ -10,7 +10,7 @@ readline = require 'readline'
   square_to_char
   pos_to_str
 } = require './board'
-{ PatternBoard, SCORE_MULT } = require './pattern'
+{ PatternBoard } = require './pattern'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 { format_eval } = require './util'

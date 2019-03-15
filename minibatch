@@ -1,7 +1,7 @@
 #!/usr/bin/env coffee
 
-{ get_single_index_size, code_to_single_indexes, SCORE_MULT } =
-  require './pattern'
+{ get_single_index_size, code_to_single_indexes } = require './pattern'
+{ LOG_MULT } = require './logutil'
 { shuffle } = require './util'
 Book = require './book'
 fs = require 'fs'
@@ -69,8 +69,8 @@ load_samples = () ->
     [outcome, code_to_single_indexes(code)...]
 
 clip = do ->
-  MAX = 32767 / SCORE_MULT
-  MIN = -32768 / SCORE_MULT
+  MAX = 32767 / LOG_MULT
+  MIN = -32768 / LOG_MULT
   (x) ->
     if x > MAX then MAX
     else if x < MIN then MIN
@@ -306,7 +306,7 @@ do ->
   process.stdout.write "Loading samples for phase #{argv.phase}: "
   samples = shuffle(sample for sample from book.iterate_indexes(argv.phase))
   if argv.logistic
-    samples.forEach (sample) -> sample[0] = if sample[0] > 0 then 1 else 0
+    samples.forEach (sample) -> sample[0] = if sample[0] > 0 then .99 else 0.01
   console.log "loaded #{samples.length} samples"
   avg = samples.reduce(((a, s) -> a + s[0]), 0) / samples.length
   console.log "Average: #{avg}"

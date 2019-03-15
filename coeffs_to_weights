@@ -4,6 +4,7 @@ fs = require 'fs'
 { N_PHASES, patterns, get_single_index, get_single_index_size } = require './pattern'
 { int } = require './util'
 { SCORE_MULT } = require './pattern'
+{ LOG_MULT } = require './logutil'
 argv = require 'yargs'
   .options
     o:
@@ -25,9 +26,12 @@ init_weights = ->
         weights[p.name][phase][i] = 0
   weights
 
+logistic = null
+
 load_coeffs = (weights) ->
   for phase in [0...N_PHASES]
     result = JSON.parse fs.readFileSync "tmp/coeffs#{phase}"
+    logistic = result.logistic
     {coeffs} = result
     for i in [0...get_single_index_size()]
       {pattern, index} = get_single_index(i)
@@ -69,14 +73,16 @@ round = (weights) ->
   rms = 0
   zero = 0
   n = 0
+  max = 0
   MIN = -32768
   MAX = 32767
+  mult = if logistic then LOG_MULT else SCORE_MULT
   for p in patterns
     for phase in [0...N_PHASES]
       tbl = weights[p.name][phase]
       for i in [0...(3**p.len+1)/2]
         orig_val = tbl[i]
-        val = Math.round(tbl[i] * SCORE_MULT)
+        val = Math.round(tbl[i] * mult)
         val = MAX if val > MAX
         val = MIN if val < MIN
         tbl[i] = val
@@ -86,8 +92,9 @@ round = (weights) ->
         if val
           rms += val*val
           n++
+        max = Math.abs(val) if Math.abs(val) > max
   rms = Math.sqrt(rms / n)
-  {rms, clip, zero}
+  {rms, clip, zero, max}
 
 process.stdout.write 'Wrapping up: '
 weights = init_weights()
