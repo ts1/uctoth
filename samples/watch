@@ -12,8 +12,15 @@ while true; do
         tail -n 1 match.log
         touch .stamp-match
     fi
+    for ph in $(seq 0 9); do
+        if [ L2/$ph -nt .stamp-l2-$ph ]; then
+            echo -n "L2/$ph: "
+            cat L2/$ph
+            touch .stamp-l2-$ph
+        fi
+    done
     echo $(sqlite3 book.db '
         select max(c) from (select count(*) c from game_nodes group by n_moves);
         select sum(outcome) from game_nodes;')
-    sleep 60 
+    sleep 60
 done
