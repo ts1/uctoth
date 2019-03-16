@@ -10,12 +10,12 @@ argv = require 'yargs'
   .options
     min:
       desc: 'Minimum value to search'
-      default: 1e-5
+      default: 1e-4
       type: 'number'
       requiresArg: true
     max:
       desc: 'Maximum value to search'
-      default: 10
+      default: 1
       type: 'number'
       requiresArg: true
     p:
@@ -161,10 +161,35 @@ optimize = (phase) ->
   console.log "Best value #{best}"
   fs.writeFileSync "L2/#{phase}", "#{best}\n"
 
+optimize_phase0 = ->
+  console.log 'Using Cross Validation'
+  l2 = minibatch
+    search: true
+    search_precision: 1 + argv.precision
+    search_min: argv.min
+    search_max: argv.max
+    book: argv.book
+    phase: 0
+    logistic: argv.logistic
+    epochs: argv.epochs
+  fs.writeFileSync "L2/0", "#{l2}\n"
+
+  minibatch
+    l2: l2
+    book: argv.book
+    phase: 0
+    logistic: argv.logistic
+    epochs: argv.epochs
+    outfile: "#{argv.prefix}0"
+    verbose: false
+
 do ->
   loop
     for phase in [0...N_PHASES]
       continue if argv.phase? and phase != argv.phase
       console.log "Phase #{phase}"
-      optimize phase
+      if phase == 0
+        optimize_phase0()
+      else
+        optimize phase
     break unless argv.loop

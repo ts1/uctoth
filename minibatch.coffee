@@ -10,6 +10,8 @@ defaults =
   book: 'book.db'
   epochs: 100
   search_precision: 1.1
+  search_max: 1
+  search_min: 1e-4
   verbose: true
 
 INDEX_SIZE = get_single_index_size()
@@ -215,25 +217,9 @@ module.exports = (options={}) ->
     loss
 
   search_l2 = (groups) ->
-    ubound = opt.l2 or 1
-    lbound = 0
-    step = 10
-    l2 = ubound
-    min_loss = Infinity
-    best = null
-    n_fail = 0
-    loop
-      loss = test_l2(groups, l2, min_loss)
-
-      if loss < min_loss
-        min_loss = loss
-        best = l2
-        n_fail = 0
-      else
-        n_fail++
-      l2 /= step
-      
-      break if l2 < lbound or (not lbound and n_fail >= 1)
+    best = (opt.search_max * opt.search_min) ** .5
+    step = (opt.search_max / opt.search_min) ** .25
+    min_loss = test_l2(groups, best, Infinity)
 
     while step > opt.search_precision
       step **= 1/2
@@ -244,12 +230,12 @@ module.exports = (options={}) ->
       if loss < min_loss
         min_loss = loss
         best = tmp
-      else
-        tmp = l2 / step
-        loss = test_l2(groups, tmp, min_loss)
-        if loss < min_loss
-          min_loss = loss
-          best = tmp
+
+      tmp = l2 / step
+      loss = test_l2(groups, tmp, min_loss)
+      if loss < min_loss
+        min_loss = loss
+        best = tmp
 
     console.log "Best L2: #{best}" if opt.verbose
     best
@@ -275,8 +261,9 @@ module.exports = (options={}) ->
       opt.l2 = search_l2(groups)
       if opt.outfile?
         fs.writeFileSync opt.outfile, "#{opt.l2}\n"
+      retval = opt.l2
     else if opt.cv
-      cross_validation(groups)
+      retval = cross_validation(groups)
     else
       throw new Error 'outfile is required' unless opt.outfile?
 
@@ -285,7 +272,7 @@ module.exports = (options={}) ->
       r2 = 1 - loss**2 / dev**2
       console.log "r2: #{r2}" if opt.verbose
 
-      output = {
+      retval = {
         coeffs
         avg
         dev
@@ -295,8 +282,9 @@ module.exports = (options={}) ->
         l2: opt.l2
       }
       process.stdout.write "Writing #{opt.outfile}: " if opt.verbose
-      fs.writeFileSync opt.outfile, JSON.stringify output
+      fs.writeFileSync opt.outfile, JSON.stringify retval
       console.log "done" if opt.verbose
     book.close()
+    retval
 
 module.exports.defaults = defaults
