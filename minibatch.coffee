@@ -218,8 +218,7 @@ module.exports = (options={}) ->
     step = (opt.search_max / opt.search_min) ** .25
     min_loss = test_l2(groups, best, Infinity)
 
-    while step > opt.search_precision
-      step **= 1/2
+    while step >= opt.search_precision
       l2 = best
 
       tmp = l2 * step
@@ -233,6 +232,8 @@ module.exports = (options={}) ->
         if loss < min_loss
           min_loss = loss
           best = tmp
+
+      step **= 1/2
 
     console.log "Best L2: #{best}" if opt.verbose
     best
