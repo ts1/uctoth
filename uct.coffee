@@ -6,7 +6,7 @@
 
 defaults =
   C: 1.80*SCORE_MULT
-  C_log: 0.25*LOG_MULT
+  C_log: 0.209*LOG_MULT
   max_search: 14000
   verbose: true
   evaluate: null
@@ -179,3 +179,5 @@ module.exports = (options={}) ->
       {move, n, value}
 
     return {move:best.move, value:best.value, moves}
+
+module.exports.defaults = defaults

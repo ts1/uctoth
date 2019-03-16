@@ -1,0 +1,97 @@
+#!/usr/bin/env coffee
+
+fs = require 'fs'
+match = require './match.coffee'
+{ SCORE_MULT } = require './pattern'
+{ LOG_MULT } = require './logutil'
+
+argv = require 'yargs'
+  .options
+    min:
+      desc: 'Minimum value to search'
+      default: 0
+      type: 'number'
+      requiresArg: true
+    max:
+      desc: 'Maximum value to search'
+      default: 4
+      type: 'number'
+      requiresArg: true
+    p:
+      alias: 'precision'
+      desc: 'Search precision'
+      default: 0.01
+      type: 'number'
+      requiresArg: true
+    s:
+      alias: 'search'
+      desc: 'Number of UCT search of match'
+      default: match.defaults.search
+    w:
+      alias: 'wld'
+      desc: 'WLD search depth'
+      default: match.defaults.wld
+    f:
+      alias: 'full'
+      desc: 'Full search depth'
+      default: match.defaults.full
+    l:
+      alias: 'leafs'
+      desc: 'Minimax leafs'
+      default: match.defaults.leafs
+    weights:
+      desc: 'Weights file'
+      default: 'weights.json'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .strict()
+  .version false
+  .argv
+
+try_value = (value, max) ->
+  process.stdout.write "C=#{value}: "
+
+  { winrate, avg } = match
+    C: value * SCORE_MULT
+    C_log: value * LOG_MULT
+    weights: argv.weights
+    search: argv.search
+    wld: argv.wld
+    full: argv.full
+    quiet: true
+    leafs: argv.leafs
+    minimax: true
+
+  score = winrate + avg * 0.0001
+  process.stdout.write "score=#{score}"
+  if score > max
+    process.stdout.write ' *\n'
+  else
+    process.stdout.write '\n'
+  score
+
+optimize = () ->
+  step = (argv.max - argv.min) / 4
+  best = (argv.min + argv.max) / 2
+  max = try_value(best, -Infinity)
+  while step >= argv.precision
+    orig_best = best
+
+    tmp = orig_best + step
+    score = try_value(tmp, max)
+    if score > max
+      max = score
+      best = tmp
+
+    tmp = orig_best - step
+    score = try_value(tmp, max)
+    if score > max
+      max = score
+      best = tmp
+
+    step *= .5
+  console.log "Best value #{best}"
+
+do ->
+  optimize()

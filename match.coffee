@@ -6,6 +6,7 @@ require './rejection_handler'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 { decode, encode } = require './encode'
+uct_defaults = require('./uct').defaults
 
 defaults =
   verbose: false
@@ -19,6 +20,8 @@ defaults =
   depth: 60
   leafs: 650000
   both_minimax: false
+  C: uct_defaults.C
+  C_log: uct_defaults.C_log
 
 module.exports = (options={}) ->
   opt = {defaults..., options...}
@@ -34,6 +37,8 @@ module.exports = (options={}) ->
       verbose: opt.verbose
       board_class: Board
       max_search: opt.search
+      C: opt.C
+      C_log: opt.C_log
     solve_wld: opt.wld
     solve_full: opt.full
     verbose: opt.verbose
@@ -71,6 +76,8 @@ module.exports = (options={}) ->
       evaluate: normal_eval
       verbose: opt.verbose
       max_search: opt.search
+      C: opt.C
+      C_log: opt.C_log
     solve_wld: opt.wld
     solve_full: opt.full
     verbose: opt.verbose
@@ -82,6 +89,8 @@ module.exports = (options={}) ->
       evaluate: ref_eval
       verbose: opt.verbose
       max_search: opt.search
+      C: opt.C
+      C_log: opt.C_log
     solve_wld: opt.wld
     solve_full: opt.full
     verbose: opt.verbose
