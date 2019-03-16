@@ -75,21 +75,20 @@ optimize = () ->
   step = (argv.max - argv.min) / 4
   best = (argv.min + argv.max) / 2
   max = try_value(best, -Infinity)
-  while step >= argv.precision
-    orig_best = best
-
-    tmp = orig_best + step
+  loop
+    tmp = best + step
     score = try_value(tmp, max)
     if score > max
       max = score
       best = tmp
+    else
+      tmp = best - step
+      score = try_value(tmp, max)
+      if score > max
+        max = score
+        best = tmp
 
-    tmp = orig_best - step
-    score = try_value(tmp, max)
-    if score > max
-      max = score
-      best = tmp
-
+    break if step < argv.precision
     step *= .5
   console.log "Best value #{best}"
 

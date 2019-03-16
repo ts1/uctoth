@@ -121,15 +121,15 @@ module.exports = (options={}) ->
       if loss < min_loss
         min_loss = loss
         best_rate = rate
-
-      rate = orig_best / step_size
-      coeffs = (0 for i in [0...INDEX_SIZE])
-      g2 = (0 for i in [0...INDEX_SIZE])
-      epoch samples, coeffs, g2, rate, batch_size
-      loss = verify(samples, coeffs)
-      if loss < min_loss
-        min_loss = loss
-        best_rate = rate
+      else
+        rate = orig_best / step_size
+        coeffs = (0 for i in [0...INDEX_SIZE])
+        g2 = (0 for i in [0...INDEX_SIZE])
+        epoch samples, coeffs, g2, rate, batch_size
+        loss = verify(samples, coeffs)
+        if loss < min_loss
+          min_loss = loss
+          best_rate = rate
 
     best_rate
 
@@ -227,12 +227,12 @@ module.exports = (options={}) ->
       if loss < min_loss
         min_loss = loss
         best = tmp
-
-      tmp = l2 / step
-      loss = test_l2(groups, tmp, min_loss)
-      if loss < min_loss
-        min_loss = loss
-        best = tmp
+      else
+        tmp = l2 / step
+        loss = test_l2(groups, tmp, min_loss)
+        if loss < min_loss
+          min_loss = loss
+          best = tmp
 
     console.log "Best L2: #{best}" if opt.verbose
     best

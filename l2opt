@@ -5,6 +5,7 @@ fs = require 'fs'
 minibatch = require './minibatch.coffee'
 coeffs_to_weights = require './coeffs_to_weights.coffee'
 match = require './match.coffee'
+{ watch_file } = require './util'
 
 argv = require 'yargs'
   .options
@@ -131,7 +132,7 @@ try_value = (phase, value, max) ->
     openings: if phase==0 then null else match.defaults.openings
 
   score = winrate + avg * 0.0001
-  process.stdout.write "score #{score}"
+  process.stdout.write "score #{Math.round(100000*score)/100000}"
   if score > max
     process.stdout.write ' *\n'
   else
@@ -143,20 +144,17 @@ optimize = (phase) ->
   best = (argv.min * argv.max) ** .5
   max = try_value(phase, best, -Infinity)
   while step - 1 > argv.precision
-    orig_best = best
-
-    tmp = orig_best * step
+    tmp = best * step
     score = try_value(phase, tmp, max)
     if score > max
       max = score
       best = tmp
-
-    tmp = orig_best / step
-    score = try_value(phase, tmp, max)
-    if score > max
-      max = score
-      best = tmp
-
+    else
+      tmp = best / step
+      score = try_value(phase, tmp, max)
+      if score > max
+        max = score
+        best = tmp
     step **= .5
   console.log "Best value #{best}"
   fs.writeFileSync "L2/#{phase}", "#{best}\n"
@@ -184,7 +182,8 @@ optimize_phase0 = ->
     verbose: false
 
 do ->
-  loop
+  reload = watch_file('.reload-l2')
+  until reload()
     for phase in [0...N_PHASES]
       continue if argv.phase? and phase != argv.phase
       console.log "Phase #{phase}"
