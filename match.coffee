@@ -5,21 +5,24 @@ require './rejection_handler'
 { PatternBoard } = require './pattern'
 Player = require './player'
 pattern_eval = require './pattern_eval'
-{ decode } = require './encode'
+{ decode, encode } = require './encode'
 
 defaults =
-  verbose:false
+  verbose: false
+  quiet: false
   wld: 18
-  full:16
+  full: 16
   search: 40000
   ref: 'ref/weights.json'
   weights: 'weights.json'
   openings: 'match.openings'
   depth: 60
   leafs: 650000
+  both_minimax: false
 
 module.exports = (options={}) ->
   opt = {defaults..., options...}
+  opt.verbose = false if opt.quiet
 
   normal_eval = pattern_eval(opt.weights)
   ref_eval = pattern_eval(opt.ref)
@@ -49,6 +52,19 @@ module.exports = (options={}) ->
     verbose: opt.verbose
     endgame_eval: normal_eval
 
+  ref_minmax = Player
+    book: null
+    strategy: require('./minmax')
+      evaluate: ref_eval
+      max_depth: opt.depth
+      max_leafs: opt.leafs
+      shuffle: false
+      verbose: opt.verbose
+    solve_wld: opt.wld
+    solve_full: opt.full
+    verbose: opt.verbose
+    endgame_eval: ref_eval
+
   uct = Player
     book: null
     strategy: require('./uct')
@@ -71,13 +87,17 @@ module.exports = (options={}) ->
     verbose: opt.verbose
     endgame_eval: ref_eval
 
-  players = [uct]
-  players.push if opt.minimax
-                 minmax
-               else if opt.simple
-                 simple
-               else
-                 uct_ref
+  players = []
+  players[0] = if opt.both_minimax then minmax else uct
+  players[1] =
+    if opt.both_minimax
+      ref_minmax
+    else if opt.minimax
+      minmax
+    else if opt.simple
+      simple
+    else
+      uct_ref
 
   play = (board, black, white) ->
     turn = if board.count(EMPTY) & 1 then WHITE else BLACK
@@ -85,15 +105,18 @@ module.exports = (options={}) ->
       if opt.verbose
         console.log board.dump true
         console.log square_to_char(turn), 'to move'
-        console.log square_to_char(BLACK), board.count(BLACK), 'discs', board.list_moves(BLACK).length, 'moves'
-        console.log square_to_char(WHITE), board.count(WHITE), 'discs', board.list_moves(WHITE).length, 'moves'
+        console.log square_to_char(BLACK), board.count(BLACK), 'discs',
+          board.list_moves(BLACK).length, 'moves'
+        console.log square_to_char(WHITE), board.count(WHITE), 'discs',
+          board.list_moves(WHITE).length, 'moves'
         console.log square_to_char(EMPTY), board.count(EMPTY), 'squares'
       if board.any_moves(turn)
         switch turn
           when BLACK then player = black
           when WHITE then player = white
         {move, value} = player(board, turn)
-        process.stdout.write pos_to_str(move, turn) unless opt.verbose
+        unless opt.verbose or opt.quiet
+          process.stdout.write pos_to_str(move, turn)
         flips = board.move turn, move
         console.assert flips.length
         console.log 'Estimated value', value if opt.verbose and value?
@@ -101,7 +124,8 @@ module.exports = (options={}) ->
         if board.any_moves(-turn)
           console.log 'PASS' if opt.verbose
         else
-          process.stdout.write " #{ board.outcome()}\n" unless opt.verbose
+          unless opt.verbose or opt.quiet
+            process.stdout.write " #{ board.outcome()}\n"
           return board.outcome()
       turn = -turn
 
@@ -112,19 +136,27 @@ module.exports = (options={}) ->
   do ->
     n_matches = 0
     sum_square_offset = 0
-    for code in fs.readFileSync(opt.openings, 'utf8').trim().split('\n')
+    openings =
+      if opt.openings
+        fs.readFileSync(opt.openings, 'utf8').trim().split('\n')
+      else
+        [encode(new Board)]
+    for code in openings
       b = decode code
       board = new PatternBoard b
-      console.log board.dump true
+      console.log board.dump true unless opt.quiet
       outcome = play board, players[0], players[1]
       score += outcome
       offset = outcome
       if outcome > 0
         wins[0]++
+        process.stdout.write '+' if opt.quiet
       else if outcome < 0
         wins[1]++
+        process.stdout.write '-' if opt.quiet
       else
         draws++
+        process.stdout.write '0' if opt.quiet
       n_matches++
 
       board = new PatternBoard b
@@ -133,24 +165,30 @@ module.exports = (options={}) ->
       offset += outcome
       if outcome > 0
         wins[1]++
+        process.stdout.write '-' if opt.quiet
       else if outcome < 0
         wins[0]++
+        process.stdout.write '+' if opt.quiet
       else
         draws++
+        process.stdout.write '0' if opt.quiet
       n_matches++
 
       offset /= 2
       sum_square_offset += offset * offset
 
-      console.log 'player[0]', wins[0], 'wins'
-      console.log 'player[1]', wins[1], 'wins'
-      console.log 'draws', draws
+      unless opt.quiet
+        console.log 'player[0]', wins[0], 'wins' unless opt.quiet
+        console.log 'player[1]', wins[1], 'wins' unless opt.quiet
+        console.log 'draws', draws unless opt.quiet
       winrate = Math.round((wins[0] + draws/2) / n_matches * 100) / 100
-      console.log 'win rate for player[0]', winrate
+      console.log 'win rate for player[0]', winrate unless opt.quiet
       avg = Math.round(score / n_matches * 10) / 10
-      console.log 'avg score for player[0]', avg
+      console.log 'avg score for player[0]', avg unless opt.quiet
 
-    console.log 'average offset', Math.sqrt(sum_square_offset / n_matches)
+    process.stdout.write ' ' if opt.quiet
+    unless opt.quiet
+      console.log 'average offset', Math.sqrt(sum_square_offset / n_matches)
 
     if opt.log
       fs.appendFileSync opt.log,

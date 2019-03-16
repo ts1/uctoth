@@ -205,12 +205,13 @@ module.exports = (options={}) ->
     avg_loss
 
   test_l2 = (groups, l2, min) ->
-    process.stdout.write "l2 #{l2}: "
+    process.stdout.write "l2 #{l2}: " if opt.verbose
     opt.l2 = l2
     loss = cross_validation(groups, quiet: true)
-    process.stdout.write "loss #{loss}"
-    process.stdout.write ' *' if loss < min
-    process.stdout.write '\n'
+    if opt.verbose
+      process.stdout.write "loss #{loss}"
+      process.stdout.write ' *' if loss < min
+      process.stdout.write '\n'
     loss
 
   search_l2 = (groups) ->
@@ -254,10 +255,11 @@ module.exports = (options={}) ->
     best
 
   do ->
-    book = new Book opt.book
+    book = new Book opt.book, close_on_exit: false
     book.init()
 
-    process.stdout.write "Loading samples for phase #{opt.phase}: "
+    if opt.verbose
+      process.stdout.write "Loading samples for phase #{opt.phase}: "
     samples = shuffle(sample for sample from book.iterate_indexes(opt.phase))
     if opt.logistic
       samples.forEach (sample) ->
@@ -278,7 +280,7 @@ module.exports = (options={}) ->
     else
       throw new Error 'outfile is required' unless opt.outfile?
 
-      {coeffs, loss, dev, r2} = train(samples)
+      {coeffs, loss, dev, r2} = train(samples, quiet: not opt.verbose)
 
       r2 = 1 - loss**2 / dev**2
       console.log "r2: #{r2}" if opt.verbose
@@ -292,8 +294,9 @@ module.exports = (options={}) ->
         logistic: opt.logistic
         l2: opt.l2
       }
-      process.stdout.write "Writing #{opt.outfile}: "
+      process.stdout.write "Writing #{opt.outfile}: " if opt.verbose
       fs.writeFileSync opt.outfile, JSON.stringify output
       console.log "done" if opt.verbose
+    book.close()
 
 module.exports.defaults = defaults

@@ -32,7 +32,7 @@ outcome_to_eval = (outcome, me) ->
 class Database
   constructor: (filename, readonly=false) ->
     @db = sqlite3 filename, {readonly, timeout: 100000}
-    process.on 'exit', => @db.close()
+  close: -> @db.close()
   run: (sql, params) -> @db.prepare(sql).run(params ? [])
   get: (sql, params) -> @db.prepare(sql).get(params ? [])
   all: (sql, params) -> @db.prepare(sql).all(params ? [])
@@ -52,12 +52,15 @@ defaults =
   solve_wld: 21
   solve_full: 19
   verbose: false
+  close_on_exit: true
 
 module.exports = class Book
   constructor: (filename, options={}) ->
     @filename = filename
     opt = {defaults..., options...}
     @db = new Database filename, opt.readonly
+    if opt.close_on_exit
+      process.on 'exit', => @close()
     @db.run 'pragma journal_mode=WAL'
     @verbose = opt.verbose
 
@@ -155,6 +158,8 @@ module.exports = class Book
       @db.run 'drop table nodes'
       @db.run 'vacuum'
     catch
+
+  close: -> @db.close()
 
   get_game_node_by_code: (code) ->
     data = @stmt_get_game_node.get([code])

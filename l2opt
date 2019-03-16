@@ -1,0 +1,170 @@
+#!/usr/bin/env coffee
+
+fs = require 'fs'
+{ N_PHASES } = require './pattern'
+minibatch = require './minibatch.coffee'
+coeffs_to_weights = require './coeffs_to_weights.coffee'
+match = require './match.coffee'
+
+argv = require 'yargs'
+  .options
+    min:
+      desc: 'Minimum value to search'
+      default: 1e-5
+      type: 'number'
+      requiresArg: true
+    max:
+      desc: 'Maximum value to search'
+      default: 10
+      type: 'number'
+      requiresArg: true
+    p:
+      alias: 'precision'
+      desc: 'Search precision'
+      default: 0.2
+      type: 'number'
+      requiresArg: true
+    b:
+      alias: 'book'
+      desc: 'Database file'
+      default: 'book.db'
+      requiresArg: true
+    l:
+      alias: 'logistic'
+      desc: 'Logistic regression'
+      type: 'boolean'
+    e:
+      alias: 'epochs'
+      desc: 'Train epochs'
+      type: 'number'
+      default: minibatch.defaults.epochs
+    loop:
+      desc: 'Loop forever'
+      type: 'boolean'
+    prefix:
+      desc: 'Prefix of coeffs'
+      default: 'tmp/l2opt/coeffs'
+    weights:
+      desc: 'Temporary weights file'
+      default: 'tmp/l2opt/weights.json'
+      requiresArg: true
+    default_l2:
+      desc: 'Default L2 value'
+      default: 0.1
+      requiresArg: true
+    s:
+      alias: 'search'
+      desc: 'Number of UCT search of match'
+      default: match.defaults.search
+    w:
+      alias: 'wld'
+      desc: 'WLD search depth'
+      default: match.defaults.wld
+    f:
+      alias: 'full'
+      desc: 'Full search depth'
+      default: match.defaults.full
+    phase:
+      desc: 'Phase to optimize (default all)'
+      type: 'number'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .strict()
+  .version false
+  .argv
+
+prepare_coeffs = (phase) ->
+  orig_file = "tmp/coeffs#{phase}"
+  if fs.existsSync(orig_file)
+    fs.copyFileSync orig_file, "#{argv.prefix}#{phase}"
+  else
+    l2file = "L2/#{phase}"
+    l2 =
+      if fs.existsSync(l2file)
+        parseInt(fs.readFileSync(l2file))
+      else
+        argv.default_l2
+
+    process.stdout.write "Preparing coeffs for phase #{phase}: "
+
+    minibatch
+      l2: l2
+      book: argv.book
+      phase: phase
+      logistic: argv.logistic
+      epochs: argv.epochs
+      outfile: "#{argv.prefix}#{phase}"
+      verbose: false
+
+    process.stdout.write "done\n"
+
+try_value = (phase, value, max) ->
+  for p in [0...N_PHASES]
+    if p != phase
+      prepare_coeffs p unless fs.existsSync("#{argv.prefix}#{p}")
+
+  process.stdout.write "L2 #{value}: "
+
+  minibatch
+    l2: value
+    book: argv.book
+    phase: phase
+    logistic: argv.logistic
+    epochs: argv.epochs
+    outfile: "#{argv.prefix}#{phase}"
+    verbose: false
+
+  coeffs_to_weights
+    prefix: argv.prefix
+    outfile: argv.weights
+    verbose: false
+
+  { winrate, avg } = match
+    weights: argv.weights
+    search: argv.search
+    wld: if phase <=2 then 0 else argv.wld
+    full: argv.full
+    quiet: true
+    both_minimax: phase <= 2
+    depth: 4
+    openings: if phase==0 then null else match.defaults.openings
+
+  score = winrate + avg * 0.0001
+  process.stdout.write "score #{score}"
+  if score > max
+    process.stdout.write ' *\n'
+  else
+    process.stdout.write '\n'
+  score
+
+optimize = (phase) ->
+  step = (argv.max / argv.min) ** .25
+  best = (argv.min * argv.max) ** .5
+  max = try_value(phase, best, -Infinity)
+  while step - 1 > argv.precision
+    orig_best = best
+
+    tmp = orig_best * step
+    score = try_value(phase, tmp, max)
+    if score > max
+      max = score
+      best = tmp
+
+    tmp = orig_best / step
+    score = try_value(phase, tmp, max)
+    if score > max
+      max = score
+      best = tmp
+
+    step **= .5
+  console.log "Best value #{best}"
+  fs.writeFileSync "L2/#{phase}", "#{best}\n"
+
+do ->
+  loop
+    for phase in [0...N_PHASES]
+      continue if argv.phase? and phase != argv.phase
+      console.log "Phase #{phase}"
+      optimize phase
+    break unless argv.loop

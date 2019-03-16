@@ -92,7 +92,7 @@ module.exports = (options) ->
     rms = Math.sqrt(rms / n)
     {rms, clip, zero, max}
 
-  process.stdout.write 'Wrapping up: '
+  process.stdout.write 'Wrapping up: ' if opt.verbose
   weights = init_weights()
   load_coeffs weights
   interpolate weights
@@ -100,7 +100,7 @@ module.exports = (options) ->
   stats = round weights
   weights.clip = 16
   fs.writeFileSync opt.outfile, JSON.stringify weights
-  console.log "'#{opt.outfile}' is ready"
-  console.log stats
+  console.log "'#{opt.outfile}' is ready" if opt.verbose
+  console.log stats if opt.verbose
 
 module.exports.defaults = defaults
