@@ -92,8 +92,7 @@ module.exports = (options={}) ->
     # rough tune
     min_loss = dev
     best_rate = null
-    rate = 100
-    n_fail = 0
+    rate = 1
     step_size = 10
     loop
       coeffs = (0 for i in [0...INDEX_SIZE])
@@ -103,19 +102,18 @@ module.exports = (options={}) ->
         if loss < min_loss
           min_loss = loss
           best_rate = rate
-        else
-          if best_rate?
-            if ++n_fail >= 2
-              break
+        else if best_rate?
+          break
       else
         break if best_rate?
       rate /= step_size
 
     # fine tune
-    while step_size >= 1.01
+    while step_size >= 1.1
       step_size **= .5
+      orig_best = best_rate
 
-      rate = best_rate * step_size
+      rate = orig_best * step_size
       coeffs = (0 for i in [0...INDEX_SIZE])
       g2 = (0 for i in [0...INDEX_SIZE])
       epoch samples, coeffs, g2, rate, batch_size
@@ -123,9 +121,8 @@ module.exports = (options={}) ->
       if loss < min_loss
         min_loss = loss
         best_rate = rate
-        continue
 
-      rate = best_rate / step_size
+      rate = orig_best / step_size
       coeffs = (0 for i in [0...INDEX_SIZE])
       g2 = (0 for i in [0...INDEX_SIZE])
       epoch samples, coeffs, g2, rate, batch_size
