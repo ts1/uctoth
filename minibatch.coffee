@@ -11,7 +11,7 @@ defaults =
   epochs: 100
   search_precision: 1.1
   search_max: 1
-  search_min: 0.01
+  search_min: 0.001
   verbose: true
 
 INDEX_SIZE = get_single_index_size()

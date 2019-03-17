@@ -11,7 +11,7 @@ argv = require 'yargs'
   .options
     min:
       desc: 'Minimum value to search'
-      default: 0.01
+      default: 0.001
       type: 'number'
       requiresArg: true
     max:
