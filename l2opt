@@ -11,7 +11,7 @@ argv = require 'yargs'
   .options
     min:
       desc: 'Minimum value to search'
-      default: 1e-4
+      default: 0.01
       type: 'number'
       requiresArg: true
     max:
@@ -124,12 +124,10 @@ try_value = (phase, value, max) ->
   { winrate, avg } = match
     weights: argv.weights
     search: argv.search
-    wld: if phase <=2 then 0 else argv.wld
+    wld: argv.wld
     full: argv.full
     quiet: true
-    both_minimax: phase <= 2
-    depth: 4
-    openings: if phase==0 then null else match.defaults.openings
+    openings: match.defaults.openings
 
   score = winrate + avg * 0.0001
   process.stdout.write "score #{Math.round(100000*score)/100000}"
@@ -143,7 +141,7 @@ optimize = (phase) ->
   step = (argv.max / argv.min) ** .25
   best = (argv.min * argv.max) ** .5
   max = try_value(phase, best, -Infinity)
-  while step - 1 > argv.precision
+  loop
     tmp = best * step
     score = try_value(phase, tmp, max)
     if score > max
@@ -155,11 +153,12 @@ optimize = (phase) ->
       if score > max
         max = score
         best = tmp
+    break if step - 1 < argv.precision
     step **= .5
   console.log "Best value #{best}"
   fs.writeFileSync "L2/#{phase}", "#{best}\n"
 
-optimize_phase0 = ->
+optimize_early_phases = ->
   console.log 'Using Cross Validation'
   l2 = minibatch
     search: true
@@ -187,8 +186,8 @@ do ->
     for phase in [0...N_PHASES]
       continue if argv.phase? and phase != argv.phase
       console.log "Phase #{phase}"
-      if phase == 0
-        optimize_phase0()
+      if phase <= 2
+        optimize_early_phases()
       else
         optimize phase
     break unless argv.loop
