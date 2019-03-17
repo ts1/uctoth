@@ -137,7 +137,7 @@ try_value = (phase, value, max) ->
     process.stdout.write '\n'
   score
 
-optimize_mach = (phase) ->
+optimize_match = (phase) ->
   step = (argv.max / argv.min) ** .25
   best = (argv.min * argv.max) ** .5
   max = try_value(phase, best, -Infinity)
