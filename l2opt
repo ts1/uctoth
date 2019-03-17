@@ -105,6 +105,27 @@ prepare = (phase) ->
     if p != phase
       prepare_coeffs p unless fs.existsSync("#{argv.prefix}#{p}")
 
+optimize_cv = (phase) ->
+  l2 = minibatch
+    search: true
+    search_precision: 1 + argv.precision
+    search_min: argv.min
+    search_max: argv.max
+    book: argv.book
+    phase: phase
+    logistic: argv.logistic
+    epochs: argv.epochs
+  fs.writeFileSync "L2/#{phase}", "#{l2}\n"
+
+  minibatch
+    l2: l2
+    book: argv.book
+    phase: phase
+    logistic: argv.logistic
+    epochs: argv.epochs
+    outfile: "#{argv.prefix}#{phase}"
+    verbose: false
+
 try_value = (phase, value, max) ->
   process.stdout.write "L2 #{value}: "
 
@@ -140,8 +161,20 @@ try_value = (phase, value, max) ->
   score
 
 optimize_match = (phase) ->
-  step = (argv.max / argv.min) ** .25
-  best = (argv.min * argv.max) ** .5
+  value = minibatch
+    search: true
+    search_precision: 1.4
+    search_min: argv.min
+    search_max: argv.max
+    book: argv.book
+    phase: phase
+    logistic: argv.logistic
+    epochs: argv.epochs
+
+  ubound = value * 2
+  lbound = value / 2
+  step = (ubound / lbound) ** .25
+  best = (lbound * ubound) ** .5
   max = try_value(phase, best, -Infinity)
   loop
     tmp = best * step
@@ -159,28 +192,6 @@ optimize_match = (phase) ->
     step **= .5
   console.log "Best value #{best}"
   fs.writeFileSync "L2/#{phase}", "#{best}\n"
-
-optimize_cv = (phase) ->
-  console.log 'Using Cross Validation'
-  l2 = minibatch
-    search: true
-    search_precision: 1 + argv.precision
-    search_min: argv.min
-    search_max: argv.max
-    book: argv.book
-    phase: phase
-    logistic: argv.logistic
-    epochs: argv.epochs
-  fs.writeFileSync "L2/#{phase}", "#{l2}\n"
-
-  minibatch
-    l2: l2
-    book: argv.book
-    phase: phase
-    logistic: argv.logistic
-    epochs: argv.epochs
-    outfile: "#{argv.prefix}#{phase}"
-    verbose: false
 
 do ->
   reload = watch_file('.reload-l2')

@@ -204,7 +204,7 @@ module.exports = (options={}) ->
     avg_loss
 
   test_l2 = (groups, l2, min) ->
-    process.stdout.write "l2 #{l2}: " if opt.verbose
+    process.stdout.write "L2 #{l2}: " if opt.verbose
     opt.l2 = l2
     loss = cross_validation(groups, quiet: true)
     if opt.verbose
@@ -236,7 +236,7 @@ module.exports = (options={}) ->
       break if step <= opt.search_precision
       step **= 1/2
 
-    console.log "Best L2: #{best}" if opt.verbose
+    console.log "CV search result: #{best}" if opt.verbose
     best
 
   do ->
