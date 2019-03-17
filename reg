@@ -7,9 +7,6 @@ for i in $(seq 0 9); do
     if [ "$L2" ]; then
         L2ARG="--l2=$L2"
         echo "Using $L2ARG"
-    elif [ "$DEFAULT_L2" ]; then
-        L2ARG="--l2=$DEFAULT_L2"
-        echo "Using $L2ARG"
     fi
     $LARGE_COFFEE minibatch -p $i -o tmp/coeffs$i $L2ARG $@
 done

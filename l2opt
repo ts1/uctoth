@@ -51,7 +51,7 @@ argv = require 'yargs'
       requiresArg: true
     default_l2:
       desc: 'Default L2 value'
-      default: 0.1
+      default: minibatch.defaults.l2
       requiresArg: true
     s:
       alias: 'search'

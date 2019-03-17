@@ -41,6 +41,7 @@ yargs = require 'yargs'
       type: 'boolean'
     l2:
       desc: 'L2 regularization parameter'
+      default: defaults.l2
       requiresArg: true
     cv:
       desc: 'K-fold cross validation'
@@ -53,6 +54,16 @@ yargs = require 'yargs'
       desc: 'Precision of L2 parameter search (>1)'
       type: 'number'
       default: defaults.search_precision
+      requiresArg: true
+    search_min:
+      desc: 'Minimum value to search L2 parameter'
+      type: 'number'
+      default: defaults.search_min
+      requiresArg: true
+    search_max:
+      desc: 'Maximum value to search L2 parameter'
+      type: 'number'
+      default: defaults.search_max
       requiresArg: true
     h:
       alias: 'help'

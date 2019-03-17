@@ -9,6 +9,7 @@ fs = require 'fs'
 defaults =
   book: 'book.db'
   epochs: 100
+  l2: 0.5
   search_precision: 1.1
   search_max: 1
   search_min: 0.001
@@ -74,8 +75,7 @@ module.exports = (options={}) ->
         continue unless g
         g2[i] += g * g
         w = coeffs[i]
-        if opt.l2
-          g -= opt.l2 * w
+        g -= opt.l2 * w
         w += rate/Math.sqrt(g2[i]) * g
         coeffs[i] = clip(w)
     return true

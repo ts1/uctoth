@@ -71,7 +71,7 @@ Generated games are stored in `book.db` (SQLite3 database).
 Next, learn the generated games and make your first `weights.json`.
 
 ```
-./reg --l2=0.5
+./reg --l2=1
 ```
 
 Now you can remove `book.db` of random games.
