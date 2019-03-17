@@ -16,7 +16,7 @@ argv = require 'yargs'
       requiresArg: true
     max:
       desc: 'Maximum value to search'
-      default: 1
+      default: 10
       type: 'number'
       requiresArg: true
     p:
@@ -137,7 +137,7 @@ try_value = (phase, value, max) ->
     process.stdout.write '\n'
   score
 
-optimize = (phase) ->
+optimize_mach = (phase) ->
   step = (argv.max / argv.min) ** .25
   best = (argv.min * argv.max) ** .5
   max = try_value(phase, best, -Infinity)
@@ -158,7 +158,7 @@ optimize = (phase) ->
   console.log "Best value #{best}"
   fs.writeFileSync "L2/#{phase}", "#{best}\n"
 
-optimize_early_phases = ->
+optimize_cv = (phase) ->
   console.log 'Using Cross Validation'
   l2 = minibatch
     search: true
@@ -166,18 +166,18 @@ optimize_early_phases = ->
     search_min: argv.min
     search_max: argv.max
     book: argv.book
-    phase: 0
+    phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
-  fs.writeFileSync "L2/0", "#{l2}\n"
+  fs.writeFileSync "L2/#{phase}", "#{l2}\n"
 
   minibatch
     l2: l2
     book: argv.book
-    phase: 0
+    phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
-    outfile: "#{argv.prefix}0"
+    outfile: "#{argv.prefix}#{phase}"
     verbose: false
 
 do ->
@@ -187,7 +187,7 @@ do ->
       continue if argv.phase? and phase != argv.phase
       console.log "Phase #{phase}"
       if phase <= 2
-        optimize_early_phases()
+        optimize_cv phase
       else
-        optimize phase
+        optimize_match phase
     break unless argv.loop
