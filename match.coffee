@@ -152,6 +152,7 @@ module.exports = (options={}) ->
         [encode(new Board)]
     for code in openings
       b = decode code
+
       board = new PatternBoard b
       console.log board.dump true unless opt.quiet
       outcome = play board, players[0], players[1]
@@ -168,6 +169,11 @@ module.exports = (options={}) ->
         process.stdout.write '0' if opt.quiet
       n_matches++
 
+      if opt.min?
+        ubound = wins[0] + draws / 2 + (openings.length * 2 - n_matches)
+        if ubound < Math.floor(opt.min * openings.length)
+          break
+
       board = new PatternBoard b
       outcome = play board, players[1], players[0]
       score -= outcome
@@ -182,6 +188,11 @@ module.exports = (options={}) ->
         draws++
         process.stdout.write '0' if opt.quiet
       n_matches++
+
+      if opt.min?
+        ubound = wins[0] + draws / 2 + (openings.length * 2 - n_matches)
+        if ubound < Math.floor(opt.min * openings.length)
+          break
 
       offset /= 2
       sum_square_offset += offset * offset

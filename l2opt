@@ -22,7 +22,7 @@ argv = require 'yargs'
     p:
       alias: 'precision'
       desc: 'Search precision'
-      default: 0.2
+      default: 0.1
       type: 'number'
       requiresArg: true
     b:
@@ -100,11 +100,12 @@ prepare_coeffs = (phase) ->
 
     process.stdout.write "done\n"
 
-try_value = (phase, value, max) ->
+prepare = (phase) ->
   for p in [0...N_PHASES]
     if p != phase
       prepare_coeffs p unless fs.existsSync("#{argv.prefix}#{p}")
 
+try_value = (phase, value, max) ->
   process.stdout.write "L2 #{value}: "
 
   minibatch
@@ -128,6 +129,7 @@ try_value = (phase, value, max) ->
     full: argv.full
     quiet: true
     openings: match.defaults.openings
+    min: max
 
   score = winrate + avg * 0.0001
   process.stdout.write "score #{Math.round(100000*score)/100000}"
@@ -185,6 +187,7 @@ do ->
   until reload()
     for phase in [0...N_PHASES]
       continue if argv.phase? and phase != argv.phase
+      prepare phase
       console.log "Phase #{phase}"
       if phase <= 2
         optimize_cv phase
