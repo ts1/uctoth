@@ -11,27 +11,56 @@ defaults =
   epochs: 100
   l2: 0.5
   search_precision: 1.1
-  search_max: 1
+  search_max: 2
   search_min: 0.001
   verbose: true
 
 INDEX_SIZE = get_single_index_size()
 
+load_samples = (opt) ->
+  book = new Book opt.book, close_on_exit: false
+  book.init()
+  if opt.verbose
+    process.stdout.write "Loading samples for phase #{opt.phase}: "
+  samples = shuffle(sample for sample from book.iterate_indexes(opt.phase))
+  if opt.logistic
+    samples.forEach (sample) ->
+      sample[0] = if sample[0] > 0 then .99 else 0.01
+  console.log "loaded #{samples.length} samples" if opt.verbose
+  book.close()
+  samples
+
+clip = do ->
+  MAX = 32767 / LOG_MULT
+  MIN = -32768 / LOG_MULT
+  (x) ->
+    if x > MAX then MAX
+    else if x < MIN then MIN
+    else x
+
+split_groups = (samples, k) ->
+  win_set = shuffle(samples.filter (sample) -> sample[0] > 0)
+  loss_set = shuffle(samples.filter (sample) -> sample[0] <= 0)
+
+  win_per_group = Math.round(win_set.length / k)
+  win_groups =
+    for i in [0...k]
+      win_set[i*win_per_group...(i + 1)*win_per_group]
+
+  loss_per_group = Math.round(loss_set.length / k)
+  loss_groups =
+    for i in [0...k]
+      loss_set[i*win_per_group...(i + 1)*loss_per_group]
+
+  groups =
+    for i in [0...k]
+      shuffle(win_groups[i].concat(loss_groups[i]))
+
+  groups
+
 module.exports = (options={}) ->
   opt = {defaults..., options...}
   throw new Error 'phase option is required' unless opt.phase?
-
-  load_samples = () ->
-    for {code, outcome} from book.fetch_codes_for_phase(opt.phase)
-      [outcome, code_to_single_indexes(code)...]
-
-  clip = do ->
-    MAX = 32767 / LOG_MULT
-    MIN = -32768 / LOG_MULT
-    (x) ->
-      if x > MAX then MAX
-      else if x < MIN then MIN
-      else x
 
   predict = do ->
     do_predict = (indexes, coeffs) ->
@@ -61,6 +90,14 @@ module.exports = (options={}) ->
       e2 += e * e
     {gradient, e2}
 
+  verify = (samples, coeffs) ->
+    e2 = 0
+    for indexes in samples
+      outcome = indexes[0]
+      e = predict(indexes, coeffs) - outcome
+      e2 += e * e
+    Math.sqrt(e2 / samples.length)
+
   epoch = (samples, coeffs, g2, rate, batch_size, max_loss=Infinity) ->
     max_e2 = max_loss**2 * samples.length
     sum_e2 = 0
@@ -79,14 +116,6 @@ module.exports = (options={}) ->
         w += rate/Math.sqrt(g2[i]) * g
         coeffs[i] = clip(w)
     return true
-
-  verify = (samples, coeffs) ->
-    e2 = 0
-    for indexes in samples
-      outcome = indexes[0]
-      e = predict(indexes, coeffs) - outcome
-      e2 += e * e
-    Math.sqrt(e2 / samples.length)
 
   find_rate = (samples, batch_size, dev) ->
     # rough tune
@@ -165,26 +194,6 @@ module.exports = (options={}) ->
       console.log "epoch #{ep} loss #{loss} #{star}" unless quiet
     {coeffs: best_coeffs, loss: min_loss, dev}
 
-  split_groups = (samples, k) ->
-    win_set = shuffle(samples.filter (sample) -> sample[0] > 0)
-    loss_set = shuffle(samples.filter (sample) -> sample[0] <= 0)
-
-    win_per_group = Math.round(win_set.length / k)
-    win_groups =
-      for i in [0...k]
-        win_set[i*win_per_group...(i + 1)*win_per_group]
-
-    loss_per_group = Math.round(loss_set.length / k)
-    loss_groups =
-      for i in [0...k]
-        loss_set[i*win_per_group...(i + 1)*loss_per_group]
-
-    groups =
-      for i in [0...k]
-        shuffle(win_groups[i].concat(loss_groups[i]))
-
-    groups
-
   cross_validation = (groups, {quiet}={}) ->
     k = groups.length
     avg_loss = 0
@@ -240,18 +249,7 @@ module.exports = (options={}) ->
     best
 
   do ->
-    book = new Book opt.book, close_on_exit: false
-    book.init()
-
-    if opt.verbose
-      process.stdout.write "Loading samples for phase #{opt.phase}: "
-    samples = shuffle(sample for sample from book.iterate_indexes(opt.phase))
-    if opt.logistic
-      samples.forEach (sample) ->
-        sample[0] = if sample[0] > 0 then .99 else 0.01
-    console.log "loaded #{samples.length} samples" if opt.verbose
-    avg = samples.reduce(((a, s) -> a + s[0]), 0) / samples.length
-    console.log "Average: #{avg}" if opt.verbose
+    samples = opt.samples or load_samples(opt)
 
     if opt.cv or opt.search
       groups = split_groups(samples, opt.cv or 4)
@@ -265,6 +263,9 @@ module.exports = (options={}) ->
       retval = cross_validation(groups)
     else
       throw new Error 'outfile is required' unless opt.outfile?
+
+      avg = samples.reduce(((a, s) -> a + s[0]), 0) / samples.length
+      console.log "Average: #{avg}" if opt.verbose
 
       {coeffs, loss, dev, r2} = train(samples, quiet: not opt.verbose)
 
@@ -283,7 +284,7 @@ module.exports = (options={}) ->
       process.stdout.write "Writing #{opt.outfile}: " if opt.verbose
       fs.writeFileSync opt.outfile, JSON.stringify retval
       console.log "done" if opt.verbose
-    book.close()
     retval
 
 module.exports.defaults = defaults
+module.exports.load_samples = load_samples

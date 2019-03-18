@@ -106,12 +106,13 @@ prepare = (phase) ->
       prepare_coeffs p unless fs.existsSync("#{argv.prefix}#{p}")
 
 optimize_cv = (phase) ->
+  samples = minibatch.load_samples(book: argv.book, phase: phase, verbose: true)
   l2 = minibatch
     search: true
     search_precision: 1 + argv.precision
     search_min: argv.min
     search_max: argv.max
-    book: argv.book
+    samples: samples
     phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
@@ -119,21 +120,21 @@ optimize_cv = (phase) ->
 
   minibatch
     l2: l2
-    book: argv.book
+    samples: samples
     phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
     outfile: "#{argv.prefix}#{phase}"
     verbose: false
 
-try_value = (phase, value, max) ->
+try_value = (phase, value, max, samples) ->
   prepare phase
 
   process.stdout.write "L2 #{value}: "
 
   coeffs = minibatch
     l2: value
-    book: argv.book
+    samples: samples
     phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
@@ -165,12 +166,13 @@ try_value = (phase, value, max) ->
 
 optimize_match = (phase) ->
   MATCH_RANGE = 2
+  samples = minibatch.load_samples(book: argv.book, phase: phase, verbose: true)
   value = minibatch
     search: true
     search_precision: 1.4
     search_min: argv.min * Math.sqrt(MATCH_RANGE)
     search_max: argv.max / Math.sqrt(MATCH_RANGE)
-    book: argv.book
+    samples: samples
     phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
@@ -179,19 +181,19 @@ optimize_match = (phase) ->
   lbound = value / MATCH_RANGE
   step = (ubound / lbound) ** .25
   best = (lbound * ubound) ** .5
-  { score, coeffs } = try_value(phase, best, -Infinity)
+  { score, coeffs } = try_value(phase, best, -Infinity, samples)
   max = score
   best_coeffs = coeffs
   loop
     tmp = best * step
-    { score, coeffs } = try_value(phase, tmp, max)
+    { score, coeffs } = try_value(phase, tmp, max, samples)
     if score > max
       max = score
       best = tmp
       best_coeffs = coeffs
     else
       tmp = best / step
-      { score, coeffs } = try_value(phase, tmp, max)
+      { score, coeffs } = try_value(phase, tmp, max, samples)
       if score > max
         max = score
         best = tmp
