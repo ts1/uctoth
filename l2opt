@@ -127,9 +127,11 @@ optimize_cv = (phase) ->
     verbose: false
 
 try_value = (phase, value, max) ->
+  prepare phase
+
   process.stdout.write "L2 #{value}: "
 
-  minibatch
+  coeffs = minibatch
     l2: value
     book: argv.book
     phase: phase
@@ -158,47 +160,53 @@ try_value = (phase, value, max) ->
     process.stdout.write ' *\n'
   else
     process.stdout.write '\n'
-  score
+
+  { score, coeffs }
 
 optimize_match = (phase) ->
+  MATCH_RANGE = 2
   value = minibatch
     search: true
     search_precision: 1.4
-    search_min: argv.min
-    search_max: argv.max
+    search_min: argv.min * Math.sqrt(MATCH_RANGE)
+    search_max: argv.max / Math.sqrt(MATCH_RANGE)
     book: argv.book
     phase: phase
     logistic: argv.logistic
     epochs: argv.epochs
 
-  ubound = value * 2
-  lbound = value / 2
+  ubound = value * MATCH_RANGE
+  lbound = value / MATCH_RANGE
   step = (ubound / lbound) ** .25
   best = (lbound * ubound) ** .5
-  max = try_value(phase, best, -Infinity)
+  { score, coeffs } = try_value(phase, best, -Infinity)
+  max = score
+  best_coeffs = coeffs
   loop
     tmp = best * step
-    score = try_value(phase, tmp, max)
+    { score, coeffs } = try_value(phase, tmp, max)
     if score > max
       max = score
       best = tmp
+      best_coeffs = coeffs
     else
       tmp = best / step
-      score = try_value(phase, tmp, max)
+      { score, coeffs } = try_value(phase, tmp, max)
       if score > max
         max = score
         best = tmp
+        best_coeffs = coeffs
     break if step - 1 < argv.precision
     step **= .5
   console.log "Best value #{best}"
   fs.writeFileSync "L2/#{phase}", "#{best}\n"
+  fs.writeFileSync "#{argv.prefix}#{phase}", JSON.stringify(best_coeffs)
 
 do ->
   reload = watch_file('.reload-l2')
   until reload()
     for phase in [0...N_PHASES]
       continue if argv.phase? and phase != argv.phase
-      prepare phase
       console.log "Phase #{phase}"
       if phase <= 2
         optimize_cv phase
