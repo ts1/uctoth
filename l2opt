@@ -106,7 +106,11 @@ prepare = (phase) ->
       prepare_coeffs p unless fs.existsSync("#{argv.prefix}#{p}")
 
 optimize_cv = (phase) ->
-  samples = minibatch.load_samples(book: argv.book, phase: phase, verbose: true)
+  samples = minibatch.load_samples
+    book: argv.book
+    phase: phase
+    logistic: argv.logistic
+    verbose: true
   l2 = minibatch
     search: true
     search_precision: 1 + argv.precision
@@ -166,7 +170,11 @@ try_value = (phase, value, max, samples) ->
 
 optimize_match = (phase) ->
   MATCH_RANGE = 2
-  samples = minibatch.load_samples(book: argv.book, phase: phase, verbose: true)
+  samples = minibatch.load_samples
+    book: argv.book
+    phase: phase
+    logistic: argv.logistic
+    verbose: true
   value = minibatch
     search: true
     search_precision: 1.4
