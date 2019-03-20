@@ -14,7 +14,6 @@ readline = require 'readline'
 Player = require './player'
 pattern_eval = require './pattern_eval'
 { format_eval } = require './util'
-book_player = require './static_book_player'
 
 argv = require 'yargs'
   .options

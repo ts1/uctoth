@@ -69,6 +69,13 @@ argv = require 'yargs'
       desc: 'Phase to optimize (default all)'
       type: 'number'
       requiresArg: true
+    skip_cv:
+      desc: 'Skip CV and use existing L2/* for starter'
+      type: 'boolean'
+    match_range:
+      desc: 'Match-search range'
+      default: 2
+      requiresArg: true
     h:
       alias: 'help'
   .strict()
@@ -83,11 +90,11 @@ prepare_coeffs = (phase) ->
     l2file = "L2/#{phase}"
     l2 =
       if fs.existsSync(l2file)
-        parseInt(fs.readFileSync(l2file))
+        parseFloat(fs.readFileSync(l2file))
       else
         argv.default_l2
 
-    process.stdout.write "Preparing coeffs for phase #{phase}: "
+    process.stdout.write "Preparing coeffs for phase #{phase} l2=#{l2}: "
 
     minibatch
       l2: l2
@@ -106,6 +113,10 @@ prepare = (phase) ->
       prepare_coeffs p unless fs.existsSync("#{argv.prefix}#{p}")
 
 optimize_cv = (phase) ->
+  if argv.skip_cv
+    throw new Error "L2/#{phase} not found" unless fs.existsSync("L2/#{phase}")
+    return
+
   samples = minibatch.load_samples
     book: argv.book
     phase: phase
@@ -122,18 +133,7 @@ optimize_cv = (phase) ->
     epochs: argv.epochs
   fs.writeFileSync "L2/#{phase}", "#{l2}\n"
 
-  minibatch
-    l2: l2
-    samples: samples
-    phase: phase
-    logistic: argv.logistic
-    epochs: argv.epochs
-    outfile: "#{argv.prefix}#{phase}"
-    verbose: false
-
 try_value = (phase, value, max, samples) ->
-  prepare phase
-
   process.stdout.write "L2 #{value}: "
 
   coeffs = minibatch
@@ -169,24 +169,30 @@ try_value = (phase, value, max, samples) ->
   { score, coeffs }
 
 optimize_match = (phase) ->
-  MATCH_RANGE = 2
+  prepare phase
+
   samples = minibatch.load_samples
     book: argv.book
     phase: phase
     logistic: argv.logistic
     verbose: true
-  value = minibatch
-    search: true
-    search_precision: 1.4
-    search_min: argv.min * Math.sqrt(MATCH_RANGE)
-    search_max: argv.max / Math.sqrt(MATCH_RANGE)
-    samples: samples
-    phase: phase
-    logistic: argv.logistic
-    epochs: argv.epochs
 
-  ubound = value * MATCH_RANGE
-  lbound = value / MATCH_RANGE
+  value =
+    if argv.skip_cv
+      parseFloat(fs.readFileSync("L2/#{phase}"))
+    else
+      minibatch
+        search: true
+        search_precision: 1.4
+        search_min: argv.min * Math.sqrt(argv.match_range)
+        search_max: argv.max / Math.sqrt(argv.match_range)
+        samples: samples
+        phase: phase
+        logistic: argv.logistic
+        epochs: argv.epochs
+
+  ubound = value * argv.match_range
+  lbound = value / argv.match_range
   step = (ubound / lbound) ** .25
   best = (lbound * ubound) ** .5
   { score, coeffs } = try_value(phase, best, -Infinity, samples)
