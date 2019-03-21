@@ -77,12 +77,12 @@ flip_v_only = (positions) -> [
 flip_hvxy  = (positions) -> [
   positions
   flip_v positions
+  flip_h positions
+  flip_v flip_h positions
   flip_xy positions
   flip_xy flip_v positions
-  flip_h positions
-  flip_h flip_v positions
-  flip_h flip_xy positions
-  flip_h flip_xy flip_v positions
+  flip_xy flip_h positions
+  flip_xy flip_v flip_h positions
 ]
 
 patterns = [
