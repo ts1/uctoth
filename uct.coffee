@@ -5,8 +5,8 @@
 { encode } = require './encode'
 
 defaults =
-  C: 1.28*SCORE_MULT
-  C_log: 0.209*LOG_MULT
+  C: 1.0 * SCORE_MULT
+  C_log: 0.20 * LOG_MULT
   max_search: 14000
   verbose: true
   evaluate: null
