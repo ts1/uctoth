@@ -169,7 +169,7 @@ build_single_index_table = ->
   for p in patterns
     p.single_index = {}
     for i in [0...(3**p.len+1)/2]
-      if p.normalize(i) == Math.abs(i) or p.normalize(-i) == Math.abs(i)
+      if Math.abs(p.normalize(i)) == i and p.normalize(-i) != i
         single_index_table.push {pattern:p.name, index:i}
         p.single_index[i] = single_i
         single_i++
@@ -200,8 +200,10 @@ code_to_single_indexes = (code) ->
       else
         map[abs] = value - 1
     for index, value of map
-      indexes.push p.get_single_index(index)
-      indexes.push value
+      single_index = p.get_single_index(index)
+      if single_index?
+        indexes.push single_index
+        indexes.push value
   indexes
 
 init = ->
