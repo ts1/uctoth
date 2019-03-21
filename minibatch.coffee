@@ -25,7 +25,13 @@ load_samples = (opt) ->
   samples = shuffle(sample for sample from book.iterate_indexes(opt.phase))
   if opt.logistic
     samples.forEach (sample) ->
-      sample[0] = if sample[0] > 0 then .99 else 0.01
+      sample[0] =
+        if sample[0] > 0
+          .99
+        else if sample[0] < 0
+          0.01
+        else
+          0.5
   console.log "loaded #{samples.length} samples" if opt.verbose
   book.close()
   samples
