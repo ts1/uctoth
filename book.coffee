@@ -116,6 +116,9 @@ module.exports = class Book
     @db.run '''
       create index if not exists game_nodes__n_moves on game_nodes (n_moves)
       '''
+    @db.run '''
+      create index if not exists game_nodes__outcome on game_nodes (outcome)
+      '''
 
     # opening nodes
     @db.run '''
@@ -387,6 +390,15 @@ module.exports = class Book
 
   sum_nodes_outcome: ->
     @db.get('select sum(outcome) as s from game_nodes').s or 0
+
+  win_loss_balance: ->
+    win = @db.get(
+      'select count(*) as win from game_nodes where outcome > 0'
+    ).win or 0
+    loss = @db.get(
+      'select count(*) as loss from game_nodes where outcome < 0'
+    ).loss or 0
+    win - loss
 
   has_game: (moves) ->
     board = new Board

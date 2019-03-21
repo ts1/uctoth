@@ -38,10 +38,9 @@ argv = require 'yargs'
       requiresArg: true
     b:
       alias: 'balance'
-      desc: 'Tolerance of outcome balance'
-      type: 'number'
-      default: 20
-      requiresArg: true
+      desc: 'Balance outcome or win-loss'
+      default: true
+      type: 'boolean'
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
@@ -58,6 +57,9 @@ argv = require 'yargs'
       desc: 'Watch the file and exit when it changes'
       default: 'weights.json'
       requiresArg: true
+    wlb:
+      desc: 'Use win-loss balance instead of outcome'
+      type: 'boolean'
     h:
       alias: 'help'
   .version false
@@ -130,10 +132,10 @@ find_unplayed_opening = (book, depth, cb) ->
       outcome = book.get_game_node(board)
       unless outcome?
         outcome = cb moves
-      if d > depth
-        return
-      if ((depth&1) and balance >= -argv.balance) or
-          ((depth&1)==0 and balance <= argv.balance)
+      return if d > depth
+      return unless argv.balance
+      if ((depth&1)==0 and balance < 0) or
+         ((depth&1)==1 and balance > 0)
         return
 
     unless board.any_moves(turn)
@@ -164,7 +166,11 @@ do ->
       {moves, outcome} = play(player, opening)
       moves_str = pos_array_to_str(moves)
       book.add_game moves
-      balance = book.sum_nodes_outcome()
+      balance =
+        if argv.wlb
+          book.win_loss_balance()
+        else
+          book.sum_nodes_outcome()
       console.log 'balance', balance
 
       process.exit 0 if ++n_games >= argv.n

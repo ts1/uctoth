@@ -56,7 +56,7 @@ argv = require 'yargs'
       default: false
     b:
       alias: 'balance'
-      desc: 'Tolerance of outcome balance'
+      desc: 'Tolerance of outcome/win-loss balance'
       type: 'number'
       default: 10000
       requiresArg: true
@@ -95,6 +95,9 @@ argv = require 'yargs'
       default: 'weights.json'
       type: 'string'
       requireArg: true
+    wlb:
+      desc: 'Use win-loss balance instead of outcome'
+      type: 'boolean'
     v:
       alias: 'verbose'
       default: false
@@ -159,7 +162,11 @@ do ->
   reload = if argv.watch then watch_file(argv.watch) else -> false
   games = {}
   until reload()
-    balance = book.sum_nodes_outcome()
+    balance =
+      if argv.wlb
+        book.win_loss_balance()
+      else
+        book.sum_nodes_outcome()
     console.log "balance #{balance}" if argv.v
 
     opening = argv.opening
