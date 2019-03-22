@@ -27,6 +27,7 @@ argv = require 'yargs'
 
 visited = {}
 book = new Book argv.book, readonly: true
+book.init()
 board = new Board
 moves = []
 
