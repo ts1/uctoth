@@ -11,6 +11,7 @@ defaults =
   verbose: true
   inverted: false
   endgame_eval: null
+  endgame_weights: 'ref/weights.json'
   shuffle: false
 
 F5 = pos_from_str('F5')
@@ -18,15 +19,24 @@ F5 = pos_from_str('F5')
 module.exports = (options={}) ->
   opts = {defaults..., options...}
 
-  solve = if opts.inverted
-    endgame
-      verbose: opts.verbose
-      evaluate: opts.endgame_eval or require('./pattern_eval')('weights.json', true)
-      inverted: true
+  try
+    ext = require('./ext').solve?
+  catch
+    ext = false
+
+  if ext and not opts.inverted
+    ext_endgame = require './ext/endgame'
+    solve = ext_endgame(weights: opts.endgame_weights, verbose: opts.verbose)
   else
-    endgame
-      verbose: opts.verbose
-      evaluate: opts.endgame_eval or require('./pattern_eval')('weights.json')
+    solve = if opts.inverted
+      endgame
+        verbose: opts.verbose
+        evaluate: opts.endgame_eval or require('./pattern_eval')('weights.json', true)
+        inverted: true
+    else
+      endgame
+        verbose: opts.verbose
+        evaluate: opts.endgame_eval or require('./pattern_eval')('weights.json')
 
   (board, me, force_moves=null) ->
     left = board.count(EMPTY)
