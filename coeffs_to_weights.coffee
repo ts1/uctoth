@@ -99,6 +99,7 @@ module.exports = (options) ->
   denormalize weights
   stats = round weights
   weights.clip = 16
+  weights.stats = stats
   fs.writeFileSync opt.outfile, JSON.stringify weights
   console.log "'#{opt.outfile}' is ready" if opt.verbose
   console.log stats if opt.verbose

@@ -65,6 +65,10 @@ yargs = require 'yargs'
       type: 'number'
       default: defaults.search_max
       requiresArg: true
+    offset:
+      desc: 'Use offset'
+      type: 'boolean'
+      default: defaults.offset
     h:
       alias: 'help'
   .strict()

@@ -14,8 +14,10 @@ defaults =
   search_max: 2
   search_min: 0.001
   verbose: true
+  offset: true
 
-INDEX_SIZE = get_single_index_size()
+INDEX_SIZE = get_single_index_size() + 1
+OFFSET = INDEX_SIZE - 1
 
 load_samples = (opt) ->
   book = new Book opt.book, close_on_exit: false
@@ -75,6 +77,7 @@ module.exports = (options={}) ->
         index = indexes[i]
         value = indexes[i+1]
         result += coeffs[index] * value
+      result += coeffs[OFFSET]
       result
 
     if opt.logistic
@@ -93,6 +96,8 @@ module.exports = (options={}) ->
         value = indexes[i+1]
         g = e * value
         gradient[index] -= g
+      if opt.offset
+        gradient[OFFSET] -= e
       e2 += e * e
     {gradient, e2}
 
@@ -287,6 +292,11 @@ module.exports = (options={}) ->
         logistic: opt.logistic
         l2: opt.l2
       }
+
+      if opt.offset
+        console.log "Offset: #{coeffs[OFFSET]}"
+        retval.offset = coeffs[OFFSET]
+
       process.stdout.write "Writing #{opt.outfile}: " if opt.verbose
       fs.writeFileSync opt.outfile, JSON.stringify retval
       console.log "done" if opt.verbose
