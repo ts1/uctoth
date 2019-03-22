@@ -9,7 +9,9 @@
     Setting.setting(v-show="mode=='setting'" @start="start")
     Game(v-if="mode=='game'" v-bind="prefs" @back="back")
     .link
-      a(href="https://github.com/ts1/uctoth" target="_blank") Source code
+      a(href="https://github.com/ts1/uctoth" target="_blank")
+        GithubIcon.icon
+        | Source code
 </template>
 
 <script lang="coffee">
@@ -18,6 +20,7 @@
   import './no_bounce'
   import Setting from './components/Setting'
   import Game from './components/Game'
+  import GithubIcon from '@icons/GithubCircle'
 
   update_win_height = ->
     height = document.documentElement.clientHeight
@@ -38,6 +41,7 @@
     components: {
       Setting
       Game
+      GithubIcon
     }
     mounted: ->
       if document.documentElement?.style?.setProperty?
@@ -84,6 +88,10 @@
       color #ccc
       text-decoration none
       padding 15px
+      .icon
+        font-size 16px
+        margin-right 5px
+        vertical-align -1px
 
   p.intro
     max-height 0
