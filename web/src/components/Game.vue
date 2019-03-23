@@ -132,6 +132,7 @@ export default
     right 0
     margin auto
     top 0
+    z-index 1
 
   .msg-enter
     transform translateY(80px)

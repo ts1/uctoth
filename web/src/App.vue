@@ -91,7 +91,7 @@
       .icon
         font-size 16px
         margin-right 5px
-        vertical-align -1px
+        vertical-align -2px
 
   p.intro
     max-height 0
