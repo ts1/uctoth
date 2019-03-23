@@ -10,6 +10,7 @@
         "src/bb_endgame.c",
         "src/bb_hash.c",
         "src/bb_minimax.c",
+        "src/bb_uct.c",
         "src/util.c"
       ],
       "include_dirs": ["<!(node -e \"require('nan')\")"]

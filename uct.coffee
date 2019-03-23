@@ -3,6 +3,7 @@
 { pos_to_str } = require './board'
 { INFINITY } = require './util'
 { encode } = require './encode'
+ext = require './ext'
 
 defaults =
   C: 1.0 * SCORE_MULT
@@ -39,7 +40,16 @@ module.exports = (options={}) ->
 
   outcome_mode = not options.evaluate.logistic or not options.tenacious
 
-  (board, me) ->
+  ext_uct = ext.is_enabled and options.evaluate.weights and
+    require('./ext/uct')
+      weights: options.evaluate.weights
+      scope: if options.evaluate.logistic then options.C_log else options.C
+      verbose: options.verbose
+      n_search: options.max_search
+      randomness: options.random
+      tenacious: options.tenacious
+
+  coffee_uct = (board, me) ->
     scope = if options.evaluate.logistic then options.C_log else options.C
     board = new options.board_class board
     max_depth = 0
@@ -179,5 +189,10 @@ module.exports = (options={}) ->
       {move, n, value}
 
     return {move:best.move, value:best.value, moves}
+
+  if ext_uct and options.random == 0
+    ext_uct
+  else
+    coffee_uct
 
 module.exports.defaults = defaults

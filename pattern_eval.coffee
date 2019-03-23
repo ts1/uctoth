@@ -31,7 +31,11 @@ module.exports = (arg, invert=false) ->
     sum
 
   if invert
-    pattern_eval = (board, me) -> -pattern_eval(board, me)
+    pattern_eval = do ->
+      orig = pattern_eval
+      (board, me) -> -orig(board, me)
 
   pattern_eval.logistic = weights.meta[0].logistic
+  pattern_eval.weights = weights
+
   pattern_eval

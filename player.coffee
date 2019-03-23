@@ -2,6 +2,7 @@
 { encode_normalized } = require './encode'
 endgame = require './endgame'
 { shuffle } = require './util'
+ext = require('./ext')
 
 defaults =
   book: null
@@ -18,8 +19,6 @@ F5 = pos_from_str('F5')
 
 module.exports = (options={}) ->
   opts = {defaults..., options...}
-
-  ext = require('./ext')
 
   if ext.is_enabled and not opts.inverted
     ext_endgame = require './ext/endgame'

@@ -3,10 +3,9 @@ ext = require '.'
 convert_weights = require './convert-weights'
 { pos_from_native_move } = require './util'
 
-defaults = {
+defaults =
   weights: path.resolve __dirname, '..', 'ref', 'weights.json'
   verbose: true
-}
 
 module.exports = (options) ->
   opt = { defaults..., options... }

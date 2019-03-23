@@ -21,6 +21,7 @@ typedef int8_t s8;
 #endif
 
 #define SCORE_MULT 4000 /* from pattern.coffee */
+#define LOG_MULT 5000 /* from logutil.coffee */
 
 #ifdef __cplusplus
 extern "C" {
