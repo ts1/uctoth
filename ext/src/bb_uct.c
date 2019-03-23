@@ -13,11 +13,13 @@ struct node {
     node_t *first_child, *sibling, *pass;
 };
 
-static int grew, scope, outcome_mode;
+static int grew, scope, outcome_mode, max_discs, n_nodes;
 
 static void uct_search(bboard b, node_t *node, int n_discs, int pass)
 {
     node->n_visited++;
+    if (n_discs > max_discs)
+        max_discs = n_discs;
 
     if (node->pass) {
         uct_search(bb_swap(b), node->pass, n_discs, 1);
@@ -34,10 +36,10 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
                 best = child;
             }
         }
-        node = best;
         u64 flips = bb_flip_discs(b, best->move);
         assert(flips);
         bboard newb = bb_swap(bb_apply_flips(b, flips, best->move));
+
         uct_search(newb, best, n_discs+1, 0);
 
         int maxval = -BB_INF;
@@ -60,10 +62,12 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
             node_t *child = calloc(1, sizeof(node_t));
             *child_slot = child;
             child_slot = &child->sibling;
-            bboard newb = bb_swap(bb_apply_flips(b, flips, move));
+            bboard newb = bb_apply_flips(b, flips, move);
             child->value = bb_eval(newb, n_discs+1);
+            child->move = move;
             if (child->value > max)
                 max = child->value;
+            n_nodes++;
             grew = 1;
         }
         if (node->first_child) {
@@ -71,7 +75,6 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
         } else {
             if (pass) {
                if (node->n_visited == 1) {
-                   grew = 1;
                    if (outcome_mode)
                        node->value = bb_score(b) * SCORE_MULT;
                }
@@ -79,6 +82,8 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
                 node_t *child = calloc(1, sizeof(node_t));
                 node->pass = child;
                 child->value = -node->value;
+                n_nodes++;
+                grew = 1;
             }
         }
     }
@@ -100,6 +105,8 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
     node_t *root = calloc(1, sizeof(node_t));
     scope = orig_scope;
     outcome_mode = !tenacious;
+    max_discs = 0;
+    n_nodes = 1;
     for (int i = 0; i < n_search; i++) {
         grew = 0;
         uct_search(b, root, n_discs, 0);
@@ -111,6 +118,8 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
             scope *= 1.4;
         }
     }
+    bb_debug("max depth %d\n", max_discs - n_discs);
+    bb_debug("%d nodes\n", n_nodes);
 
     int max_visit = -1;
     node_t *best = NULL;

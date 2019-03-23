@@ -1,19 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "oth.h"
 #include "bitboard.h"
 #include "bitmap.h"
 #include "bb_eval.h"
 #include "bb_hash.h"
 #include "bb_minimax.h"
+#include "bb_uct.h"
 
 #define USE_HASH 1
 #define FASTEST_FIRST_DEPTH 8
 #define PRE_SEARCH_DEPTH 13
 #define PRE_SEARCH_2_DEPTH 20
 #define PRE_SEARCH_3_DEPTH 25
-#define SHALLOW_SEARCH_DEPTH_DIFF 8
 #define USE_PARITY 1
 #define USE_ETC (1 && USE_HASH)
 
@@ -576,20 +577,19 @@ static int solve_root(bboard b, int *score_p, int pass, int wld, u64 mask)
     struct move moves[64];
     int n_moves;
     int i;
-    int ssdepth;
     int init_guess;
     int ssbest;
+    int n_search;
 
     make_parity_table(b);
     make_empty_list(b);
     n_empty = bm_count_bits(~(b.black|b.white));
 
-    ssdepth = n_empty - SHALLOW_SEARCH_DEPTH_DIFF;
-    if (ssdepth < 1)
-        ssdepth = 1;
-    if (ssdepth > 8)
-        ssdepth = 8;
-    init_guess = bb_minimax(b, ssdepth, &ssbest);
+    n_search = 20000;
+    if (n_empty > 20)
+        n_search <<= n_empty - 20;
+
+    init_guess = bb_uct_search(b, n_search, &ssbest, DEFAULT_SCOPE, 0, 0);
     n_moves = sort_moves_fastest_first(b, moves, NULL, ssbest, -64, 64, mask);
 
     if (!n_moves) {
@@ -603,7 +603,9 @@ static int solve_root(bboard b, int *score_p, int pass, int wld, u64 mask)
         return best_move;
     }
 
-    init_guess = (int) ((float) init_guess / SCORE_MULT / 2 + .5) * 2;
+    init_guess = (int) round((double) init_guess / (SCORE_MULT * 2)) * 2;
+    if (init_guess > 64) init_guess = 64;
+    if (init_guess < -64) init_guess = -64;
 
     int old_v = bb_verbosity;
     if (wld) {
