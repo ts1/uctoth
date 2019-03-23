@@ -4,6 +4,7 @@ import make_player from '@oth/player'
 import uct from '@oth/uct'
 import minmax from '@oth/minmax'
 import weights from './weights.json'
+import { ready } from '@oth/ext/wasm-glue'
 
 player = null
 
@@ -75,10 +76,20 @@ set_level = (level) ->
     verbose: false
     inverted: invert
     endgame_eval: evaluate
+    endgame_weights: weights
     solve_wld: wld
     solve_full: full
 
+shown = false
+
 self.onmessage = (e) ->
+  try
+    await ready
+    console.log 'wasm is ready!' unless shown
+  catch
+    console.log 'wasm is not available' unless shown
+  shown = true
+
   switch e.data.type
     when 'set_level'
       { level } = e.data

@@ -19,12 +19,9 @@ F5 = pos_from_str('F5')
 module.exports = (options={}) ->
   opts = {defaults..., options...}
 
-  try
-    ext = require('./ext').solve?
-  catch
-    ext = false
+  ext = require('./ext')
 
-  if ext and not opts.inverted
+  if ext.is_enabled and not opts.inverted
     ext_endgame = require './ext/endgame'
     solve = ext_endgame(weights: opts.endgame_weights, verbose: opts.verbose)
   else

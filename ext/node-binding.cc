@@ -1,10 +1,10 @@
 #include <nan.h>
 #include <stdlib.h>
-#include "bitboard.h"
-#include "bb_eval.h"
-#include "bb_index.h"
-#include "bb_hash.h"
-#include "oth.h"
+#include "src/bitboard.h"
+#include "src/bb_eval.h"
+#include "src/bb_index.h"
+#include "src/bb_hash.h"
+#include "src/oth.h"
 
 using namespace v8;
 

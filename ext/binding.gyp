@@ -3,7 +3,7 @@
     {
       "target_name": "ext",
       "sources": [
-        "node_binding.cc",
+        "node-binding.cc",
         "src/bitboard.c",
         "src/bb_eval.c",
         "src/bb_index.c",

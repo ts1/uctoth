@@ -11,10 +11,19 @@
 #define N_PHASES 10
 #define N_MOVES_PER_PHASE 6
 
+#define POW3_4 (3*3*3*3)
+#define POW3_5 (POW3_4*3)
+#define POW3_6 (POW3_5*3)
+#define POW3_7 (POW3_6*3)
+#define POW3_8 (POW3_7*3)
+#define POW3_9 (POW3_8*3)
+#define POW3_10 (POW3_9*3)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+void *bb_get_weights_ptr(int phase);
 void bb_set_weights(int phase, const s16 *weights);
 int bb_eval(bboard b, int n_discs);
 
