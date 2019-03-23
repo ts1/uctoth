@@ -41,12 +41,15 @@ param_table =
     random: 0
     wld: 20
     full: 18
+    wasm_wld: 22
+    wasm_full: 20
 
-set_level = (level) ->
+set_level = (level, wasm) ->
   params = param_table[level]
   unless params
     throw new Error "invalid level #{level}"
-  {search, wld, full, invert, random, book, book_random, depth} = params
+  {search, wld, full, invert, random, book, book_random, depth
+    wasm_wld, wasm_full } = params
 
   evaluate = if invert then pattern_eval(weights, true) else pattern_eval(weights)
   if book
@@ -77,8 +80,8 @@ set_level = (level) ->
     inverted: invert
     endgame_eval: evaluate
     endgame_weights: weights
-    solve_wld: wld
-    solve_full: full
+    solve_wld: wasm and wasm_wld or wld
+    solve_full: wasm and wasm_full or full
 
 shown = false
 
@@ -86,14 +89,16 @@ self.onmessage = (e) ->
   try
     await ready
     console.log 'wasm is ready!' unless shown
+    wasm = true
   catch
     console.log 'wasm is not available' unless shown
+    wasm = false
   shown = true
 
   switch e.data.type
     when 'set_level'
       { level } = e.data
-      set_level level
+      set_level level, wasm
     when 'move'
       unless player
         throw new Error 'level not set'
