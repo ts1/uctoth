@@ -294,7 +294,7 @@ module.exports = (options={}) ->
       }
 
       if opt.offset
-        console.log "Offset: #{coeffs[OFFSET]}"
+        console.log "Offset: #{coeffs[OFFSET]}" if opt.verbose
         retval.offset = coeffs[OFFSET]
 
       process.stdout.write "Writing #{opt.outfile}: " if opt.verbose
