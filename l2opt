@@ -228,4 +228,7 @@ do ->
         optimize_cv phase
       else
         optimize_match phase
+    coeffs_to_weights
+      prefix: argv.prefix
+      outfile: argv.weights
     break unless argv.loop
