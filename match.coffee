@@ -89,8 +89,6 @@ module.exports = (options={}) ->
       evaluate: ref_eval
       verbose: opt.verbose
       max_search: opt.search
-      C: opt.C
-      C_log: opt.C_log
     solve_wld: opt.wld
     solve_full: opt.full
     verbose: opt.verbose
