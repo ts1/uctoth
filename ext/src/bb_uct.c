@@ -7,13 +7,42 @@
 #include "bb_hash.h"
 
 typedef struct node node_t;
-
 struct node {
     int move, value, n_visited;
     node_t *first_child, *sibling, *pass;
 };
 
 static int grew, scope, outcome_mode, max_discs, n_nodes;
+
+#define PER_POOL 1000
+
+typedef struct node_pool node_pool_t;
+struct node_pool {
+    node_pool_t *prev;
+    int n_used;
+    node_t nodes[PER_POOL];
+};
+
+static node_pool_t *pool;
+
+static node_t *alloc_node(void)
+{
+    if (!pool || pool->n_used >= PER_POOL) {
+        node_pool_t *new_pool = calloc(1, sizeof(node_pool_t));
+        new_pool->prev = pool;
+        pool = new_pool;
+    }
+    return &pool->nodes[pool->n_used++];
+}
+
+static void free_pools(node_pool_t *pool)
+{
+    if (pool) {
+        free_pools(pool->prev);
+        free(pool);
+    }
+}
+
 
 static void uct_search(bboard b, node_t *node, int n_discs, int pass)
 {
@@ -29,7 +58,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
         node_t *best;
         for (node_t *child = node->first_child; child; child = child->sibling) {
             double bias = scope *
-                sqrt(node->n_visited / (child->n_visited + 2));
+                sqrt((node->n_visited + 1)/ (child->n_visited + 2));
             double value = child->value + bias;
             if (value > max) {
                 max = value;
@@ -48,6 +77,13 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
                 maxval = child->value;
         }
         node->value = -maxval;
+    } else if (n_discs == 64) {
+       if (node->n_visited == 1) {
+           if (outcome_mode) {
+               node->value = bb_score(b) * SCORE_MULT;
+               grew = 1;
+           }
+       }
     } else {
         node_t **child_slot = &node->first_child;
         u64 pmoves = bb_potential_moves(b);
@@ -59,7 +95,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
             u64 flips = bb_flip_discs(b, move);
             if (!flips)
                 continue;
-            node_t *child = calloc(1, sizeof(node_t));
+            node_t *child = alloc_node();
             *child_slot = child;
             child_slot = &child->sibling;
             bboard newb = bb_apply_flips(b, flips, move);
@@ -79,7 +115,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
                        node->value = bb_score(b) * SCORE_MULT;
                }
             } else {
-                node_t *child = calloc(1, sizeof(node_t));
+                node_t *child = alloc_node();
                 node->pass = child;
                 child->value = -node->value;
                 n_nodes++;
@@ -90,19 +126,11 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
 
 }
 
-static void free_nodes(node_t *node) {
-    if (node->first_child)
-        free_nodes(node->first_child);
-    if (node->sibling)
-        free_nodes(node->sibling);
-    free(node);
-}
-
 int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
         double randomness, int tenacious)
 {
     int n_discs = bm_count_bits(b.black | b.white);
-    node_t *root = calloc(1, sizeof(node_t));
+    node_t *root = alloc_node();
     scope = orig_scope;
     outcome_mode = !tenacious;
     max_discs = 0;
@@ -138,6 +166,7 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
     int retval = best->value;
     if (move_ptr)
         *move_ptr = best->move;
-    free_nodes(root);
+    free_pools(pool);
+    pool = NULL;
     return retval;
 }
