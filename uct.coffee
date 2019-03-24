@@ -46,7 +46,6 @@ module.exports = (options={}) ->
     options.ext and
     ext.is_enabled and
     options.evaluate.weights and
-    options.random == 0 and
     not options.inverted and
       require('./ext/uct')
         weights: options.evaluate.weights

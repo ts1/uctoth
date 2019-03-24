@@ -46,6 +46,12 @@ argv = require 'yargs'
       type: 'number'
       default: 0.7
       requiresArg: true
+    random:
+      alias: 'R'
+      desc: 'UCT randomness'
+      type: 'number'
+      default: 0
+      requiresArg: true
     depth:
       alias: 'd'
       desc: 'Search depth of minimax'
@@ -117,6 +123,7 @@ simple = Player
     evaluate: require('./simple_eval')
     max_search: argv.search
     board_class: Board
+    random: argv.random
   solve_wld: argv.wld
   solve_full: argv.full
   endgame_eval: normal_eval
@@ -138,6 +145,7 @@ uct = Player
   strategy: require('./uct')
     evaluate: normal_eval
     max_search: argv.search
+    random: argv.random
   solve_wld: argv.wld
   solve_full: argv.full
   endgame_eval: normal_eval
@@ -148,6 +156,7 @@ invert = Player
     evaluate: invert_eval
     max_search: argv.search
     inverted: true
+    random: argv.random
   inverted: true
   solve_wld: argv.wld
   solve_full: argv.full

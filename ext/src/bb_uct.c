@@ -124,6 +124,52 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
     }
 
 }
+static node_t *find_best_child(node_t *node)
+{
+    node_t *best = NULL;
+    for (node_t *child = node->first_child; child; child = child->sibling) {
+        if (!best || child->n_visited > best->n_visited ||
+             (child->n_visited == best->n_visited &&
+                  child->value > best->value))
+            best = child ;
+    }
+    return best;
+}
+
+static node_t *find_stochastic_child(node_t *node, double randomness)
+{
+    double i_rand = 1 / randomness;
+    double avg = 0;
+    int n = 0;
+    for (node_t *child = node->first_child; child; child = child->sibling) {
+        avg += child->n_visited;
+        n++;
+    }
+    avg /= n;
+    bb_debug("avg=%g\n", avg);
+
+    double sum = 0;
+    for (node_t *child = node->first_child; child; child = child->sibling) {
+        bb_debug("n=%d norm=%g pow=%g\n",
+                child->n_visited,
+                child->n_visited / avg,
+                pow(child->n_visited / avg, i_rand));
+        sum += pow(child->n_visited / avg, i_rand);
+    }
+    bb_debug("sum=%g\n", sum);
+
+    double r = ((double) rand() / RAND_MAX) * sum;
+    bb_debug("r=%g\n", r);
+
+    double s = 0;
+    for (node_t *child = node->first_child; child; child = child->sibling) {
+        s += pow(child->n_visited / avg, i_rand);
+        bb_debug("n=%d s=%g\n", child->n_visited, s);
+        if (s >= r)
+            return child;
+    }
+    return NULL;
+}
 
 int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
         double randomness, int tenacious)
@@ -148,14 +194,10 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
     bb_debug("max depth %d\n", max_discs - n_discs);
     bb_debug("%d nodes\n", n_nodes);
 
-    int max_visit = -1;
-    node_t *best = NULL;
-    for (node_t *node = root->first_child; node; node = node->sibling) {
-        if (node->n_visited > max_visit) {
-            max_visit = node->n_visited;
-            best = node;
-        }
-    }
+    node_t *best = randomness ?
+        find_stochastic_child(root, randomness) :
+        find_best_child(root);
+
     if (!best) {
         if (move_ptr)
             *move_ptr = -1;
