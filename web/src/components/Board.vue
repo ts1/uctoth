@@ -188,8 +188,6 @@
           console.log "#{t} msec"
 
           {move, value} = e.data
-          console.log 'Move', pos_to_str(move)
-          console.log 'Estimated value', Math.round(100*value)/100 if value?
           setTimeout (=>
             @move move
             @thinking = false

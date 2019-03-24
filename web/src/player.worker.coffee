@@ -5,6 +5,7 @@ import uct from '@oth/uct'
 import minmax from '@oth/minmax'
 import weights from './weights.json'
 import { ready } from '@oth/ext/wasm-glue'
+import { format_eval } from '@oth/util'
 
 player = null
 
@@ -38,18 +39,19 @@ param_table =
     book: true
     book_random: .1
     search: 100000
+    wasm_search: 500000
     random: 0
     wld: 20
     full: 18
-    wasm_wld: 22
-    wasm_full: 20
+    wasm_wld: 24
+    wasm_full: 22
 
 set_level = (level, wasm) ->
   params = param_table[level]
   unless params
     throw new Error "invalid level #{level}"
-  {search, wld, full, invert, random, book, book_random, depth
-    wasm_wld, wasm_full } = params
+  {search, wld, full, invert, random, book, book_random, depth,
+    wasm_search, wasm_wld, wasm_full } = params
 
   evaluate = if invert then pattern_eval(weights, true) else pattern_eval(weights)
   if book
@@ -66,7 +68,7 @@ set_level = (level, wasm) ->
     else
       uct
         evaluate: evaluate
-        max_search: search
+        max_search: wasm and wasm_search or search
         random: random
         verbose: false
         inverted: invert
@@ -105,6 +107,15 @@ self.onmessage = (e) ->
       {board, turn} = e.data
       board = new Board board
       result = await player(board, turn)
+      if result.solved == 'wld'
+        console.log "WLD result: #{result.value}"
+      else if result.solved == 'full'
+        console.log "Perfect outcome: #{result.value}"
+      else
+        logistic = weights.logistic
+        if result.value
+          console.log "Estimated value: #{format_eval(result.value, logistic)}"
+      console.log "Move: #{pos_to_str(result.move, turn)}"
       self.postMessage result
     else
       throw new Error "message type unknown: #{e.data.type}"

@@ -13,10 +13,6 @@ NAN_METHOD(set_verbose)
 {
     Nan::HandleScope scope;
 
-    if (!info[0]->IsBoolean()) {
-        Nan::ThrowTypeError("Argument 1 must be a Number");
-        return;
-    }
     bool verbose = Nan::To<bool>(info[0]).FromMaybe(false);
     bb_verbosity = verbose ? 2 : 1;
 }
@@ -24,11 +20,6 @@ NAN_METHOD(set_verbose)
 NAN_METHOD(set_weights)
 {
     Nan::HandleScope scope;
-
-    if (!info[0]->IsArray()) {
-        Nan::ThrowTypeError("Argument must be an Array");
-        return;
-    }
 
     Local<Array> array = info[0].As<Array>();
     for (int i = 0; i < N_PHASES; i++) {
@@ -42,45 +33,30 @@ NAN_METHOD(set_weights)
     }
 }
 
+NAN_METHOD(evaluate)
+{
+    const char *board = *Nan::Utf8String(info[0]);
+    int turn = Nan::To<int>(info[1]).FromMaybe(0);
+    bboard bb = bb_from_ascii(board, 0);
+    if (turn == -1)
+        bb = bb_swap(bb);
+    int n_discs = bm_count_bits(bb.black | bb.white);
+
+    int eval = bb_eval(bb, n_discs);
+
+    info.GetReturnValue().Set(eval);
+}
+
 NAN_METHOD(uct_search)
 {
-    if (!info[0]->IsString()) {
-        Nan::ThrowTypeError("Argument 1 must be a String");
-        return;
-    }
     const char *board = *Nan::Utf8String(info[0]);
-    bboard bb = bb_from_ascii(board, 0);
-
-    if (!info[1]->IsNumber()) {
-        Nan::ThrowTypeError("Argument 2 must be a Number");
-        return;
-    }
     int turn = Nan::To<int>(info[1]).FromMaybe(0);
-
-    if (!info[2]->IsNumber()) {
-        Nan::ThrowTypeError("Argument 3 must be a Number");
-        return;
-    }
     int n_search = Nan::To<int>(info[2]).FromMaybe(0);
-
-    if (!info[3]->IsNumber()) {
-        Nan::ThrowTypeError("Argument 4 must be a Number");
-        return;
-    }
     int scope = Nan::To<int>(info[3]).FromMaybe(0);
-
-    if (!info[4]->IsNumber()) {
-        Nan::ThrowTypeError("Argument 5 must be a Number");
-        return;
-    }
     double randomness = Nan::To<double>(info[4]).FromMaybe(0);
-
-    if (!info[5]->IsBoolean()) {
-        Nan::ThrowTypeError("Argument 6 must be a Boolean");
-        return;
-    }
     int tenacious = Nan::To<int>(info[5]).FromMaybe(0);
 
+    bboard bb = bb_from_ascii(board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
 
@@ -101,27 +77,11 @@ NAN_METHOD(uct_search)
 
 NAN_METHOD(solve)
 {
-    if (!info[0]->IsString()) {
-        Nan::ThrowTypeError("Argument 1 must be a String");
-        return;
-    }
     const char *board = *Nan::Utf8String(info[0]);
-    bboard bb = bb_from_ascii(board, 0);
-
-    if (!info[1]->IsNumber()) {
-        Nan::ThrowTypeError("Argument 2 must be a Number");
-        return;
-    }
     int turn = Nan::To<int>(info[1]).FromMaybe(0);
-
-    if (!info[2]->IsBoolean()) {
-        Nan::ThrowTypeError("Argument 3 must be a Boolean");
-        return;
-    }
     int wld = Nan::To<int>(info[2]).FromMaybe(0);
 
-    bb_hash_init(24);
-
+    bboard bb = bb_from_ascii(board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
     int score;
@@ -142,8 +102,10 @@ NAN_METHOD(solve)
 NAN_MODULE_INIT(init)
 {
     bb_index_init();
+    bb_hash_init(22);
     NAN_EXPORT(target, set_verbose);
     NAN_EXPORT(target, set_weights);
+    NAN_EXPORT(target, evaluate);
     NAN_EXPORT(target, uct_search);
     NAN_EXPORT(target, solve);
 }

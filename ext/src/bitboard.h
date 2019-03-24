@@ -99,6 +99,7 @@ static inline bboard bb_diag(bboard b)
     return b;
 }
 
+#if 1
 #define BB_ALL_SYMMETRIC(b, f, m, mf, t, tf, tm, tmf) \
     ( \
       m = bb_mirror(b), \
@@ -109,6 +110,18 @@ static inline bboard bb_diag(bboard b)
       tf = bb_transpose(f), \
       tmf = bb_transpose(mf) \
     )
+#else
+#define BB_ALL_SYMMETRIC(b, f, m, mf, t, tf, tm, tmf) \
+    ( \
+      t = bb_transpose(b), \
+      m = bb_mirror(b), \
+      f = bb_flip(b), \
+      tm = bb_mirror(t), \
+      mf = bb_flip(m), \
+      tf = bb_flip(t), \
+      tmf = bb_flip(tm) \
+    )
+#endif
 
 enum {
     bH8, bG8, bF8, bE8, bD8, bC8, bB8, bA8,

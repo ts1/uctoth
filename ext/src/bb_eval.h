@@ -26,6 +26,7 @@ extern "C" {
 void *bb_get_weights_ptr(int phase);
 void bb_set_weights(int phase, const s16 *weights);
 int bb_eval(bboard b, int n_discs);
+int bb_eval_dump(bboard b, int n_discs);
 
 #ifdef __cplusplus
 } /* extern "C" */

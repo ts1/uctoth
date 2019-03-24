@@ -111,3 +111,93 @@ int bb_eval(bboard b, int n_discs)
 
     return eval;
 }
+
+#if 0
+int bb_eval_dump(bboard b, int n_discs)
+{
+    bboard f, m, mf, t, tf, tm, tmf;
+    bboard bd, fd, md, mfd;
+    int eval;
+    const struct weight *w;
+
+    assert(n_discs >= 5 && n_discs <= 64);
+    w = &weights[(n_discs - 5) / 6];
+
+    BB_ALL_SYMMETRIC(b, f, m, mf, t, tf, tm, tmf);
+    bd = bb_diag(b);
+    fd = bb_diag(f);
+    md = bb_diag(m);
+    mfd = bb_diag(mf);
+
+    eval = 0;
+
+    printf("%d\n", w->corner9[bb_index_corner9(b)]);
+    printf("%d\n", w->corner9[bb_index_corner9(f)]);
+    printf("%d\n", w->corner9[bb_index_corner9(m)]);
+    printf("%d\n", w->corner9[bb_index_corner9(mf)]);
+    printf("\n");
+
+    printf("%d\n", w->corner10[bb_index_corner10(b)]);
+    printf("%d\n", w->corner10[bb_index_corner10(f)]);
+    printf("%d\n", w->corner10[bb_index_corner10(m)]);
+    printf("%d\n", w->corner10[bb_index_corner10(mf)]);
+    printf("%d\n", w->corner10[bb_index_corner10(t)]);
+    printf("%d\n", w->corner10[bb_index_corner10(tf)]);
+    printf("%d\n", w->corner10[bb_index_corner10(tm)]);
+    printf("%d\n", w->corner10[bb_index_corner10(tmf)]);
+    printf("\n");
+
+    printf("%d\n", w->edge2x[bb_index_edge2x(b)]);
+    printf("%d\n", w->edge2x[bb_index_edge2x(f)]);
+    printf("%d\n", w->edge2x[bb_index_edge2x(t)]);
+    printf("%d\n", w->edge2x[bb_index_edge2x(tm)]);
+    printf("\n");
+
+    printf("%d\n", w->row1[bb_index_row1(b)]);
+    printf("%d\n", w->row1[bb_index_row1(f)]);
+    printf("%d\n", w->row1[bb_index_row1(t)]);
+    printf("%d\n", w->row1[bb_index_row1(tm)]);
+    printf("\n");
+
+    printf("%d\n", w->row2[bb_index_row2(b)]);
+    printf("%d\n", w->row2[bb_index_row2(f)]);
+    printf("%d\n", w->row2[bb_index_row2(t)]);
+    printf("%d\n", w->row2[bb_index_row2(tm)]);
+    printf("\n");
+
+    printf("%d\n", w->row3[bb_index_row3(b)]);
+    printf("%d\n", w->row3[bb_index_row3(f)]);
+    printf("%d\n", w->row3[bb_index_row3(t)]);
+    printf("%d\n", w->row3[bb_index_row3(tm)]);
+    printf("\n");
+
+    printf("%d\n", w->diag4[bb_index_diag4_d(bd)]);
+    printf("%d\n", w->diag4[bb_index_diag4_d(fd)]);
+    printf("%d\n", w->diag4[bb_index_diag4_d(md)]);
+    printf("%d\n", w->diag4[bb_index_diag4_d(mfd)]);
+    printf("\n");
+
+    printf("%d\n", w->diag5[bb_index_diag5_d(bd)]);
+    printf("%d\n", w->diag5[bb_index_diag5_d(fd)]);
+    printf("%d\n", w->diag5[bb_index_diag5_d(md)]);
+    printf("%d\n", w->diag5[bb_index_diag5_d(mfd)]);
+    printf("\n");
+
+    printf("%d\n", w->diag6[bb_index_diag6_d(bd)]);
+    printf("%d\n", w->diag6[bb_index_diag6_d(fd)]);
+    printf("%d\n", w->diag6[bb_index_diag6_d(md)]);
+    printf("%d\n", w->diag6[bb_index_diag6_d(mfd)]);
+    printf("\n");
+
+    printf("%d\n", w->diag7[bb_index_diag7_d(bd)]);
+    printf("%d\n", w->diag7[bb_index_diag7_d(fd)]);
+    printf("%d\n", w->diag7[bb_index_diag7_d(md)]);
+    printf("%d\n", w->diag7[bb_index_diag7_d(mfd)]);
+    printf("\n");
+
+    printf("%d\n", w->diag8[bb_index_diag8_d(md)]);
+    printf("%d\n", w->diag8[bb_index_diag8_d(mfd)]);
+
+    return eval;
+}
+#endif

@@ -8,7 +8,6 @@ module.exports = (arg, invert=false) ->
   else
     weights = arg
 
-  #console.log 'making single tables', arg
   single_tbl = []
   for phase in [0...N_PHASES]
     tbl = []
@@ -22,13 +21,11 @@ module.exports = (arg, invert=false) ->
 
   pattern_eval = (board, me) ->
     phase = int((board.n_discs - 5) / N_MOVES_PER_PHASE)
-    #phase = N_PHASES - 1 if phase >= N_PHASES
     tbl = single_tbl[phase]
     sum = 0
     for i in [0...n_indexes]
       sum += tbl[board.indexes[i]]
-    sum *= me
-    sum
+    sum * me
 
   if invert
     pattern_eval = do ->

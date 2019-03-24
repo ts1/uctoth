@@ -10,7 +10,7 @@ int bb_verbosity = 1;
 static void message(int level, const char *fmt, va_list ap)
 {
     if (bb_verbosity >= level)
-        vfprintf(stderr, fmt, ap);
+        vprintf(fmt, ap);
 }
 
 void bb_debug(const char *fmt, ...)

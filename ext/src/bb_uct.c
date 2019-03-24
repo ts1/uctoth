@@ -43,7 +43,6 @@ static void free_pools(node_pool_t *pool)
     }
 }
 
-
 static void uct_search(bboard b, node_t *node, int n_discs, int pass)
 {
     node->n_visited++;

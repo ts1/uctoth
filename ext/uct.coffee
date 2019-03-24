@@ -1,5 +1,3 @@
-path = require 'path'
-uct = require '../uct'
 ext = require '.'
 convert_weights = require './convert-weights'
 { pos_from_native_move } = require './util'
