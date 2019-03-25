@@ -31,6 +31,10 @@ NAN_METHOD(set_weights)
         Nan::TypedArrayContents<s16> weights(val.As<Int16Array>());
         bb_set_weights(i, *weights);
     }
+
+    bool inverted = Nan::To<bool>(info[1]).FromMaybe(false);
+    if (inverted)
+        bb_nega_weight();
 }
 
 NAN_METHOD(evaluate)

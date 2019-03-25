@@ -46,7 +46,6 @@ module.exports = (options={}) ->
     options.ext and
     ext.is_enabled and
     options.evaluate.weights and
-    not options.inverted and
       require('./ext/uct')
         weights: options.evaluate.weights
         scope: if options.evaluate.logistic then options.C_log else options.C
@@ -54,6 +53,7 @@ module.exports = (options={}) ->
         n_search: options.max_search
         randomness: options.random
         tenacious: options.tenacious
+        inverted: options.inverted
 
   coffee_uct = (board, me) ->
     scope = if options.evaluate.logistic then options.C_log else options.C

@@ -12,6 +12,7 @@ player = null
 param_table =
   easiest:
     search: 2000
+    wasm_search: 100000
     random: 0
     invert: true
     wld: 15

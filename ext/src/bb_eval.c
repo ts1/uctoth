@@ -7,6 +7,14 @@
 #include "bb_eval.h"
 #include "bb_hash.h"
 
+#define POW3_4 (3*3*3*3)
+#define POW3_5 (POW3_4*3)
+#define POW3_6 (POW3_5*3)
+#define POW3_7 (POW3_6*3)
+#define POW3_8 (POW3_7*3)
+#define POW3_9 (POW3_8*3)
+#define POW3_10 (POW3_9*3)
+
 struct weight {
     s16 corner9[POW3_9];
     s16 corner10[POW3_10];
@@ -201,3 +209,15 @@ int bb_eval_dump(bboard b, int n_discs)
     return eval;
 }
 #endif
+
+void bb_nega_weight(void)
+{
+    s16 *p, *end;
+
+    p = (s16 *) weights;
+    end = p + (sizeof(weights) / sizeof(s16));
+    while (p < end) {
+        *p = -*p;
+        p++;
+    }
+}

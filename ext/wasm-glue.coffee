@@ -38,16 +38,14 @@ export solve = (board, turn, wld) ->
 _set_weights_single = Module.cwrap 'set_weights_single', null,
   ['number', 'array']
 _get_weights_ptr = Module.cwrap 'get_weights_ptr', 'number', ['number']
+_nega_weight = Module.cwrap 'nega_weight', null, []
 
-export set_weights = (weights) ->
+export set_weights = (weights, inverted) ->
   for i in [0...N_PHASES]
     ptr = _get_weights_ptr(i)
     array = new Uint8Array weights[i].buffer
     Module.writeArrayToMemory array, ptr
-    ###
-    console.log 'setting weight', i
-    _set_weights_single i, new Uint8Array weights[i].buffer
-    ###
+  _nega_weight()
   return
 
 export ready = new Promise (resolve, reject) ->

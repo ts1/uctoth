@@ -301,8 +301,14 @@ module.exports = (options={}) ->
     uct_result = uct_eval(board, me)
 
     move_values = {}
-    for move in uct_result.moves
-      move_values[move.move] = move.n
+    if uct_result.moves
+      for move in uct_result.moves
+        move_values[move.move] = move.n
+    else
+      # Native UCT doesn't return moves, so fake it
+      for move in moves
+        move_values[move] =
+          if move==uct_result.move then uct_result.value else -64
     moves.sort (a, b) -> move_values[b] - move_values[a]
 
     first_guess = uct_result.value / SCORE_MULT

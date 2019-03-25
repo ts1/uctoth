@@ -7,7 +7,7 @@ module.exports = (opt) ->
 
   (board, turn) ->
     ext.set_verbose opt.verbose
-    ext.set_weights weights
+    ext.set_weights weights, opt.inverted
     { move, value } = ext.uct_search(board.dump(), turn, opt.n_search,
       opt.scope, opt.randomness, opt.tenacious)
 

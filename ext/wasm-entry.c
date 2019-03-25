@@ -26,6 +26,12 @@ void *get_weights_ptr(int phase)
 }
 
 EMSCRIPTEN_KEEPALIVE
+void nega_weight(int phase)
+{
+    bb_nega_weight();
+}
+
+EMSCRIPTEN_KEEPALIVE
 s32 eval(const char *board, int turn, int n_search, int scope)
 {
     bboard bb = bb_from_ascii(board, 0);
