@@ -69,10 +69,10 @@ static inline u64 flip_discs_dir(u64 b, u64 w, u64 move, int sh, int n)
     if (!f)
         return 0;
     switch (n) {
-    case 6: f |= w & shift(f, sh);
-    case 5: f |= w & shift(f, sh);
-    case 4: f |= w & shift(f, sh);
-    case 3: f |= w & shift(f, sh);
+    case 6: f |= w & shift(f, sh); /* fallthrough */
+    case 5: f |= w & shift(f, sh); /* fallthrough */
+    case 4: f |= w & shift(f, sh); /* fallthrough */
+    case 3: f |= w & shift(f, sh); /* fallthrough */
     case 2: f |= w & shift(f, sh);
     }
     return (shift(f, sh) & b) ? f : 0;
@@ -115,7 +115,7 @@ def_flip(2,0) def_flip(2,1) def_flip(2,2) def_flip(2,3)
 def_flip(3,0) def_flip(3,1) def_flip(3,2) def_flip(3,3)
 
 typedef u64 (*flip_fn_t)(u64,u64,int);
-const static flip_fn_t flip_fn_tbl[64] = {
+static const flip_fn_t flip_fn_tbl[64] = {
     flip33,flip33,flip32,flip32,flip31,flip31,flip30,flip30,
     flip33,flip33,flip32,flip32,flip31,flip31,flip30,flip30,
     flip23,flip23,flip22,flip22,flip21,flip21,flip20,flip20,

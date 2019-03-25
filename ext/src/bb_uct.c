@@ -54,7 +54,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
         node->value = -node->pass->value;
     } else if (node->first_child) {
         double max = -INFINITY;
-        node_t *best;
+        node_t *best = NULL;
         for (node_t *child = node->first_child; child; child = child->sibling) {
             double bias = scope *
                 sqrt((node->n_visited + 1)/ (child->n_visited + 2));
