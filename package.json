@@ -2,7 +2,15 @@
   "private": true,
   "dependencies": {
     "better-sqlite3": "^5.4.0",
+    "bindings": "^1.5.0",
     "coffeescript": "^2.3.2",
     "yargs": "^12.0.5"
+  },
+  "devDependencies": {
+    "nan": "^2.13.2",
+    "node-gyp": "^3.8.0"
+  },
+  "scripts": {
+    "wasm": "emcc -Wall -Os ext/wasm-entry.c ext/src/*.c -o web/public/js/ext.js -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"cwrap\", \"writeArrayToMemory\"]' -s ALLOW_MEMORY_GROWTH=1"
   }
 }

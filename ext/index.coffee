@@ -1,5 +1,5 @@
 try
-  module.exports = require('./node-binding')
+  module.exports = require('../node-binding')
   module.exports.is_enabled = true
 catch
   try
