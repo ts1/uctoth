@@ -19,6 +19,8 @@ defaults =
 INDEX_SIZE = get_single_index_size() + 1
 OFFSET = INDEX_SIZE - 1
 
+new_array = -> new Float32Array(INDEX_SIZE)
+
 load_samples = (opt) ->
   book = new Book opt.book, close_on_exit: false
   book.init()
@@ -86,7 +88,7 @@ module.exports = (options={}) ->
       do_predict
 
   make_gradient = (batch, coeffs) ->
-    gradient = (0 for i in [0...INDEX_SIZE])
+    gradient = new_array()
     e2 = 0
     for indexes in batch
       outcome = indexes[0]
@@ -135,8 +137,8 @@ module.exports = (options={}) ->
     rate = 1
     step_size = 10
     loop
-      coeffs = (0 for i in [0...INDEX_SIZE])
-      g2 = (0 for i in [0...INDEX_SIZE])
+      coeffs = new_array()
+      g2 = new_array()
       if epoch(samples, coeffs, g2, rate, batch_size, dev)
         loss = verify(samples, coeffs)
         if loss < min_loss
@@ -154,8 +156,8 @@ module.exports = (options={}) ->
       orig_best = best_rate
 
       rate = orig_best * step_size
-      coeffs = (0 for i in [0...INDEX_SIZE])
-      g2 = (0 for i in [0...INDEX_SIZE])
+      coeffs = new_array()
+      g2 = new_array()
       epoch samples, coeffs, g2, rate, batch_size
       loss = verify(samples, coeffs)
       if loss < min_loss
@@ -163,8 +165,8 @@ module.exports = (options={}) ->
         best_rate = rate
       else
         rate = orig_best / step_size
-        coeffs = (0 for i in [0...INDEX_SIZE])
-        g2 = (0 for i in [0...INDEX_SIZE])
+        coeffs = new_array()
+        g2 = new_array()
         epoch samples, coeffs, g2, rate, batch_size
         loss = verify(samples, coeffs)
         if loss < min_loss
@@ -174,7 +176,7 @@ module.exports = (options={}) ->
     best_rate
 
   train = (samples, {quiet}={}) ->
-    dev = verify(samples, (0 for i in [0...INDEX_SIZE]))
+    dev = verify(samples, new_array())
     console.log "Deviation: #{dev}" unless quiet
 
     if opt.batch_size?
@@ -190,8 +192,8 @@ module.exports = (options={}) ->
       rate = find_rate(samples, batch_size, dev)
       console.log "#{rate}" unless quiet
 
-    coeffs = (0 for i in [0...INDEX_SIZE])
-    g2 = (0 for i in [0...INDEX_SIZE])
+    coeffs = new_array()
+    g2 = new_array()
     min_loss = dev
     for ep in [1..opt.epochs]
       epoch shuffle(samples), coeffs, g2, rate, batch_size
