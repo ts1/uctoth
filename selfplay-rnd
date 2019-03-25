@@ -9,6 +9,7 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('weights.json')
 Book = require './book'
 { int, watch_file } = require './util'
+ext = require './ext'
 
 argv = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options...]"
@@ -162,6 +163,7 @@ do ->
   reload = if argv.watch then watch_file(argv.watch) else -> false
   games = {}
   until reload()
+    ext.reset_hash() if ext.is_enabled and ext.reset_hash?
     balance =
       if argv.wlb
         book.win_loss_balance()

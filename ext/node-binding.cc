@@ -103,6 +103,11 @@ NAN_METHOD(solve)
     info.GetReturnValue().Set(retval);
 }
 
+NAN_METHOD(reset_hash)
+{
+    bb_hash_reset();
+}
+
 NAN_MODULE_INIT(init)
 {
     bb_index_init();
@@ -111,6 +116,7 @@ NAN_MODULE_INIT(init)
     NAN_EXPORT(target, set_weights);
     NAN_EXPORT(target, evaluate);
     NAN_EXPORT(target, uct_search);
+    NAN_EXPORT(target, reset_hash);
     NAN_EXPORT(target, solve);
 }
 
