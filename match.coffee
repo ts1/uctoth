@@ -7,6 +7,7 @@ Player = require './player'
 pattern_eval = require './pattern_eval'
 { decode, encode } = require './encode'
 uct_defaults = require('./uct').defaults
+ext = require './ext'
 
 defaults =
   verbose: false
@@ -151,6 +152,7 @@ module.exports = (options={}) ->
     for code in openings
       b = decode code
 
+      ext.reset_hash() if ext.is_enabled and ext.reset_hash?
       board = new PatternBoard b
       console.log board.dump true unless opt.quiet
       outcome = play board, players[0], players[1]
@@ -172,6 +174,7 @@ module.exports = (options={}) ->
         if ubound < Math.floor(opt.min * openings.length)
           break
 
+      ext.reset_hash() if ext.is_enabled and ext.reset_hash?
       board = new PatternBoard b
       outcome = play board, players[1], players[0]
       score -= outcome

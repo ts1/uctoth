@@ -17,6 +17,7 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('weights.json')
 Book = require './book'
 { encode_normalized } = require './encode'
+ext = require './ext'
 
 argv = require 'yargs'
   .options
@@ -80,6 +81,7 @@ player = make_player
   endgame_eval: pattern_eval
 
 play = (player, opening) ->
+  ext.reset_hash() if ext.is_enabled and ext.reset_hash?
   board = new Board
   moves = []
   for {move, turn} in opening
