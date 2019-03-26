@@ -14,6 +14,14 @@
         "ext/src/util.c"
       ],
       "include_dirs": ["<!(node -e \"require('nan')\")"]
+    },
+    {
+      "target_name": "learn-ext",
+      "sources": [
+        "learn-ext/node-binding.cc",
+        "learn-ext/learn.c",
+      ],
+      "include_dirs": ["<!(node -e \"require('nan')\")"]
     }
   ]
 }

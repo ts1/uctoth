@@ -9,6 +9,7 @@ defaults =
   prefix: 'tmp/coeffs'
   outfile: 'weights.json'
   verbose: true
+  array: null
 
 module.exports = (options) ->
   opt = { defaults..., options... }
@@ -26,7 +27,10 @@ module.exports = (options) ->
 
   load_coeffs = (weights) ->
     for phase in [0...N_PHASES]
-      result = JSON.parse fs.readFileSync "#{opt.prefix}#{phase}"
+      if opt.array
+        result = opt.array[phase]
+      else
+        result = JSON.parse fs.readFileSync "#{opt.prefix}#{phase}"
       logistic = result.logistic
       {coeffs} = result
       for i in [0...get_single_index_size()]

@@ -1,6 +1,10 @@
 #!/usr/bin/env coffee
 
-{ get_single_index_size, code_to_single_indexes } = require './pattern'
+{
+  get_single_index_size
+  code_to_single_indexes
+  SCORE_MULT
+} = require './pattern'
 { LOG_MULT } = require './logutil'
 { shuffle } = require './util'
 Book = require './book'
@@ -40,14 +44,6 @@ load_samples = (opt) ->
   book.close()
   samples
 
-clip = do ->
-  MAX = 32767 / LOG_MULT
-  MIN = -32768 / LOG_MULT
-  (x) ->
-    if x > MAX then MAX
-    else if x < MIN then MIN
-    else x
-
 split_groups = (samples, k) ->
   win_set = shuffle(samples.filter (sample) -> sample[0] > 0)
   loss_set = shuffle(samples.filter (sample) -> sample[0] <= 0)
@@ -71,6 +67,15 @@ split_groups = (samples, k) ->
 module.exports = (options={}) ->
   opt = {defaults..., options...}
   throw new Error 'phase option is required' unless opt.phase?
+
+  clip = do ->
+    MULT = if opt.logistic then LOG_MULT else SCORE_MULT
+    MAX = 32767 / MULT
+    MIN = -32768 / MULT
+    (x) ->
+      if x > MAX then MAX
+      else if x < MIN then MIN
+      else x
 
   predict = do ->
     do_predict = (indexes, coeffs) ->

@@ -1,0 +1,58 @@
+#!/usr/bin/env coffee
+
+coeffs_to_weights = require('./coeffs_to_weights.coffee')
+{ N_PHASES } = require './pattern'
+
+defaults = require('./learn.coffee').defaults
+
+opt = require 'yargs'
+  .options
+    l:
+      alias: 'logistic'
+      desc: 'Logistic regression'
+      type: 'boolean'
+      default: false
+    b:
+      alias: 'book'
+      desc: 'Database file'
+      type: 'string'
+      default: defaults.book
+      requiresArg: true
+    l2:
+      desc: 'L2 regularization parameter'
+      type: 'number'
+      default: defaults.l2
+      requiresArg: true
+    e:
+      alias: 'epochs'
+      desc: 'Number of epochs'
+      type: 'number'
+      default: defaults.epochs
+      requiresArg: true
+    batch_size:
+      desc: 'Number of samples per batch (default auto)'
+      type: 'number'
+      default: defaults.batch_size
+      requiresArg: true
+    o:
+      alias: 'outfile'
+      desc: 'Output weights file'
+      type: 'string'
+      default: 'weights.json'
+      requiresArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
+  .argv
+
+{ load_samples, learn } = require('./learn.coffee')(opt)
+
+results = []
+
+results =
+  for phase in [0...N_PHASES]
+    load_samples phase
+    learn()
+
+coeffs_to_weights outfile: opt.outfile, array: results
