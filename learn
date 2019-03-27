@@ -40,6 +40,10 @@ opt = require 'yargs'
       type: 'string'
       default: 'weights.json'
       requiresArg: true
+    l2file:
+      desc: 'L2 regularization parameter file'
+      default: 'auto'
+      requiresArg: true
     h:
       alias: 'help'
   .version false
@@ -53,6 +57,6 @@ results = []
 results =
   for phase in [0...N_PHASES]
     load_samples phase
-    learn()
+    learn phase
 
 coeffs_to_weights outfile: opt.outfile, array: results
