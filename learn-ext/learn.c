@@ -19,7 +19,7 @@ typedef struct {
 } sample_t;
 
 typedef struct {
-    uint32_t length;
+    int length;
     sample_t *array[];
 } ptr_array_t;
 
@@ -100,7 +100,7 @@ static double deviation(ptr_array_t *a)
     return sqrt(sum / a->length);
 }
 
-static ptr_array_t *alloc_ptr_array(len)
+static ptr_array_t *alloc_ptr_array(int len)
 {
     ptr_array_t *array = calloc(1, sizeof(ptr_array_t) + len * sizeof(void *));
     array->length = len;
