@@ -59,7 +59,7 @@ module.exports = (options) ->
     console.log "R2: #{r2}" if opt.verbose
     t = Date.now() - t
     console.log "Learned in #{t/1000} seconds" if opt.verbose
-    { coeffs: weights, r2, loss, avg, dev, offset, l2 }
+    { coeffs: weights, r2, loss, avg, dev, offset, l2, logistic: opt.logistic }
 
   cross_validation: (args) ->
     arg = { opt..., args... }
