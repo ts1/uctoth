@@ -45,7 +45,7 @@ export set_weights = (weights, inverted) ->
     ptr = _get_weights_ptr(i)
     array = new Uint8Array weights[i].buffer
     Module.writeArrayToMemory array, ptr
-  _nega_weight()
+  _nega_weight() if inverted
   return
 
 export ready = new Promise (resolve, reject) ->
