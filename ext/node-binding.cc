@@ -39,9 +39,9 @@ NAN_METHOD(set_weights)
 
 NAN_METHOD(evaluate)
 {
-    const char *board = *Nan::Utf8String(info[0]);
+    Nan::Utf8String board(info[0]);
     int turn = Nan::To<int>(info[1]).FromMaybe(0);
-    bboard bb = bb_from_ascii(board, 0);
+    bboard bb = bb_from_ascii(*board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
     int n_discs = bm_count_bits(bb.black | bb.white);
@@ -53,14 +53,14 @@ NAN_METHOD(evaluate)
 
 NAN_METHOD(uct_search)
 {
-    const char *board = *Nan::Utf8String(info[0]);
+    Nan::Utf8String board(info[0]);
     int turn = Nan::To<int>(info[1]).FromMaybe(0);
     int n_search = Nan::To<int>(info[2]).FromMaybe(0);
     int scope = Nan::To<int>(info[3]).FromMaybe(0);
     double randomness = Nan::To<double>(info[4]).FromMaybe(0);
     int tenacious = Nan::To<int>(info[5]).FromMaybe(0);
 
-    bboard bb = bb_from_ascii(board, 0);
+    bboard bb = bb_from_ascii(*board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
 
@@ -81,11 +81,11 @@ NAN_METHOD(uct_search)
 
 NAN_METHOD(solve)
 {
-    const char *board = *Nan::Utf8String(info[0]);
+    Nan::Utf8String board(info[0]);
     int turn = Nan::To<int>(info[1]).FromMaybe(0);
     int wld = Nan::To<int>(info[2]).FromMaybe(0);
 
-    bboard bb = bb_from_ascii(board, 0);
+    bboard bb = bb_from_ascii(*board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
     int score;
