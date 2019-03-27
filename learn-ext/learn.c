@@ -11,12 +11,17 @@
 int lx_vector_size, lx_offset, lx_logistic, lx_verbose;
 double lx_min, lx_max;;
 
-typedef struct sample {
+typedef struct {
     float outcome;
     uint16_t n_features; 
     uint16_t indexes[MAX_FEATURES];
     int8_t values[MAX_FEATURES];
 } sample_t;
+
+typedef struct {
+    uint32_t length;
+    sample_t *array[];
+} ptr_array_t;
 
 static int n_samples, max_samples;
 static sample_t *samples;
@@ -84,34 +89,48 @@ double lx_average(void)
     return sum / n_samples;
 }
 
-static double deviation(sample_t *array[], int len)
+static double deviation(ptr_array_t *a)
 {
     double sum = 0;
-    for (sample_t **p = array; p < &array[len]; p++) {
+    for (sample_t **p = a->array; p < a->array + a->length; p++) {
         sample_t *s = *p;
         double y = lx_logistic ? s->outcome - 0.5 : s->outcome;
         sum += y * y;
     }
-    return sqrt(sum / len);
+    return sqrt(sum / a->length);
+}
+
+static ptr_array_t *alloc_ptr_array(len)
+{
+    ptr_array_t *array = calloc(1, sizeof(ptr_array_t) + len * sizeof(void *));
+    array->length = len;
+    return array;
+}
+
+static ptr_array_t *make_sample_array(void)
+{
+    ptr_array_t *a = alloc_ptr_array(n_samples);
+    sample_t **p = a->array;
+    for (sample_t *s = samples; s < &samples[n_samples]; s++)
+        *p++ = s;
+    return a;
 }
 
 double lx_deviation(void)
 {
-    double sum = 0;
-    for (sample_t *s = samples; s < &samples[n_samples]; s++) {
-        double x = lx_logistic ? s->outcome - 0.5 : s->outcome;
-        sum += x * x;
-    }
-    return sqrt(sum / n_samples);
+    ptr_array_t *array = make_sample_array();
+    double retval = deviation(array);
+    free(array);
+    return retval;
 }
 
-static void shuffle(sample_t *array[], int len)
+static void shuffle(ptr_array_t *a)
 {
-    for (int i = len - 1; i >= 0; i--) {
+    for (int i = a->length - 1; i >= 0; i--) {
         int r = rand() % (i + 1);
-        void *tmp = array[i];
-        array[i] = array[r];
-        array[r] = tmp;
+        void *tmp = a->array[i];
+        a->array[i] = a->array[r];
+        a->array[r] = tmp;
     }
 }
 
@@ -127,20 +146,20 @@ static double predict(const sample_t *s)
         return sum;
 }
 
-static double verify(sample_t *p[], int len)
+static double verify(ptr_array_t *a)
 {
     double sum = 0;
-    sample_t **end = p + len;
-    for (; p < end; p++) {
+    sample_t **end = a->array + a->length;
+    for (sample_t **p = a->array; p < end; p++) {
         sample_t *s = *p;
         double e = s->outcome - predict(s);
         sum += e * e;
     }
-    return sqrt(sum / len);
+    return sqrt(sum / a->length);
 }
 
 static void
-minibatch(sample_t **start, int stride, sample_t **end, double l2)
+batch(sample_t **start, sample_t **end, int stride, double l2)
 {
     clear_vector(gradient);
     for (sample_t **p = start; p < end; p += stride) {
@@ -153,11 +172,11 @@ minibatch(sample_t **start, int stride, sample_t **end, double l2)
 }
 
 static void
-epoch(sample_t *dataset[], int len, int batch_size, double rate, double l2)
+epoch(ptr_array_t *a, int batch_size, double rate, double l2)
 {
-    int n_batches = len / batch_size;
+    int n_batches = a->length / batch_size;
     for (int offset = 0; offset < n_batches; offset++) {
-        minibatch(dataset + offset, n_batches, dataset + len, l2);
+        batch(a->array + offset, a->array + a->length, n_batches, l2);
         for (int i = 0; i < lx_vector_size; i++) {
             double g = gradient[i];
             if (g) {
@@ -172,18 +191,18 @@ epoch(sample_t *dataset[], int len, int batch_size, double rate, double l2)
 }
 
 static double
-find_learning_rate(sample_t *dataset[], int len, int batch_size, double l2)
+find_learning_rate(ptr_array_t *a, int batch_size, double l2)
 {
     double rate = 10;
     double step = 10;
-    double min_loss = deviation(dataset, len);
+    double min_loss = deviation(a);
     double best_rate = 0;
     LOG(("Finding optimal learning rate: "));
     for (;;) {
         clear_vector(weights);
         clear_vector(g2);
-        epoch(dataset, len, batch_size, rate, l2);
-        double loss = verify(dataset, len);
+        epoch(a, batch_size, rate, l2);
+        double loss = verify(a);
         if (loss < min_loss) {
             min_loss = loss;
             best_rate = rate;
@@ -205,8 +224,8 @@ find_learning_rate(sample_t *dataset[], int len, int batch_size, double l2)
         rate = best_rate * step;
         clear_vector(weights);
         clear_vector(g2);
-        epoch(dataset, len, batch_size, rate, l2);
-        loss = verify(dataset, len);
+        epoch(a, batch_size, rate, l2);
+        loss = verify(a);
         if (loss < min_loss) {
             min_loss = loss;
             best_rate = rate;
@@ -216,8 +235,8 @@ find_learning_rate(sample_t *dataset[], int len, int batch_size, double l2)
         rate = best_rate / step;
         clear_vector(weights);
         clear_vector(g2);
-        epoch(dataset, len, batch_size, rate, l2);
-        loss = verify(dataset, len);
+        epoch(a, batch_size, rate, l2);
+        loss = verify(a);
         if (loss < min_loss) {
             min_loss = loss;
             best_rate = rate;
@@ -227,19 +246,18 @@ find_learning_rate(sample_t *dataset[], int len, int batch_size, double l2)
     return best_rate;
 }
 
-static void learn(sample_t *dataset[], int len, int n_epochs,
-        int batch_size, double l2)
+static void learn(ptr_array_t *a, int n_epochs, int batch_size, double l2)
 {
-    shuffle(dataset, len);
+    shuffle(a);
     if (!batch_size)
-        batch_size = len / 10;
-    double rate = find_learning_rate(dataset, len, batch_size, l2);
+        batch_size = a->length / 10;
+    double rate = find_learning_rate(a, batch_size, l2);
     clear_vector(weights);
     clear_vector(g2);
     for (int i = 0 ; i < n_epochs; i++) {
         LOG(("epoch %d\r", i));
-        shuffle(dataset, len);
-        epoch(dataset, len, batch_size, rate, l2);
+        shuffle(a);
+        epoch(a, batch_size, rate, l2);
     }
 }
 
@@ -249,17 +267,79 @@ double lx_learn(int n_epochs, int batch_size, double l2, float *weights_)
     gradient = malloc(lx_vector_size * sizeof(float));
     g2 = malloc(lx_vector_size * sizeof(float));
 
-    sample_t **dataset = malloc(n_samples * sizeof(sample_t));
-    sample_t **p = dataset;
-    for (sample_t *s = samples; s < &samples[n_samples]; s++)
-        *p++ = s;
+    ptr_array_t *array = make_sample_array();
 
-    learn(dataset, n_samples, n_epochs, batch_size, l2);
-    double loss = verify(dataset, n_samples);
+    learn(array, n_epochs, batch_size, l2);
+    double loss = verify(array);
     LOG(("loss %g\r", loss));
 
-    free(dataset);
+    free(array);
     free(gradient);
     free(g2);
     return loss;
+}
+
+static ptr_array_t **split_groups(ptr_array_t *a, int k)
+{
+    ptr_array_t **groups = malloc(k * sizeof(ptr_array_t *));
+    int n_per_group = (n_samples + k - 1) / k;
+    for (int i = 0; i < k; i++) {
+        int n = n_per_group;
+        if (n * i + n > n_samples)
+            n = n_samples - n * i;
+        groups[i] = alloc_ptr_array(n);
+        memcpy(groups[i]->array, &a->array[i * n_per_group], n*sizeof(void *));
+    }
+    return groups;
+}
+
+static ptr_array_t *join_groups(ptr_array_t *groups[], int exclude, int k)
+{
+    int len = 0;
+    for (int i = 0; i < k; i++)
+        if (i != exclude)
+            len += groups[i]->length;
+
+    ptr_array_t *a = alloc_ptr_array(len);
+    int offset = 0;
+    for (int i = 0 ; i < k; i++) {
+        if (i != exclude) {
+            memcpy(a->array + offset, groups[i]->array,
+                    groups[i]->length * sizeof(void *));
+            offset += groups[i]->length;
+        }
+    }
+    return a;
+}
+
+double lx_cross_validation(int n_epochs, int batch_size, double l2, int k)
+{
+    weights = malloc(lx_vector_size * sizeof(float));
+    gradient = malloc(lx_vector_size * sizeof(float));
+    g2 = malloc(lx_vector_size * sizeof(float));
+
+    ptr_array_t *array = make_sample_array();
+    shuffle(array);
+
+    ptr_array_t **groups = split_groups(array, k);
+
+    double avg = 0;
+    for (int i = 0; i < k; i++) {
+        ptr_array_t *test_set = groups[i];
+        ptr_array_t *train_set = join_groups(groups, i, k);
+        learn(train_set, n_epochs, batch_size, l2);
+        double loss = verify(test_set);
+        avg += loss / k;
+        free(train_set);
+    }
+
+    for (int i = 0; i < k; i++)
+        free(groups[i]);
+    free(groups);
+    free(array);
+    free(weights);
+    free(gradient);
+    free(g2);
+
+    return avg;
 }

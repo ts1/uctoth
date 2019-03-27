@@ -10,6 +10,7 @@ defaults =
   l2: 0.5
   epochs: 100
   batch_size: null
+  k: 4
 
 module.exports = (options) ->
   opt = { defaults..., options... }
@@ -41,5 +42,9 @@ module.exports = (options) ->
     t = Date.now() - t
     console.log "Learned in #{t/1000} seconds" if opt.verbose
     { coeffs: weights, r2, loss, avg, dev, offset, l2: arg.l2 }
+
+  cross_validation: (args) ->
+    arg = { opt..., args... }
+    loss = lx.cross_validation arg.epochs, arg.l2, arg.batch_size, arg.k
 
 module.exports.defaults = defaults

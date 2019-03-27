@@ -1,0 +1,108 @@
+#!/usr/bin/env coffee
+fs = require 'fs'
+coeffs_to_weights = require('./coeffs_to_weights.coffee')
+{ N_PHASES } = require './pattern'
+
+defaults = require('./learn.coffee').defaults
+
+opt = require 'yargs'
+  .options
+    k:
+      desc: 'Number of cross validation splits'
+      default: defaults.k
+    m:
+      alias: 'min'
+      desc: 'Minimum L2 to search'
+      default: 0.01
+    M:
+      alias: 'max'
+      desc: 'Maximum L2 to search'
+      default: 2
+    p:
+      alias: 'precision'
+      desc: 'Maximum step (ratio) to search'
+      default: 1.1
+    l:
+      alias: 'logistic'
+      desc: 'Logistic regression'
+      type: 'boolean'
+      default: false
+    b:
+      alias: 'book'
+      desc: 'Database file'
+      type: 'string'
+      default: defaults.book
+      requiresArg: true
+    l2:
+      desc: 'L2 regularization parameter'
+      type: 'number'
+      default: defaults.l2
+      requiresArg: true
+    e:
+      alias: 'epochs'
+      desc: 'Number of epochs'
+      type: 'number'
+      default: defaults.epochs
+      requiresArg: true
+    batch_size:
+      desc: 'Number of samples per batch (default auto)'
+      type: 'number'
+      default: defaults.batch_size
+      requiresArg: true
+    o:
+      alias: 'outfile'
+      desc: 'Output l2 param file (default l2.json or l2_logistic.json)'
+      type: 'string'
+      default: null
+      requiresArg: true
+    h:
+      alias: 'help'
+  .version false
+  .strict()
+  .argv
+
+opt.verbose = false
+
+{ load_samples, cross_validation } = require('./learn.coffee')(opt)
+
+array =
+  for phase in [0...N_PHASES]
+    console.log "Phase #{phase}"
+    load_samples phase
+    l2 = (opt.min * opt.max) ** .5
+    step = (opt.max / opt.min) ** .25
+    process.stdout.write "L2=#{l2}: "
+    min_loss = cross_validation({opt..., l2})
+    process.stdout.write "loss=#{min_loss} *\n"
+    best = l2
+    loop
+      l2 = best * step
+      process.stdout.write "L2=#{l2}: "
+      loss = cross_validation({opt..., l2})
+      process.stdout.write "loss=#{loss}"
+      if loss < min_loss
+        min_loss = loss
+        best = l2
+        process.stdout.write " *\n"
+      else
+        process.stdout.write '\n'
+        l2 = best / step
+        process.stdout.write "L2=#{l2}: "
+        loss = cross_validation({opt..., l2})
+        process.stdout.write "loss=#{loss}"
+        if loss < min_loss
+          process.stdout.write " *\n"
+          min_loss = loss
+          best = l2
+        else
+          process.stdout.write '\n'
+      break if step <= opt.precision
+      step **= .5
+    best
+
+outfile = opt.outfile or
+  if opt.logistic
+    'l2_logistic.json'
+  else
+    'l2.json'
+fs.writeFileSync outfile, JSON.stringify(array)

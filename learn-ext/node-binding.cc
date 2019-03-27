@@ -75,12 +75,25 @@ namespace learn_ext {
         info.GetReturnValue().Set(retval);
     }
 
+    NAN_METHOD(cross_validation)
+    {
+        int n_epochs = Nan::To<int>(info[0]).FromMaybe(0);
+        double l2 = Nan::To<double>(info[1]).FromMaybe(0.);
+        int batch_size = Nan::To<int>(info[2]).FromMaybe(0);
+        int k = Nan::To<int>(info[3]).FromMaybe(0);
+
+        float loss = lx_cross_validation(n_epochs, batch_size, l2, k);
+
+        info.GetReturnValue().Set(loss);
+    }
+
     NAN_MODULE_INIT(module_init)
     {
         NAN_EXPORT(target, init);
         NAN_EXPORT(target, reset);
         NAN_EXPORT(target, add_sample);
         NAN_EXPORT(target, learn);
+        NAN_EXPORT(target, cross_validation);
     }
 
     NODE_MODULE(learn_ext, module_init);
