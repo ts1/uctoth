@@ -20,7 +20,7 @@ typedef int8_t s8;
 # define asm /* no op */
 #endif
 
-#define SCORE_MULT 4000 /* from pattern.coffee */
+#define SCORE_MULT 1000 /* from pattern.coffee */
 #define LOG_MULT 5000 /* from logutil.coffee */
 
 #ifdef __cplusplus

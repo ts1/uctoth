@@ -4,7 +4,7 @@
 
 N_PHASES = 10
 N_MOVES_PER_PHASE = 60 / N_PHASES
-SCORE_MULT = 4000
+SCORE_MULT = 1000
 
 all_one = (len) -> (3 ** len - 1) / 2
 
