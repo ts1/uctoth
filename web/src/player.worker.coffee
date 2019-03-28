@@ -45,7 +45,7 @@ param_table =
     wld: 20
     full: 18
     wasm_wld: 24
-    wasm_full: 22
+    wasm_full: 20
 
 set_level = (level, wasm) ->
   params = param_table[level]
