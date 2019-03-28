@@ -31,81 +31,88 @@ module.exports = (options={}) ->
   normal_eval = pattern_eval(opt.weights)
   ref_eval = pattern_eval(opt.ref)
 
-  simple = Player
-    book: null
-    strategy: require('./uct')
-      evaluate: require('./simple_eval')
-      verbose: opt.verbose
-      board_class: Board
-      max_search: opt.search
-      C: opt.C
-      C_log: opt.C_log
-    solve_wld: opt.wld
-    solve_full: opt.full
-    verbose: opt.verbose
-    endgame_eval: normal_eval
-
-  minmax = Player
-    book: null
-    strategy: require('./minmax')
-      evaluate: normal_eval
-      max_depth: opt.depth
-      max_leafs: opt.leafs
-      shuffle: false
-      verbose: opt.verbose
-    solve_wld: opt.wld
-    solve_full: opt.full
-    verbose: opt.verbose
-    endgame_eval: normal_eval
-
-  ref_minmax = Player
-    book: null
-    strategy: require('./minmax')
-      evaluate: ref_eval
-      max_depth: opt.depth
-      max_leafs: opt.leafs
-      shuffle: false
-      verbose: opt.verbose
-    solve_wld: opt.wld
-    solve_full: opt.full
-    verbose: opt.verbose
-    endgame_eval: ref_eval
-
-  uct = Player
-    book: null
-    strategy: require('./uct')
-      evaluate: normal_eval
-      verbose: opt.verbose
-      max_search: opt.search
-      C: opt.C
-      C_log: opt.C_log
-    solve_wld: opt.wld
-    solve_full: opt.full
-    verbose: opt.verbose
-    endgame_eval: normal_eval
-
-  uct_ref = Player
-    book: null
-    strategy: require('./uct')
-      evaluate: ref_eval
-      verbose: opt.verbose
-      max_search: opt.search
-    solve_wld: opt.wld
-    solve_full: opt.full
-    verbose: opt.verbose
-    endgame_eval: ref_eval
-
   players = []
-  players[0] = if opt.both_minimax then minmax else uct
+
+  players[0] =
+    if opt.both_minimax
+      Player
+        book: null
+        strategy: require('./minmax')
+          evaluate: normal_eval
+          max_depth: opt.depth
+          max_leafs: opt.leafs
+          shuffle: false
+          verbose: opt.verbose
+        solve_wld: opt.wld
+        solve_full: opt.full
+        verbose: opt.verbose
+        endgame_eval: normal_eval
+    else
+      Player
+        book: null
+        strategy: require('./uct')
+          evaluate: normal_eval
+          verbose: opt.verbose
+          max_search: opt.search
+          C: opt.C
+          C_log: opt.C_log
+        solve_wld: opt.wld
+        solve_full: opt.full
+        verbose: opt.verbose
+        endgame_eval: normal_eval
+
   players[1] =
     if opt.both_minimax
-      ref_minmax
+      Player
+        book: null
+        strategy: require('./minmax')
+          evaluate: ref_eval
+          max_depth: opt.depth
+          max_leafs: opt.leafs
+          shuffle: false
+          verbose: opt.verbose
+        solve_wld: opt.wld
+        solve_full: opt.full
+        verbose: opt.verbose
+        endgame_eval: ref_eval
     else if opt.minimax
-      minmax
+      Player
+        book: null
+        strategy: require('./minmax')
+          evaluate: normal_eval
+          max_depth: opt.depth
+          max_leafs: opt.leafs
+          shuffle: false
+          verbose: opt.verbose
+        solve_wld: opt.wld
+        solve_full: opt.full
+        verbose: opt.verbose
+        endgame_eval: normal_eval
     else if opt.simple
-      simple
+      Player
+        book: null
+        strategy: require('./uct')
+          evaluate: require('./simple_eval')
+          verbose: opt.verbose
+          board_class: Board
+          max_search: opt.search
+          C: opt.C
+          C_log: opt.C_log
+        solve_wld: opt.wld
+        solve_full: opt.full
+        verbose: opt.verbose
+        endgame_eval: normal_eval
     else
-      uct_ref
+      Player
+        book: null
+        strategy: require('./uct')
+          evaluate: ref_eval
+          verbose: opt.verbose
+          max_search: opt.search
+        solve_wld: opt.wld
+        solve_full: opt.full
+        verbose: opt.verbose
+        endgame_eval: ref_eval
 
   play = (board, black, white) ->
     turn = if board.count(EMPTY) & 1 then WHITE else BLACK
