@@ -52,7 +52,7 @@ module.exports = {
     name: 'Uctoth',
     themeColor: '#333',
     appleMobileWebAppStatusBarStyle: 'black-translucent',
-    assetsVersion: '5'
+    assetsVersion: '6'
   }
 }
 

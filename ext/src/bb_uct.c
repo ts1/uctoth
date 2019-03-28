@@ -43,6 +43,15 @@ static void free_pools(node_pool_t *pool)
     }
 }
 
+static inline int eval_endgame(bboard b)
+{
+    if (outcome_mode)
+        return bb_score(b) * SCORE_MULT;
+    else
+        return bm_count_bits(b.black) > bm_count_bits(b.white) ?
+           BB_INF : -BB_INF;
+}
+
 static void uct_search(bboard b, node_t *node, int n_discs, int pass)
 {
     node->n_visited++;
@@ -76,14 +85,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
                 maxval = child->value;
         }
         node->value = -maxval;
-    } else if (n_discs == 64) {
-       if (node->n_visited == 1) {
-           if (outcome_mode) {
-               node->value = bb_score(b) * SCORE_MULT;
-               grew = 1;
-           }
-       }
-    } else {
+    } else if (n_discs < 64) {
         node_t **child_slot = &node->first_child;
         u64 pmoves = bb_potential_moves(b);
         int max = -BB_INF;
@@ -98,20 +100,23 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
             *child_slot = child;
             child_slot = &child->sibling;
             bboard newb = bb_apply_flips(b, flips, move);
-            child->value = bb_eval(newb, n_discs+1);
+            if (n_discs == 63)
+                child->value = eval_endgame(newb);
+            else
+                child->value = bb_eval(newb, n_discs+1);
             child->move = move;
             if (child->value > max)
                 max = child->value;
             n_nodes++;
             grew = 1;
         }
-        if (node->first_child) {
+        if (node->first_child)
             node->value = -max;
-        } else {
+        else {
             if (pass) {
                if (node->n_visited == 1) {
-                   if (outcome_mode)
-                       node->value = bb_score(b) * SCORE_MULT;
+                   node->value = -eval_endgame(b);
+                   grew = 1;
                }
             } else {
                 node_t *child = alloc_node();
@@ -188,7 +193,7 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
                 break;
             if (scope > orig_scope * 100)
                 break;
-            scope *= 1.4;
+            scope *= 1.2;
         }
     }
     bb_debug("max depth %d\n", max_discs - n_discs);
