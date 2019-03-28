@@ -1,7 +1,10 @@
 #!/usr/bin/env coffee
 fs = require 'fs'
 coeffs_to_weights = require('./coeffs_to_weights.coffee')
+match = require './match.coffee'
 { N_PHASES } = require './pattern'
+
+MATCH_MIN = 3
 
 defaults = require('./learn.coffee').defaults
 
@@ -33,11 +36,6 @@ opt = require 'yargs'
       type: 'string'
       default: defaults.book
       requiresArg: true
-    l2:
-      desc: 'L2 regularization parameter'
-      type: 'number'
-      default: defaults.l2
-      requiresArg: true
     e:
       alias: 'epochs'
       desc: 'Number of epochs'
@@ -51,9 +49,41 @@ opt = require 'yargs'
       requiresArg: true
     o:
       alias: 'outfile'
-      desc: 'Output l2 param file (default l2.json or l2_logistic.json)'
+      desc: 'Output L2 param file (default l2.json or l2_logistic.json)'
       type: 'string'
       default: null
+      requiresArg: true
+    match:
+      desc: 'Use match to fine tune'
+      type: 'boolean'
+      default: false
+    match_range:
+      desc: 'Switch CV to match in this range'
+      type: 'number'
+      default: 1.4
+      requiresArg: true
+    s:
+      alias: 'search'
+      desc: 'Number of searches used in match'
+      type: 'number'
+      default: 300000
+      requiresArg: true
+    w:
+      alias: 'wld'
+      desc: 'WLD search depth used in match'
+      type: 'number'
+      default: 24
+      requiresArg: true
+    f:
+      alias: 'full'
+      desc: 'Full search depth used in match'
+      type: 'number'
+      default: 22
+      requiresArg: true
+    weights:
+      desc: 'Output weights.json file (only when --match)'
+      type: 'string'
+      default: 'weights.json'
       requiresArg: true
     h:
       alias: 'help'
@@ -64,45 +94,121 @@ opt = require 'yargs'
 opt.verbose = false
 
 { load_samples, cross_validation } = require('./learn.coffee')(opt)
+{ learn } = require('./learn.coffee')({opt..., verbose: false})
 
-array =
-  for phase in [0...N_PHASES]
-    console.log "Phase #{phase}"
-    load_samples phase
-    l2 = (opt.min * opt.max) ** .5
-    step = (opt.max / opt.min) ** .25
-    process.stdout.write "L2=#{l2}: "
-    min_loss = cross_validation({opt..., l2})
-    process.stdout.write "loss=#{min_loss} *\n"
-    best = l2
-    loop
-      l2 = best * step
-      process.stdout.write "L2=#{l2}: "
-      loss = cross_validation({opt..., l2})
-      process.stdout.write "loss=#{loss}"
+try_cv = (l2, min) ->
+  process.stdout.write "L2=#{l2}: "
+  loss = cross_validation({opt..., l2})
+  process.stdout.write "loss=#{loss}"
+  if loss < min
+    process.stdout.write " *\n"
+  else
+    process.stdout.write '\n'
+  loss
+
+tune_cv = (phase, precision) ->
+  console.log "Phase #{phase}"
+  load_samples phase
+  l2 = (opt.min * opt.max) ** .5
+  step = (opt.max / opt.min) ** .25
+  min_loss = try_cv(l2, -Infinity)
+  best = l2
+  loop
+    l2 = best * step
+    loss = try_cv(l2, min_loss)
+    if loss < min_loss
+      min_loss = loss
+      best = l2
+    else
+      l2 = best / step
+      loss = try_cv(l2, min_loss)
       if loss < min_loss
         min_loss = loss
         best = l2
-        process.stdout.write " *\n"
+    break if step <= precision
+    step **= .5
+  best
+
+l2_array =
+  for phase in [0...N_PHASES]
+    precision =
+      if opt.match and phase >= MATCH_MIN
+        opt.match_range ** .5
       else
-        process.stdout.write '\n'
-        l2 = best / step
-        process.stdout.write "L2=#{l2}: "
-        loss = cross_validation({opt..., l2})
-        process.stdout.write "loss=#{loss}"
-        if loss < min_loss
-          process.stdout.write " *\n"
-          min_loss = loss
-          best = l2
-        else
-          process.stdout.write '\n'
-      break if step <= opt.precision
-      step **= .5
-    best
+        opt.precision
+    tune_cv(phase, precision)
+
+weights_array = []
+
+prepare_weights = ->
+  for phase in [0...N_PHASES]
+    continue if weights_array[phase]?
+    console.log "Learning phase #{phase} L2=#{l2_array[phase]}"
+    load_samples phase
+    weights_array[phase] = learn phase, l2: l2_array[phase]
+
+try_match = (phase, l2, max, skip_learn=false) ->
+  process.stdout.write "L2=#{l2}: "
+
+  weights_array[phase] = learn phase, l2: l2 unless skip_learn
+  weights = weights_array[phase]
+
+  coeffs_to_weights outfile: opt.weights, array: weights_array, verbose: false
+
+  { winrate, avg } = match
+    weights: opt.weights
+    search: opt.search
+    wld: opt.wld
+    full: opt.full
+    quiet: true
+    openings: match.defaults.openings
+    min: max
+  score = winrate + avg * 0.0001
+
+  process.stdout.write "score=#{Math.round(score*1000000)/1000000}"
+  console.log if score > max then ' *' else ''
+
+  { score, weights }
+
+tune_match = (phase) ->
+  load_samples phase
+  best = l2_array[phase]
+  { score, weights } = try_match(phase, best, -Infinity, true)
+  best_weights = weights
+  max = score
+  best_weights = weights
+  step = opt.match_range
+  while step > opt.precision
+    step **= .5
+    l2 = best * step
+    { score, weights } = try_match(phase, l2, max)
+    if score > max
+      max = score
+      best_weights = weights
+      best = l2
+    else
+      l2 = best / step
+      { score, weights } = try_match(phase, l2, max)
+      if score > max
+        max = score
+        best_weights = weights
+        best = l2
+  l2_array[phase] = best
+  weights_array[phase] = best_weights
+
+if opt.match
+  prepare_weights()
+  for phase in [MATCH_MIN...N_PHASES]
+    console.log "Phase #{phase}"
+    tune_match phase
+  coeffs_to_weights outfile: opt.weights, array: weights_array
 
 outfile = opt.outfile or
   if opt.logistic
     'l2_logistic.json'
   else
     'l2.json'
-fs.writeFileSync outfile, JSON.stringify(array)
+process.stdout.write "Writing L2 parameter to '#{outfile}': "
+fs.writeFileSync outfile, JSON.stringify(l2_array)
+process.stdout.write "done\n"
+

@@ -35,10 +35,6 @@ argv = require 'yargs'
       alias: 'full'
       desc: 'Full search depth'
       default: match.defaults.full
-    l:
-      alias: 'leafs'
-      desc: 'Minimax leafs'
-      default: match.defaults.leafs
     weights:
       desc: 'Weights file'
       default: 'weights.json'
@@ -60,7 +56,6 @@ try_value = (value, max) ->
     wld: argv.wld
     full: argv.full
     quiet: true
-    leafs: argv.leafs
 
   score = winrate + avg * 0.0001
   process.stdout.write "score=#{score}"

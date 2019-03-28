@@ -37,8 +37,9 @@ module.exports = (options) ->
         {pattern, index} = get_single_index(i)
         weights[pattern][phase][index] = coeffs[i]
       weights.meta or= []
-      delete result.coeffs
-      weights.meta[phase] = result
+      meta = { result.coeffs... }
+      delete meta.coeffs
+      weights.meta[phase] = meta
 
   interpolate = (weights) ->
     for p in patterns
@@ -104,6 +105,7 @@ module.exports = (options) ->
   stats = round weights
   weights.clip = 16
   weights.stats = stats
+  weights.logistic = logistic
   fs.writeFileSync opt.outfile, JSON.stringify weights
   console.log "'#{opt.outfile}' is ready" if opt.verbose
   console.log stats if opt.verbose

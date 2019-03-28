@@ -49,17 +49,18 @@ module.exports = (options) ->
     console.log "loaded #{n} samples in #{t/1000} seconds" if opt.verbose
     book.close()
 
-  learn: (phase) ->
-    l2 = if l2array then l2array[phase] else opt.l2
-    console.log "Using L2: #{l2}"
+  learn: (phase, args) ->
+    arg = { opt..., args... }
+    l2 = if l2array then l2array[phase] else arg.l2
+    console.log "Using L2: #{l2}" if arg.verbose
     t = Date.now()
     { weights, loss, avg, dev, offset } =
-      lx.learn opt.epochs, l2, opt.batch_size
+      lx.learn arg.epochs, l2, arg.batch_size
     r2 = 1 - loss**2 / dev**2
-    console.log "R2: #{r2}" if opt.verbose
+    console.log "R2: #{r2}" if arg.verbose
     t = Date.now() - t
-    console.log "Learned in #{t/1000} seconds" if opt.verbose
-    { coeffs: weights, r2, loss, avg, dev, offset, l2, logistic: opt.logistic }
+    console.log "Learned in #{t/1000} seconds" if arg.verbose
+    { coeffs: weights, r2, loss, avg, dev, offset, l2, logistic: arg.logistic }
 
   cross_validation: (args) ->
     arg = { opt..., args... }
