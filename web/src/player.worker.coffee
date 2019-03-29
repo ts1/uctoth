@@ -109,7 +109,11 @@ self.onmessage = (e) ->
       board = new Board board
       result = await player(board, turn)
       if result.solved == 'wld'
-        console.log "WLD result: #{result.value}"
+        wld =
+          if result.value > 0 then 'WIN'
+          else if result.value < 0 then 'LOSS'
+          else 'DRAW'
+        console.log "WLD result: #{wld}"
       else if result.solved == 'full'
         console.log "Perfect outcome: #{result.value}"
       else
