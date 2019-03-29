@@ -111,7 +111,7 @@ tune_cv = (phase, precision) ->
   load_samples phase
   l2 = (opt.min * opt.max) ** .5
   step = (opt.max / opt.min) ** .25
-  min_loss = try_cv(l2, -Infinity)
+  min_loss = try_cv(l2, Infinity)
   best = l2
   loop
     l2 = best * step
@@ -170,10 +170,14 @@ try_match = (phase, l2, max, skip_learn=false) ->
 
   { score, weights }
 
-tune_match = (phase) ->
+tune_match = (phase, score) ->
   load_samples phase
   best = l2_array[phase]
-  { score, weights } = try_match(phase, best, -Infinity, true)
+  if score
+    console.log "L2=#{best}: score=#{Math.round(score*1000000)/1000000} *"
+    weights = weights_array[phase]
+  else
+    { score, weights } = try_match(phase, best, -Infinity, true)
   best_weights = weights
   max = score
   best_weights = weights
@@ -195,12 +199,14 @@ tune_match = (phase) ->
         best = l2
   l2_array[phase] = best
   weights_array[phase] = best_weights
+  max
 
 if opt.match
   prepare_weights()
+  score = null
   for phase in [MATCH_MIN...N_PHASES]
     console.log "Phase #{phase}"
-    tune_match phase
+    score = tune_match phase, score
   coeffs_to_weights outfile: opt.weights, array: weights_array
 
 outfile = opt.outfile or
