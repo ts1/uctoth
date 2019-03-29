@@ -52,6 +52,7 @@ try_value = (value, max) ->
     C: value * SCORE_MULT
     C_log: value * LOG_MULT
     weights: argv.weights
+    ref: argv.weights
     search: argv.search
     wld: argv.wld
     full: argv.full
