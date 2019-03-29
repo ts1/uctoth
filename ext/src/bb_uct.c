@@ -49,7 +49,7 @@ static inline int eval_endgame(bboard b)
         return bb_score(b) * SCORE_MULT;
     else
         return bm_count_bits(b.black) > bm_count_bits(b.white) ?
-           BB_INF : -BB_INF;
+           (BB_INF/2) : -(BB_INF/2);
 }
 
 static void uct_search(bboard b, node_t *node, int n_discs, int pass)
@@ -127,8 +127,8 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
             }
         }
     }
-
 }
+
 static node_t *find_best_child(node_t *node)
 {
     node_t *best = NULL;
@@ -193,7 +193,7 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
                 break;
             if (scope > orig_scope * 100)
                 break;
-            scope *= 1.2;
+            scope *= 1.1;
         }
     }
     bb_debug("max depth %d\n", max_discs - n_discs);
