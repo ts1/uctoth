@@ -37,7 +37,7 @@ module.exports = (options) ->
         {pattern, index} = get_single_index(i)
         weights[pattern][phase][index] = coeffs[i]
       weights.meta or= []
-      meta = { result.coeffs... }
+      meta = { result... }
       delete meta.coeffs
       weights.meta[phase] = meta
 
