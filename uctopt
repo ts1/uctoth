@@ -59,7 +59,7 @@ try_value = (value, max) ->
     quiet: true
 
   score = winrate + avg * 0.0001
-  process.stdout.write "score=#{score}"
+  process.stdout.write "score=#{Math.round(score*10000)/10000}"
   if score > max
     process.stdout.write ' *\n'
   else
