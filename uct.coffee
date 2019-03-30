@@ -6,8 +6,8 @@
 ext = require './ext'
 
 defaults =
-  C: 0.75 * SCORE_MULT
-  C_log: 0.26 * LOG_MULT
+  C: 0.56 * SCORE_MULT
+  C_log: 0.17 * LOG_MULT
   max_search: 14000
   verbose: true
   evaluate: null
