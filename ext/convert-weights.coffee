@@ -1,6 +1,7 @@
 fs = require 'fs'
-{ patterns, n_indexes, N_PHASES, N_MOVES_PER_PHASE } = require '../pattern'
+{ patterns, n_indexes, N_PHASES, N_MOVES_PER_PHASE, SCORE_MULT } = require '../pattern'
 { int } = require '../util'
+{ LOG_MULT } = require '../logutil'
 
 convert_index = (index, p) ->
   mult = 1
@@ -28,7 +29,10 @@ module.exports = (weights) ->
     weights = JSON.parse fs.readFileSync weights
 
   for phase in [0...N_PHASES]
-    tbl = []
+    offset = weights.meta[phase].offset or 0
+    offset *= if weights.meta[phase].logistic then LOG_MULT else SCORE_MULT
+    offset = Math.round(offset)
+    tbl = [offset]
     for p in patterns
       tbl = tbl.concat convert_tbl(weights[p.name][phase], p)
     Int16Array.from tbl

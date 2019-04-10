@@ -1,6 +1,7 @@
 fs = require 'fs'
-{ patterns, n_indexes, N_PHASES, N_MOVES_PER_PHASE } = require './pattern'
+{ patterns, n_indexes, N_PHASES, N_MOVES_PER_PHASE, SCORE_MULT } = require './pattern'
 { int } = require './util'
+{ LOG_MULT } = require './logutil'
 
 module.exports = (arg, invert=false) ->
   if typeof arg == 'string'
@@ -9,6 +10,7 @@ module.exports = (arg, invert=false) ->
     weights = arg
 
   single_tbl = []
+  offsets = []
   for phase in [0...N_PHASES]
     tbl = []
     for p in patterns
@@ -18,11 +20,14 @@ module.exports = (arg, invert=false) ->
       single_tbl[phase] = new Int16Array tbl
     else
       single_tbl[phase] = tbl
+    offset = weights.meta[phase].offset or 0
+    offset *= if weights.meta[phase].logistic then LOG_MULT else SCORE_MULT
+    offsets[phase] = Math.round(offset)
 
   pattern_eval = (board, me) ->
     phase = int((board.n_discs - 5) / N_MOVES_PER_PHASE)
     tbl = single_tbl[phase]
-    sum = 0
+    sum = offsets[phase]
     for i in [0...n_indexes]
       sum += tbl[board.indexes[i]]
     sum * me

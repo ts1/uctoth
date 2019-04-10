@@ -16,6 +16,7 @@
 #define POW3_10 (POW3_9*3)
 
 struct weight {
+    s16 offset;
     s16 corner9[POW3_9];
     s16 corner10[POW3_10];
     s16 edge2x[POW3_10];
@@ -58,7 +59,7 @@ int bb_eval(bboard b, int n_discs)
     md = bb_diag(m);
     mfd = bb_diag(mf);
 
-    eval = 0;
+    eval = w->offset;
 
     eval += w->diag4[bb_index_diag4_d(bd)];
     eval += w->diag4[bb_index_diag4_d(fd)];
