@@ -1,5 +1,5 @@
 try
-  module.exports = require('./node-binding.coffee')
+  module.exports = require('../node-binding.coffee')
   module.exports.is_enabled = true
 catch
   try
