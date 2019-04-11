@@ -211,6 +211,6 @@ do ->
       player = make_player(randomness)
       console.log 'collision rate', avg_col, 'randomness', randomness if argv.v
 
-    break if ++n_save >= argv.n
+    break if not collision and ++n_save >= argv.n
   balance = book.sum_nodes_outcome()
   console.log "played #{n_play + n_skip} collision #{n_col} skipped #{n_skip} balance #{balance}"
