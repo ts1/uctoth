@@ -7,7 +7,7 @@ Book = require './book'
 
 argv = require 'yargs'
   .options
-    m:
+    M:
       alias: 'max_moves'
       desc: 'Minimum number of moves'
       default: 40
@@ -16,7 +16,13 @@ argv = require 'yargs'
     d:
       alias: 'max_diff'
       desc: 'Minimum difference of move value from best move'
-      default: 2000
+      default: 4000
+      type: 'number'
+      requiresArg: true
+    m:
+      alias: 'min_visits'
+      desc: 'Minimum number of visits to nodes'
+      default: 100
       type: 'number'
       requiresArg: true
     o:
@@ -64,7 +70,8 @@ add_nodes = (turn, depth, movestr) ->
   moves.sort (a, b) -> b.value - a.value
   best_value = moves[0].value
   for move in moves
-    if depth == 1 or best_value - move.value <= argv.max_diff
+    if depth == 1 or (best_value - move.value <= argv.max_diff and
+        move.n >= argv.min_visits)
       nodes[move.code] = { value: move.value * turn, n: move.n }
       new_movestr = movestr + pos_to_str(move.move, turn)
       console.log new_movestr, nodes[move.code] if argv.verbose
@@ -81,4 +88,3 @@ do ->
   board.move BLACK, pos_from_str('F5')
   add_nodes WHITE, 1, 'F5'
   console.log "#{Object.keys(nodes).length} nodes"
-  fs.writeFileSync argv.output, JSON.stringify nodes

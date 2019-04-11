@@ -3,6 +3,8 @@ require './rejection_handler'
 { pos_array_from_str } = require './board'
 { watch_file } = require './util'
 Book = require './book'
+Player = require './player'
+minmax = require './minmax'
 
 argv = require 'yargs'
   .options
@@ -27,18 +29,18 @@ argv = require 'yargs'
       alias: 'wld'
       desc: 'Depth of win-loss-draw solve'
       type: 'number'
-      default: 20
+      default: 23
       requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full solve'
       type: 'number'
-      default: 18
+      default: 21
       requiresArg: true
     S:
       alias: 'scope'
       desc: 'UCT constant to find opening'
-      default: 0
+      default: 0.7
       type: 'number'
       requiresArg: true
     B:
@@ -51,18 +53,100 @@ argv = require 'yargs'
       desc: 'Watch the file and exit when it changes'
       default: 'weights.json'
       requiresArg: true
+    v:
+      alias: 'verbose'
+      default: false
+      type: 'boolean'
     h:
       alias: 'help'
   .strict()
   .version false
   .argv
 
+pattern_eval = require('./pattern_eval')('weights.json')
+
+player0 = Player
+  book: null
+  strategy: minmax
+    verbose: false
+    max_depth: argv.depth
+    evaluate: pattern_eval
+  solve_wld: argv.wld
+  solve_full: argv.full
+  verbose: false
+  endgame_eval: pattern_eval
+
+player1 = Player
+  book: null
+  strategy: minmax
+    verbose: false
+    max_depth: argv.depth - 1
+    evaluate: pattern_eval
+  solve_wld: argv.wld
+  solve_full: argv.full
+  verbose: false
+  endgame_eval: pattern_eval
+
+player2 = Player
+  book: null
+  strategy: minmax
+    verbose: false
+    max_depth: argv.depth - 2
+    evaluate: pattern_eval
+  solve_wld: argv.wld
+  solve_full: argv.full
+  verbose: false
+  endgame_eval: pattern_eval
+
+evaluate = (board, me, moves) ->
+  if moves?
+    max = -Infinity
+    best = null
+    for move in moves or board.list_moves(me)
+      flips = board.move(me, move)
+      throw new Error 'invalid move' unless flips.length
+      if board.any_moves(-me)
+        { value } = player1(board, -me)
+        value = -value
+      else
+        { value } = player1(board, me)
+      board.undo me, move, flips
+      value = 0 unless isFinite(value)
+      if value > max
+        max = value
+        best = move
+
+      flips = board.move(me, best)
+      if board.any_moves(-me)
+        { value } = player2(board, -me)
+        value = -value
+      else
+        { value } = player2(board, me)
+      board.undo me, best, flips
+      value = 0 unless isFinite(value)
+
+      value = Math.round((max + value) / 2)
+  else
+    { value, move } = player0(board, me)
+    value = 0 unless isFinite(value)
+    max = value
+    best = move
+
+    flips = board.move(me, best)
+    if board.any_moves(-me)
+      { value } = player2(board, -me)
+      value = -value
+    else
+      { value } = player2(board, me)
+    board.undo me, best, flips
+    value = 0 unless isFinite(value)
+
+    value = Math.round((max + value) / 2)
+
+  { value, move: best }
+
 do ->
-  book = new Book argv.book,
-    eval_depth: argv.depth
-    solve_wld: argv.wld
-    solve_full: argv.full
-    evaluate: require('./pattern_eval')('weights.json')
+  book = new Book argv.book, evaluate: evaluate, verbose: argv.verbose
   book.init()
   opening = pos_array_from_str(argv.opening)
   reload = if argv.watch then watch_file(argv.watch) else -> false

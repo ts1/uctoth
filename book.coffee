@@ -16,8 +16,6 @@ sqlite3 = require('better-sqlite3')
   code_to_single_indexes
 } = require './pattern'
 { shuffle, INFINITY, unique_moves, int } = require './util'
-Player = require './player'
-minmax = require './minmax'
 
 DEFAULT_OPENING = [pos_from_str('F5')]
 
@@ -48,10 +46,7 @@ class Database
 
 defaults =
   readonly: false
-  eval_depth: 10
-  solve_wld: 21
-  solve_full: 19
-  verbose: false
+  evaluate: null
   close_on_exit: true
 
 module.exports = class Book
@@ -63,47 +58,7 @@ module.exports = class Book
       process.on 'exit', => @close()
     @db.run 'pragma journal_mode=WAL'
     @verbose = opt.verbose
-
-    @evaluate = do ->
-      do_evaluate = null
-      (board, me, moves) ->
-        unless do_evaluate
-          do_evaluate = do ->
-            console.assert opt.evaluate?
-            player1 = Player
-              book: null
-              strategy: minmax
-                verbose: false
-                max_depth: opt.eval_depth
-                evaluate: opt.evaluate
-                #cache_size: 0
-              solve_wld: opt.solve_wld
-              solve_full: opt.solve_full
-              verbose: false
-              endgame_eval: opt.evaluate
-
-            player2 = Player
-              book: null
-              strategy: minmax
-                verbose: false
-                max_depth: opt.eval_depth - 1
-                evaluate: opt.evaluate
-                #cache_size: 0
-              solve_wld: opt.solve_wld
-              solve_full: opt.solve_full
-              verbose: false
-              endgame_eval: opt.evaluate
-
-            (board, me, moves) ->
-              ev = player1 board, me, moves
-              unless ev.value?
-                ev = player1 board, me, [ev.move]
-              unless ev.solved
-                ev2 = player2 board, me, [ev.move]
-                ev.value = Math.round(ev.value + ev2.value / 2)
-              ev
-        do_evaluate(board, me, moves)
-
+    @evaluate = opt.evaluate
 
   init: ->
     # game nodes
