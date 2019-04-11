@@ -1,5 +1,7 @@
 #include <node_api.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 #include "napimacros.h"
 #include "src/bitboard.h"
 #include "src/bb_eval.h"
@@ -129,6 +131,8 @@ MODULE_INIT(init)
 {
     bb_index_init();
     bb_hash_init(22);
+
+    srand(time(NULL) + getpid());
 
     napi_property_descriptor pd[] = {
         EXPORT(set_verbose),
