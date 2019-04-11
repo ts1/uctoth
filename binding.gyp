@@ -11,7 +11,8 @@
         "ext/src/bb_hash.c",
         "ext/src/bb_minimax.c",
         "ext/src/bb_uct.c",
-        "ext/src/util.c"
+        "ext/src/util.c",
+        "ext/src/cache.c"
       ],
       "include_dirs": ["include"]
     },

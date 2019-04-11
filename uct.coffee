@@ -41,7 +41,6 @@ module.exports = (options={}) ->
 
   outcome_mode = not options.evaluate.logistic or not options.tenacious
 
-  
   ext_uct =
     options.ext and
     ext.is_enabled and

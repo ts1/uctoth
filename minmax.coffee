@@ -2,6 +2,7 @@
 { PatternBoard, SCORE_MULT } = require './pattern'
 solve = require './endgame'
 { INFINITY, format_eval } = require './util'
+ext = require './ext'
 
 corner_zone = do ->
   b = new Board
@@ -30,6 +31,7 @@ defaults =
   shuffle: true
   use_mtdf: false
   cache_depth: 5
+  ext: true
 
 module.exports = (options={}) ->
   {
@@ -45,7 +47,7 @@ module.exports = (options={}) ->
     shuffle
     use_mtdf
     cache_depth
-  } = {defaults..., options...}
+  } = opt = {defaults..., options...}
 
   if invert
     orig_evaluate = evaluate
@@ -168,7 +170,18 @@ module.exports = (options={}) ->
       guess = value
     value
 
-  minmax_main = (board, me, moves=null) ->
+  native_minmax =
+    opt.ext and
+    ext.is_enabled and
+    evaluate.weights and
+      require('./ext/minimax')
+        weights: evaluate.weights
+        verbose: verbose
+        max_depth: max_depth
+        max_nodes: max_leafs
+        inverted: invert
+
+  coffee_minmax = (board, me, moves=null) ->
     board = new board_class board
 
     moves or= board.list_moves(me)
@@ -231,6 +244,14 @@ module.exports = (options={}) ->
     cache.stats() if verbose and cache_size
 
     {value: max, move: best, solved: null}
+
+  minmax_main = (board, me, moves=null) ->
+    if moves? and moves.length == board.list_moves(me).length
+      moves = null
+    if native_minmax and not moves?
+      native_minmax(board, me)
+    else
+      coffee_minmax(board, me, moves)
 
   minmax_main.minmax = minmax
   minmax_main.simple_minmax = simple_minmax

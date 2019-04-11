@@ -387,9 +387,9 @@ sort_moves_fastest_first(bboard b, struct move *moves, bb_hashnode *hash, int
             score = -bb_mobility(bb_swap(newb));
             if (n_empty >= PRE_SEARCH_DEPTH) {
                 if (n_empty >= PRE_SEARCH_3_DEPTH)
-                    eval = -bb_minimax(bb_swap(newb), 2, NULL);
+                    eval = -bb_minimax(bb_swap(newb), 2, 0, NULL);
                 else if (n_empty >= PRE_SEARCH_2_DEPTH)
-                    eval = -bb_minimax(bb_swap(newb), 1, NULL);
+                    eval = -bb_minimax(bb_swap(newb), 1, 0, NULL);
                 else
                     eval = -bb_eval(bb_swap(newb), n_empty);
                 if (eval < (alpha<<10) - ALPHA_CUT_THRESHOLD)

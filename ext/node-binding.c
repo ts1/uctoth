@@ -8,6 +8,7 @@
 #include "src/bb_index.h"
 #include "src/bb_hash.h"
 #include "src/bb_uct.h"
+#include "src/bb_minimax.h"
 #include "src/oth.h"
 
 FUNCTION(set_verbose)
@@ -127,6 +128,29 @@ FUNCTION(reset_hash)
     return 0;
 }
 
+FUNCTION(minimax)
+{
+    ARGC(4)
+    ARG_STRING(0, board, 256);
+    ARG_INT32(1, turn);
+    ARG_INT32(2, depth);
+    ARG_INT32(3, nodes);
+    bboard bb = bb_from_ascii(board, 0);
+    if (turn == -1)
+        bb = bb_swap(bb);
+
+    int move;
+    int value = bb_minimax(bb, depth, nodes, &move);
+
+    napi_value retval, val;
+    CHECK(napi_create_object(env, &retval));
+    CHECK(napi_create_int32(env, move, &val));
+    CHECK(napi_set_named_property(env, retval, "move", val));
+    CHECK(napi_create_int32(env, value, &val));
+    CHECK(napi_set_named_property(env, retval, "value", val));
+    return retval;
+}
+
 MODULE_INIT(init)
 {
     bb_index_init();
@@ -141,6 +165,7 @@ MODULE_INIT(init)
         EXPORT(uct_search),
         EXPORT(reset_hash),
         EXPORT(solve),
+        EXPORT(minimax),
     };
     CHECK(napi_define_properties(env, exports, sizeof(pd)/sizeof(pd[0]), pd));
     return exports;
