@@ -289,7 +289,7 @@ int bb_minimax(bboard b, int max_depth, int max_nodes, int *move_ptr)
     int n_discs = bm_count_bits(b.black | b.white);
     if (!max_depth || max_depth > 64 - n_discs)
         max_depth = 64 - n_discs;
-    if (max_depth == 1)
+    if (max_depth < SORT_DEPTH)
         return minimax(b, max_depth, move_ptr, n_discs, -BB_INF, BB_INF, 0);
     else
         return deepening(b, max_depth, max_nodes, move_ptr, n_discs);
