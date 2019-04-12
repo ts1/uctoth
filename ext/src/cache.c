@@ -123,7 +123,7 @@ static entry_t *find(cache_t cache, bboard b)
 static void hash_remove(cache_t cache, entry_t *entry)
 {
     if (entry->hash_prev) {
-        assert(entry->hash_prev->hash_next = entry);
+        assert(entry->hash_prev->hash_next == entry);
         entry->hash_prev->hash_next = entry->hash_next;
     } else {
         entry_t **slot = find_hash_slot(cache, entry->b);
