@@ -40,7 +40,7 @@ argv = require 'yargs'
     S:
       alias: 'scope'
       desc: 'UCT constant to find opening'
-      default: 0.7
+      default: 0.6
       type: 'number'
       requiresArg: true
     B:
@@ -106,16 +106,34 @@ evaluate = (board, me, moves) ->
       flips = board.move(me, move)
       throw new Error 'invalid move' unless flips.length
       if board.any_moves(-me)
-        { value } = player1(board, -me)
+        { value, solved } = player1(board, -me)
         value = -value
       else
-        { value } = player1(board, me)
+        { value, solved } = player1(board, me)
       board.undo me, move, flips
       value = 0 unless isFinite(value)
       if value > max
         max = value
         best = move
 
+      unless solved
+        flips = board.move(me, best)
+        if board.any_moves(-me)
+          { value } = player2(board, -me)
+          value = -value
+        else
+          { value } = player2(board, me)
+        board.undo me, best, flips
+        value = 0 unless isFinite(value)
+
+        value = Math.round((max + value) / 2)
+  else
+    { value, move, solved } = player0(board, me)
+    value = 0 unless isFinite(value)
+    max = value
+    best = move
+
+    unless solved
       flips = board.move(me, best)
       if board.any_moves(-me)
         { value } = player2(board, -me)
@@ -126,24 +144,9 @@ evaluate = (board, me, moves) ->
       value = 0 unless isFinite(value)
 
       value = Math.round((max + value) / 2)
-  else
-    { value, move } = player0(board, me)
-    value = 0 unless isFinite(value)
-    max = value
-    best = move
 
-    flips = board.move(me, best)
-    if board.any_moves(-me)
-      { value } = player2(board, -me)
-      value = -value
-    else
-      { value } = player2(board, me)
-    board.undo me, best, flips
-    value = 0 unless isFinite(value)
-
-    value = Math.round((max + value) / 2)
-
-  { value, move: best }
+  move = best
+  { value, move, solved }
 
 do ->
   book = new Book argv.book, evaluate: evaluate, verbose: argv.verbose
