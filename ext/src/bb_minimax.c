@@ -214,13 +214,15 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
 
 static int
 deepening(bboard b, int max_depth, int max_nodes, int *move_ptr, int n_discs,
-        int lbound, int ubound)
+        u64 mask)
 {
     n_nodes = 0;
 
     move_t *moves[MAX_MOVES], move_array[MAX_MOVES];
     int n_moves = 0;
     u64 pmoves = bb_potential_moves(b);
+    if (mask)
+        pmoves &= mask;
     for (int square = 0; pmoves; square++) {
         if ((pmoves & (1ull << square)) == 0)
             continue;
@@ -249,30 +251,23 @@ deepening(bboard b, int max_depth, int max_nodes, int *move_ptr, int n_discs,
         for (int i = 0; i < n_moves; i++) {
             bb_debug(" %s", bb_square_to_ascii(moves[i]->move));
             int value;
-            if (lbound > -BB_INF) {
+            if (max > -BB_INF) {
                 value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                    -(lbound+1), -lbound, 0);
-                if (value > lbound) {
+                    -(max+1), -max, 0);
+                if (value > max) {
                     bb_debug(">\b");
                     value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                        -ubound, -value, 0);
+                        -BB_INF, -value, 0);
                 }
             } else {
                 value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                    -ubound, -lbound, 0);
+                    -BB_INF, -max, 0);
             }
             if (value > max) {
                 moves[i]->value = value;
                 bb_debug("=%d", value);
                 max = value;
                 best = moves[i];
-                if (value > lbound) {
-                    lbound = value;
-                    if (value >= ubound) {
-                        bb_debug("\n");
-                        goto double_break;
-                    }
-                }
             } else
                 moves[i]->value = -BB_INF;
             if (max_nodes && n_nodes >= max_nodes) {
@@ -292,17 +287,15 @@ double_break:
 }
 
 int
-bb_minimax(bboard b, int max_depth, int max_nodes, int *move_ptr, int lbound, int ubound)
+bb_minimax(bboard b, int max_depth, int max_nodes, int *move_ptr, u64 mask)
 {
     assert(max_depth > 0 || max_nodes > 0);
     int n_discs = bm_count_bits(b.black | b.white);
     if (!max_depth || max_depth > 64 - n_discs)
         max_depth = 64 - n_discs;
-    if (!lbound) lbound = -BB_INF;
-    if (!ubound) ubound = +BB_INF;
-    if (max_depth < SORT_DEPTH)
-        return minimax(b, max_depth, move_ptr, n_discs, lbound, ubound, 0);
-    else
-        return deepening(b, max_depth, max_nodes, move_ptr, n_discs,
-                lbound, ubound);
+    if (max_depth < SORT_DEPTH) {
+        assert(mask == 0); /* mask not supported for this depth! */
+        return minimax(b, max_depth, move_ptr, n_discs, -BB_INF, BB_INF, 0);
+    } else
+        return deepening(b, max_depth, max_nodes, move_ptr, n_discs, mask);
 }

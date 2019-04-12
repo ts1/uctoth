@@ -135,14 +135,16 @@ FUNCTION(minimax)
     ARG_INT32(1, turn);
     ARG_INT32(2, depth);
     ARG_INT32(3, nodes);
-    ARG_INT32(4, lbound);
-    ARG_INT32(5, ubound);
+    ARG_INT32(4, mask_lower);
+    ARG_INT32(5, mask_upper);
     bboard bb = bb_from_ascii(board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
 
+    u64 mask = (((u64) mask_upper) << 32) | mask_lower;
+
     int move;
-    int value = bb_minimax(bb, depth, nodes, &move, lbound, ubound);
+    int value = bb_minimax(bb, depth, nodes, &move, mask);
 
     napi_value retval, val;
     CHECK(napi_create_object(env, &retval));

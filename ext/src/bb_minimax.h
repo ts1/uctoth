@@ -5,8 +5,7 @@
 extern "C" {
 #endif
 
-int bb_minimax(bboard b, int max_depth, int max_nodes, int *best_move,
-        int lbound, int ubound);
+int bb_minimax(bboard b, int max_depth, int max_nodes, int *best_move, u64 mask);
 
 #ifdef __cplusplus
 } /* extern "C" */
