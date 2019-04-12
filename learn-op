@@ -29,13 +29,13 @@ argv = require 'yargs'
       alias: 'wld'
       desc: 'Depth of win-loss-draw solve'
       type: 'number'
-      default: 23
+      default: 22
       requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full solve'
       type: 'number'
-      default: 21
+      default: 20
       requiresArg: true
     S:
       alias: 'scope'

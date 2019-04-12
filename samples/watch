@@ -8,17 +8,21 @@ while true; do
         fi
         touch .stamp-weights
     fi
+
     if [ match.log -nt .stamp-match ]; then
         tail -n 1 match.log
         touch .stamp-match
     fi
-    for ph in $(seq 0 9); do
-        if [ L2/$ph -nt .stamp-l2-$ph ]; then
-            echo -n "L2/$ph: "
-            cat L2/$ph
-            touch .stamp-l2-$ph
+
+    if [ l2.json -nt .stamp-l2 ] ; then
+        if type jq >/dev/null 2>&1; then
+            jq < l2.json
+        else
+            cat l2.json
         fi
-    done
+        touch .stamp-l2
+    fi
+
     echo $(sqlite3 book.db '
         select max(c) from (select count(*) c from game_nodes group by n_moves);
         select sum(outcome) from game_nodes;')

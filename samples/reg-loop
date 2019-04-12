@@ -1,19 +1,8 @@
 #!/bin/bash -ex
 while true ; do
-    snapshotdir=snapshots/$(date +%Y%m%d_%H%M%S)
-    mkdir -p $snapshotdir
-    sqlite3 book.db '
-        select max(c) from (select count(*) c from game_nodes group by n_moves)
-    ' >$snapshotdir/count
+    time npx coffee selfplay-rnd -a -s 300000 -w 24 -f 22 -n 10
 
-    time ./reg --l2=0.3
-
-    cp -p weights.json $snapshotdir
-    gzip $snapshotdir/weights.json
-
-    time ./match match.log
-
-    tail -n 1 match.log > $snapshotdir/match.log
+    time ./learn
 
     if [ -f .reload-reg ]; then
         rm .reload-reg

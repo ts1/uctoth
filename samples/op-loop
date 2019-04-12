@@ -1,10 +1,7 @@
 #!/bin/bash -ex
 
 while true; do
-    npx coffee learn-op -d 10 -w 20 -f 18 -o f5d6 -n 100 -S 0.5
-    npx coffee learn-op -d 10 -w 20 -f 18 -o f5d6 -n 100
-    npx coffee learn-op -d 10 -w 20 -f 18 -o f5f6 -n 100 -S 0.5
-    npx coffee learn-op -d 10 -w 20 -f 18 -o f5f6 -n 100
-    npx coffee learn-op -d 10 -w 0 -f 18 -o f5f4 -n 50 -S 0.5
-    npx coffee learn-op -d 10 -w 0 -f 18 -o f5f4 -n 50
+    npx coffee learn-op -o f5d6 -n 1000
+    npx coffee learn-op -o f5f6 -n 500
+    npx coffee learn-op -o f5f4 -n 100
 done
