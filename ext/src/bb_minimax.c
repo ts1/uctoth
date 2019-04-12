@@ -213,7 +213,8 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
 }
 
 static int
-deepening(bboard b, int max_depth, int max_nodes, int *move_ptr, int n_discs)
+deepening(bboard b, int max_depth, int max_nodes, int *move_ptr, int n_discs,
+        int lbound, int ubound)
 {
     n_nodes = 0;
 
@@ -248,23 +249,30 @@ deepening(bboard b, int max_depth, int max_nodes, int *move_ptr, int n_discs)
         for (int i = 0; i < n_moves; i++) {
             bb_debug(" %s", bb_square_to_ascii(moves[i]->move));
             int value;
-            if (max > -BB_INF) {
+            if (lbound > -BB_INF) {
                 value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                    -(max+1), -max, 0);
-                if (value > max) {
+                    -(lbound+1), -lbound, 0);
+                if (value > lbound) {
                     bb_debug(">\b");
                     value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                        -BB_INF, -value, 0);
+                        -ubound, -value, 0);
                 }
             } else {
                 value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                    -BB_INF, -max, 0);
+                    -ubound, -lbound, 0);
             }
             if (value > max) {
                 moves[i]->value = value;
                 bb_debug("=%d", value);
                 max = value;
                 best = moves[i];
+                if (value > lbound) {
+                    lbound = value;
+                    if (value >= ubound) {
+                        bb_debug("\n");
+                        goto double_break;
+                    }
+                }
             } else
                 moves[i]->value = -BB_INF;
             if (max_nodes && n_nodes >= max_nodes) {
@@ -283,14 +291,18 @@ double_break:
     return best->value;
 }
 
-int bb_minimax(bboard b, int max_depth, int max_nodes, int *move_ptr)
+int
+bb_minimax(bboard b, int max_depth, int max_nodes, int *move_ptr, int lbound, int ubound)
 {
     assert(max_depth > 0 || max_nodes > 0);
     int n_discs = bm_count_bits(b.black | b.white);
     if (!max_depth || max_depth > 64 - n_discs)
         max_depth = 64 - n_discs;
+    if (!lbound) lbound = -BB_INF;
+    if (!ubound) ubound = +BB_INF;
     if (max_depth < SORT_DEPTH)
-        return minimax(b, max_depth, move_ptr, n_discs, -BB_INF, BB_INF, 0);
+        return minimax(b, max_depth, move_ptr, n_discs, lbound, ubound, 0);
     else
-        return deepening(b, max_depth, max_nodes, move_ptr, n_discs);
+        return deepening(b, max_depth, max_nodes, move_ptr, n_discs,
+                lbound, ubound);
 }

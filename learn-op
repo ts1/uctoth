@@ -87,65 +87,16 @@ player1 = Player
   verbose: false
   endgame_eval: pattern_eval
 
-player2 = Player
-  book: null
-  strategy: minmax
-    verbose: false
-    max_depth: argv.depth - 2
-    evaluate: pattern_eval
-  solve_wld: argv.wld
-  solve_full: argv.full
-  verbose: false
-  endgame_eval: pattern_eval
-
 evaluate = (board, me, moves) ->
-  if moves?
-    max = -Infinity
-    best = null
-    for move in moves or board.list_moves(me)
-      flips = board.move(me, move)
-      throw new Error 'invalid move' unless flips.length
-      if board.any_moves(-me)
-        { value, solved } = player1(board, -me)
-        value = -value
-      else
-        { value, solved } = player1(board, me)
-      board.undo me, move, flips
-      value = 0 unless isFinite(value)
-      if value > max
-        max = value
-        best = move
+  { value, move, solved } = player0(board, me, moves)
+  value = 0 unless isFinite(value)
+  value0 = value
 
-      unless solved
-        flips = board.move(me, best)
-        if board.any_moves(-me)
-          { value } = player2(board, -me)
-          value = -value
-        else
-          { value } = player2(board, me)
-        board.undo me, best, flips
-        value = 0 unless isFinite(value)
-
-        value = Math.round((max + value) / 2)
-  else
-    { value, move, solved } = player0(board, me)
+  unless solved
+    { value } = player1(board, me, [move])
     value = 0 unless isFinite(value)
-    max = value
-    best = move
+    value = Math.round((value0 + value) / 2)
 
-    unless solved
-      flips = board.move(me, best)
-      if board.any_moves(-me)
-        { value } = player2(board, -me)
-        value = -value
-      else
-        { value } = player2(board, me)
-      board.undo me, best, flips
-      value = 0 unless isFinite(value)
-
-      value = Math.round((max + value) / 2)
-
-  move = best
   { value, move, solved }
 
 do ->

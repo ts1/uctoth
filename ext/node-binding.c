@@ -130,17 +130,19 @@ FUNCTION(reset_hash)
 
 FUNCTION(minimax)
 {
-    ARGC(4)
+    ARGC(6)
     ARG_STRING(0, board, 256);
     ARG_INT32(1, turn);
     ARG_INT32(2, depth);
     ARG_INT32(3, nodes);
+    ARG_INT32(4, lbound);
+    ARG_INT32(5, ubound);
     bboard bb = bb_from_ascii(board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
 
     int move;
-    int value = bb_minimax(bb, depth, nodes, &move);
+    int value = bb_minimax(bb, depth, nodes, &move, lbound, ubound);
 
     napi_value retval, val;
     CHECK(napi_create_object(env, &retval));

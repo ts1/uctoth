@@ -245,14 +245,7 @@ module.exports = (options={}) ->
 
     {value: max, move: best, solved: null}
 
-  minmax_main = (board, me, moves=null) ->
-    if moves? and moves.length == board.list_moves(me).length
-      moves = null
-    if native_minmax and not moves?
-      native_minmax(board, me)
-    else
-      coffee_minmax(board, me, moves)
-
+  minmax_main = native_minmax or coffee_minmax
   minmax_main.minmax = minmax
   minmax_main.simple_minmax = simple_minmax
 
