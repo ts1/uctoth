@@ -9,6 +9,8 @@ uct = require './uct'
 pattern_eval = require('./pattern_eval')('weights.json')
 Book = require './book'
 { watch_file } = require './util'
+minmax = require './minmax'
+Player = require './player'
 
 argv = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options...]"
@@ -33,7 +35,7 @@ argv = require 'yargs'
       alias: 'search'
       desc: 'Number of UCT searches per move'
       type: 'number'
-      default: 14000
+      default: uct.defaults.max_search
       requiresArg: true
     S:
       alias: 'scope'
@@ -49,12 +51,12 @@ argv = require 'yargs'
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
-      default: 20
+      default: make_player.defaults.solve_wld
       requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full endgame search'
-      default: 18
+      default: make_player.defaults.solve_full
       requiresArg: true
     a:
       alias: 'auto_opening'
@@ -86,6 +88,40 @@ player = make_player
   solve_full: argv.f
   endgame_eval: pattern_eval
 
+evaluator0 = Player
+  book: null
+  strategy: minmax
+    verbose: false
+    max_depth: argv.depth
+    evaluate: pattern_eval
+  solve_wld: argv.wld
+  solve_full: argv.full
+  verbose: false
+  endgame_eval: pattern_eval
+
+evaluator1 = Player
+  book: null
+  strategy: minmax
+    verbose: false
+    max_depth: argv.depth - 1
+    evaluate: pattern_eval
+  solve_wld: argv.wld
+  solve_full: argv.full
+  verbose: false
+  endgame_eval: pattern_eval
+
+evaluate = (board, me, moves) ->
+  { value, move, solved } = evaluator0(board, me, moves)
+  value = 0 unless isFinite(value)
+  value0 = value
+
+  unless solved
+    { value } = evaluator1(board, me, [move])
+    value = 0 unless isFinite(value)
+    value = Math.round((value0 + value) / 2)
+
+  { value, move, solved }
+
 play = (player, opening) ->
   board = new Board
   moves = []
@@ -113,12 +149,7 @@ play = (player, opening) ->
   {moves, outcome}
 
 do ->
-  book = new Book argv.book,
-    eval_depth: argv.depth
-    solve_wld: argv.wld
-    solve_full: argv.full
-    verbose: argv.verbose
-    evaluate: pattern_eval
+  book = new Book argv.book, evaluate: evaluate
   book.init()
 
   n_games = 0

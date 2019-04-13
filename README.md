@@ -15,9 +15,9 @@ Read the source if you are interested.
 
 Works both on Node.js (with ES6+ features) and on [browsers](https://ts1.github.io/uctoth/) (with help from babel and webpack).
 
-Now most of CPU-consuming parts, endgame solving, game tree search and
+Now the most of CPU-intensive parts, endgame solving, game tree search and
 learning, are also written in C.
-They work as Node.js add-on and also as WebAssembly on browsers
+They work as add-on of Node.js and also as WebAssembly on browsers
 (except learning).
 CoffeeScript implementations still exist and used when add-on/wasm is not
 available.
@@ -135,7 +135,7 @@ and invoked again by shell script.
 
 `watch` script is useful for watching to see if everything is working well.
 
-### L2 parameter tuning
+### Tuning L2 regularization parameter
 
 `learn` (and its CoffeeScript counter part `reg`/`minibatch`) uses
 *L2 regularization* to avoid over-fitting.
@@ -146,6 +146,7 @@ It uses K-fold cross-validation and optionally actually plays 30-game match to
 find strongest parameters.
 The result is written to `l2.json` and `learn` reads values from this file if
 available.
+These are very time consuming processes.
 It's recommended to run `l2tune` without `--match` periodically while learning,
 and use `l2tune --match` for final finish of your `weights.json`.
 

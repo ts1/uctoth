@@ -8,18 +8,19 @@ pattern_eval = require './pattern_eval'
 { decode, encode } = require './encode'
 uct_defaults = require('./uct').defaults
 ext = require './ext'
+minmax = require './minmax'
 
 defaults =
   verbose: false
   quiet: false
-  wld: 18
-  full: 16
-  search: 40000
+  wld: Player.defaults.solve_wld
+  full: Player.defaults.solve_full
+  search: uct_defaults.max_search
   ref: 'ref/weights.json'
   weights: 'weights.json'
   openings: 'match.openings'
-  depth: 60
-  leafs: 650000
+  depth: minmax.defaults.max_depth
+  leafs: minmax.defaults.max_leafs
   both_minimax: false
   C: uct_defaults.C
   C_log: uct_defaults.C_log

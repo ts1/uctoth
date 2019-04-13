@@ -57,6 +57,7 @@ try_value = (value, max) ->
     wld: argv.wld
     full: argv.full
     quiet: true
+    minimax: true
 
   score = winrate + avg * 0.0001
   process.stdout.write "score=#{Math.round(score*10000)/10000}"

@@ -33,7 +33,7 @@ argv = require 'yargs'
       alias: 'randomness'
       desc: 'Initial randomness'
       type: 'number'
-      default: 0.07
+      default: 0.1
       requiresArg: true
     min_col:
       desc: 'Minimum collision rate'
@@ -59,7 +59,7 @@ argv = require 'yargs'
       alias: 'balance'
       desc: 'Tolerance of outcome/win-loss balance'
       type: 'number'
-      default: 10000
+      default: 1000
       requiresArg: true
     B:
       alias: 'book'
@@ -71,25 +71,19 @@ argv = require 'yargs'
       alias: 'search'
       desc: 'Number of UCT searches per move'
       type: 'number'
-      default: 14000
+      default: uct.defaults.max_search
       requireArg: true
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
       type: 'number'
-      default: 20
+      default: Player.defaults.solve_wld
       requireArg: true
     f:
       alias: 'full'
       desc: 'Depth of full endgame search'
       type: 'number'
-      default: 18
-      requireArg: true
-    d:
-      alias: 'depth'
-      desc: 'Learn depth'
-      type: 'number'
-      default: 5
+      default: Player.defaults.solve_full
       requireArg: true
     watch:
       desc: 'Watch the file and exit when it changes'
@@ -99,6 +93,7 @@ argv = require 'yargs'
     wlb:
       desc: 'Use win-loss balance instead of outcome'
       type: 'boolean'
+      default: false
     v:
       alias: 'verbose'
       default: false
@@ -148,8 +143,7 @@ play = (player, opening) ->
   {moves, outcome}
 
 do ->
-  book = new Book argv.book,
-    solve_wld: argv.wld, solve_full: argv.full, eval_depth: argv.depth
+  book = new Book argv.book
   book.init()
 
   randomness = argv.randomness

@@ -6,9 +6,9 @@ ext = require('./ext')
 
 defaults =
   book: null
-  strategy: require('./minmax')()
-  solve_wld: 18
-  solve_full: 20
+  strategy: null
+  solve_wld: 24
+  solve_full: 22
   verbose: true
   inverted: false
   endgame_eval: null
@@ -68,3 +68,5 @@ module.exports = (options={}) ->
         return move
 
     opts.strategy(board, me, unique_moves)
+
+module.exports.defaults = defaults

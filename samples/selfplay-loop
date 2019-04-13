@@ -1,4 +1,4 @@
 #!/bin/bash -ex
 while true ; do
-    npx coffee selfplay-rnd -a -s 300000 -w 24 -f 22
+    npx coffee selfplay-rnd -a
 done

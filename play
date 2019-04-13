@@ -33,7 +33,7 @@ argv = require 'yargs'
       alias: 's'
       desc: 'Number of UCT search'
       type: 'number'
-      default: 240000
+      default: require('./uct').defaults.max_search
       requiresArg: true
     book:
       desc: 'Opening book'
@@ -44,7 +44,7 @@ argv = require 'yargs'
       alias: 'r'
       desc: 'Randomness of opening book'
       type: 'number'
-      default: 0.7
+      default: 1
       requiresArg: true
     random:
       alias: 'R'
@@ -56,25 +56,25 @@ argv = require 'yargs'
       alias: 'd'
       desc: 'Search depth of minimax'
       type: 'number'
-      default: 60
+      default: require('./minmax').defaults.max_depth
       requiresArg: true
     leafs:
       alias: 'l'
       desc: 'Maximum number of leafs to search of minimax'
       type: 'number'
-      default: 4e6
+      default: require('./minmax').defaults.max_leafs
       requiresArg: true
     wld:
       alias: 'W'
       desc: 'Depth of win-loss-draw endgame search'
       type: 'number'
-      default: 21
+      default: Player.defaults.solve_wld
       requiresArg: true
     full:
       alias: 'f'
       desc: 'Depth of ful endgame search'
       type: 'number'
-      default: 19
+      default: Player.defaults.solve_full
       requiresArg: true
     h:
       alias: 'help'

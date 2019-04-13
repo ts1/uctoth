@@ -19,9 +19,9 @@ corner_zone = do ->
   b
 
 defaults =
-  evaluate: require './simple_eval'
-  max_depth: 6
-  max_leafs: 4e6
+  evaluate: null
+  max_depth: 60
+  max_leafs: 3e6
   verbose: true
   invert: false
   cq: false
@@ -250,3 +250,5 @@ module.exports = (options={}) ->
   minmax_main.simple_minmax = simple_minmax
 
   minmax_main
+
+module.exports.defaults = defaults

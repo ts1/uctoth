@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 while true ; do
-    time npx coffee selfplay-rnd -a -s 300000 -w 24 -f 22 -n 10
+    time npx coffee selfplay-rnd -a -n 10
 
     time ./learn
 

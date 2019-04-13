@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 while true ; do
     for i in $(seq 10); do
-        time ./match -s 300000 -w 24 -f 22 match.log
+        time ./match match.log
     done
-    time ./l2tune -l -p 1.1
+    time ./l2tune
 done

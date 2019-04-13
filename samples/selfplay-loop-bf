@@ -1,4 +1,4 @@
 #!/bin/bash -ex
 while true ; do
-    npx coffee selfplay-bf -s 300000 -w 24 -f 22
+    npx coffee selfplay-bf
 done

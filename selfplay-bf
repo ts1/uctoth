@@ -35,7 +35,7 @@ argv = require 'yargs'
       alias: 'search'
       desc: 'Number of UCT search per move'
       type: 'number'
-      default: 14000
+      default: uct.defaults.max_search
       requiresArg: true
     b:
       alias: 'balance'
@@ -46,13 +46,13 @@ argv = require 'yargs'
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
       type: 'number'
-      default: 20
+      default: make_player.defaults.solve_wld
       requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full endgame search'
       type: 'number'
-      default: 18
+      default: make_player.defaults.solve_full
       requiresArg: true
     watch:
       desc: 'Watch the file and exit when it changes'
