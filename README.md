@@ -137,7 +137,7 @@ and invoked again by shell script.
 
 ### L2 parameter tuning
 
-`learn` (and its CoffeeScript counter part `reg`/`regress`) uses
+`learn` (and its CoffeeScript counter part `reg`/`minibatch`) uses
 *L2 regularization* to avoid over-fitting.
 It's important to give optimal parameters of this to build strong weights.
 

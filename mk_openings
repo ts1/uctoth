@@ -16,13 +16,13 @@ argv = require 'yargs'
     d:
       alias: 'max_diff'
       desc: 'Minimum difference of move value from best move'
-      default: 4000
+      default: Infinity
       type: 'number'
       requiresArg: true
     m:
       alias: 'min_visits'
       desc: 'Minimum number of visits to nodes'
-      default: 100
+      default: 1000
       type: 'number'
       requiresArg: true
     o:
@@ -88,3 +88,4 @@ do ->
   board.move BLACK, pos_from_str('F5')
   add_nodes WHITE, 1, 'F5'
   console.log "#{Object.keys(nodes).length} nodes"
+  fs.writeFileSync argv.output, JSON.stringify(nodes)

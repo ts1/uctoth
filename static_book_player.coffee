@@ -3,7 +3,7 @@ book = require './openings.json'
 { SCORE_MULT } = require './pattern'
 
 defaults =
-  random: 0.7
+  random: 1
   verbose: true
 
 module.exports = (options={}) ->
@@ -29,9 +29,14 @@ module.exports = (options={}) ->
     return null unless nodes.length
 
     if opts.random
+      avg = 0
+      for node in nodes
+        avg += node.n
+      avg /= nodes.length
+
       sum_p = 0
       for node in nodes
-        node.p = Math.exp(node.value / (1*SCORE_MULT*opts.random))
+        node.p = (node.n / avg) ** (1 / opts.random)
         sum_p += node.p
 
       r = Math.random() * sum_p

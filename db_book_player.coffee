@@ -4,8 +4,9 @@ Book = require './book'
 
 defaults =
   book: 'book.db'
-  random: 0.7
+  random: 1
   verbose: true
+  min_visits: 1000
 
 module.exports = (options={}) ->
   opt = {defaults..., options...}
@@ -21,7 +22,7 @@ module.exports = (options={}) ->
       flips = board.move me, move
       data = book.get_op_node(board)
       board.undo me, move, flips
-      if data
+      if data and data.n_visited > opt.min_visits
         value = data.pub_value * me
         node = {move, value, n:data.n_visited}
         nodes.push node
@@ -31,9 +32,15 @@ module.exports = (options={}) ->
     return null unless nodes.length
 
     if opt.random
+      avg = 0
+      n = 0
+      for node in nodes
+        avg += node.n
+      avg /= nodes.length
+
       sum_p = 0
       for node in nodes
-        node.p = Math.exp(node.value / (1*SCORE_MULT*opt.random))
+        node.p = (node.n / avg) ** (1 / opt.random)
         sum_p += node.p
 
       r = Math.random() * sum_p
