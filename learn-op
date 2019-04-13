@@ -22,7 +22,7 @@ argv = require 'yargs'
     s:
       desc: 'Number of UCT search'
       type: 'number'
-      default: 30000
+      default: 10000
       requiresArg: true
     w:
       alias: 'wld'
@@ -39,7 +39,7 @@ argv = require 'yargs'
     S:
       alias: 'scope'
       desc: 'UCT constant to find opening'
-      default: .7
+      default: .5
       type: 'number'
       requiresArg: true
     B:
@@ -77,9 +77,38 @@ do_evaluate = Player
   endgame_eval: pattern_eval
 
 evaluate = (board, turn, moves) ->
-  result = do_evaluate(board, turn, moves)
-  result.value = 0 unless result.value?
-  result
+  max = -Infinity
+  for pos in moves or board.list_moves(turn)
+    flips = board.move(turn, pos)
+    throw new Error unless flips.length
+    if board.any_moves(-turn)
+      { value, move, solved } = do_evaluate(board, -turn)
+      value = 0 unless value?
+      value = -value
+    else
+      { value, move, solved } = do_evaluate(board, turn)
+      value = 0 unless value?
+    board.undo turn, pos, flips
+    if value > max
+      max = value
+      best = pos
+      best_move = move
+
+  if not solved and best_move > 0
+    flips = board.move(turn, best)
+    throw new Error unless flips.length
+    if board.any_moves(-turn)
+      { value } = do_evaluate(board, -turn, [best_move])
+      value = 0 unless value?
+      value = -value
+    else
+      { value } = do_evaluate(board, turn, [best_move])
+      value = 0 unless value?
+    #console.log max, value
+    board.undo turn, best, flips
+    max = Math.round((max + value) / 2)
+
+  { value: max, move: best, solved }
 
 do ->
   book = new Book argv.book, evaluate: evaluate, verbose: argv.verbose

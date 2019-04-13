@@ -335,7 +335,7 @@ module.exports = class Book
           '-'
           pos_to_str(ev.move, turn)
           data.pri_value
-        ) if @verbose
+        ) if @verbose #or true
         board.undo turn, ev.move, flips
         pri = data.pri_value * turn
         if pri > max_pri
