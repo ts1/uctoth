@@ -114,7 +114,6 @@ book =
     null
 
 normal_eval = pattern_eval('weights.json')
-invert_eval = pattern_eval('weights.json', true)
 logistic = normal_eval.logistic
 
 simple = Player
@@ -150,17 +149,23 @@ uct = Player
   solve_full: argv.full
   endgame_eval: normal_eval
 
-invert = Player
-  book: null
-  strategy: require('./uct')
-    evaluate: invert_eval
-    max_search: argv.search
-    inverted: true
-    random: argv.random
-  inverted: true
-  solve_wld: argv.wld
-  solve_full: argv.full
-  endgame_eval: invert_eval
+invert = do->
+  do_invert = null
+  (board, turn, moves) ->
+    unless do_invert
+      invert_eval = pattern_eval('weights.json', true)
+      do_invert = Player
+        book: null
+        strategy: require('./uct')
+          evaluate: invert_eval
+          max_search: argv.search
+          inverted: true
+          random: argv.random
+        inverted: true
+        solve_wld: argv.wld
+        solve_full: argv.full
+        endgame_eval: invert_eval
+    do_invert(board, turn, moves)
 
 time_tbl = {}
 
