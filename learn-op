@@ -4,7 +4,7 @@ require './rejection_handler'
 { watch_file } = require './util'
 Book = require './book'
 Player = require './player'
-minmax = require './minmax'
+uct = require './uct'
 
 argv = require 'yargs'
   .options
@@ -19,11 +19,10 @@ argv = require 'yargs'
       type: 'number'
       default: Infinity
       requiresArg: true
-    d:
-      alias: 'depth'
-      desc: 'Evaluation depth'
+    s:
+      desc: 'Number of UCT search'
       type: 'number'
-      default: 10
+      default: 30000
       requiresArg: true
     w:
       alias: 'wld'
@@ -65,39 +64,22 @@ argv = require 'yargs'
 
 pattern_eval = require('./pattern_eval')('weights.json')
 
-player0 = Player
+do_evaluate = Player
   book: null
-  strategy: minmax
+  strategy: uct
     verbose: false
-    max_depth: argv.depth
+    max_search: argv.s
     evaluate: pattern_eval
+    by_value: true
   solve_wld: argv.wld
   solve_full: argv.full
   verbose: false
   endgame_eval: pattern_eval
 
-player1 = Player
-  book: null
-  strategy: minmax
-    verbose: false
-    max_depth: argv.depth - 1
-    evaluate: pattern_eval
-  solve_wld: argv.wld
-  solve_full: argv.full
-  verbose: false
-  endgame_eval: pattern_eval
-
-evaluate = (board, me, moves) ->
-  { value, move, solved } = player0(board, me, moves)
-  value = 0 unless isFinite(value)
-  value0 = value
-
-  unless solved
-    { value } = player1(board, me, [move])
-    value = 0 unless isFinite(value)
-    value = Math.round((value0 + value) / 2)
-
-  { value, move, solved }
+evaluate = (board, turn, moves) ->
+  result = do_evaluate(board, turn, moves)
+  result.value = 0 unless result.value?
+  result
 
 do ->
   book = new Book argv.book, evaluate: evaluate, verbose: argv.verbose

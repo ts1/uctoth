@@ -589,7 +589,9 @@ static int solve_root(bboard b, int *score_p, int pass, int wld, u64 mask)
     if (n_empty > 20)
         n_search <<= n_empty - 20;
 
-    init_guess = bb_uct_search(b, n_search, &ssbest, DEFAULT_SCOPE, 0, 0);
+
+    bb_uct_set_options(n_search, DEFAULT_SCOPE, 0, false, false);
+    init_guess = bb_uct_search(b, &ssbest, 0);
     n_moves = sort_moves_fastest_first(b, moves, NULL, ssbest, -64, 64, mask);
 
     if (!n_moves) {

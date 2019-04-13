@@ -17,6 +17,7 @@ defaults =
   show_cache: false
   tenacious: true
   ext: true
+  by_value: false
 
 module.exports = (options={}) ->
   options = {defaults..., options...}
@@ -53,14 +54,15 @@ module.exports = (options={}) ->
         randomness: options.random
         tenacious: options.tenacious
         inverted: options.inverted
+        by_value: options.by_value
 
-  coffee_uct = (board, me) ->
+  coffee_uct = (board, me, forced_moves=null) ->
     scope = if options.evaluate.logistic then options.C_log else options.C
     board = new options.board_class board
     max_depth = 0
     grew = false
 
-    uct_search = (node, me, pass, depth) ->
+    uct_search = (node, me, pass, depth, forced_moves=null) ->
       node.n++
 
       if node.pass?
@@ -71,6 +73,7 @@ module.exports = (options={}) ->
         max = -INFINITY
         any_moves = false
         board.each_empty (move) ->
+          return if forced_moves and move not in forced_moves
           flips = board.move me, move, false
           if flips.length
             any_moves = true
@@ -139,7 +142,7 @@ module.exports = (options={}) ->
 
     for i in [0...options.max_search]
       grew = false
-      uct_search root, me, false, 0
+      uct_search root, me, false, 0, forced_moves
       unless grew
         if options.tenacious and scope < 10*SCORE_MULT
           scope *= 1.4
@@ -168,7 +171,12 @@ module.exports = (options={}) ->
       max_value = -INFINITY
       best = null
       for child in root.children
-        if child.n > max_n or (child.n == max_n and child.value > max_value)
+        is_best =
+          if options.by_value
+            child.value > max_value
+          else
+            child.n > max_n or (child.n == max_n and child.value > max_value)
+        if is_best
           max_n = child.n
           max_value = child.value
           best = child

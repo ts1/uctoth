@@ -68,22 +68,36 @@ FUNCTION(evaluate)
     return retval;
 }
 
+FUNCTION(set_uct_options)
+{
+    ARGC(5)
+    ARG_INT32(0, n_search)
+    ARG_DOUBLE(1, scope)
+    ARG_DOUBLE(2, randomness)
+    ARG_BOOL(3, tenacious)
+    ARG_BOOL(4, by_value)
+
+    bb_uct_set_options(n_search, scope, randomness, tenacious, by_value);
+
+    return 0;
+}
+
 FUNCTION(uct_search)
 {
-    ARGC(6)
+    ARGC(4)
     ARG_STRING(0, board, 256)
     ARG_INT32(1, turn)
-    ARG_INT32(2, n_search)
-    ARG_INT32(3, scope)
-    ARG_DOUBLE(4, randomness)
-    ARG_BOOL(5, tenacious)
+    ARG_INT32(2, mask_lower)
+    ARG_INT32(3, mask_upper)
 
     bboard bb = bb_from_ascii(board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
 
+    u64 mask = (((u64) mask_upper) << 32) | mask_lower;
+
     int move = -1;
-    int value = bb_uct_search(bb, n_search, &move, scope, randomness, tenacious);
+    int value = bb_uct_search(bb, &move, mask);
 
     napi_value retval, val;
     CHECK(napi_create_object(env, &retval));
@@ -166,6 +180,7 @@ MODULE_INIT(init)
         EXPORT(set_verbose),
         EXPORT(set_weights),
         EXPORT(evaluate),
+        EXPORT(set_uct_options),
         EXPORT(uct_search),
         EXPORT(reset_hash),
         EXPORT(solve),

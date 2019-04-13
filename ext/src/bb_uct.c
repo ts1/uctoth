@@ -12,7 +12,9 @@ struct node {
     node_t *first_child, *sibling, *pass;
 };
 
-static int grew, scope, outcome_mode, max_discs, n_nodes;
+static int max_discs, n_nodes, n_search;
+static bool grew, outcome_mode, tenacious, by_value;
+static double orig_scope, scope, randomness;
 
 #define PER_POOL 1000
 
@@ -52,14 +54,14 @@ static inline int eval_endgame(bboard b)
            (BB_INF/2) : -(BB_INF/2);
 }
 
-static void uct_search(bboard b, node_t *node, int n_discs, int pass)
+static void uct_search(bboard b, node_t *node, int n_discs, int pass, u64 mask)
 {
     node->n_visited++;
     if (n_discs > max_discs)
         max_discs = n_discs;
 
     if (node->pass) {
-        uct_search(bb_swap(b), node->pass, n_discs, 1);
+        uct_search(bb_swap(b), node->pass, n_discs, 1, 0);
         node->value = -node->pass->value;
     } else if (node->first_child) {
         double max = -INFINITY;
@@ -77,7 +79,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
         assert(flips);
         bboard newb = bb_swap(bb_apply_flips(b, flips, best->move));
 
-        uct_search(newb, best, n_discs+1, 0);
+        uct_search(newb, best, n_discs+1, 0, 0);
 
         int maxval = -BB_INF;
         for (node_t *child = node->first_child; child; child = child->sibling) {
@@ -88,6 +90,8 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
     } else if (n_discs < 64) {
         node_t **child_slot = &node->first_child;
         u64 pmoves = bb_potential_moves(b);
+        if (mask)
+            pmoves &= mask;
         int max = -BB_INF;
         for (int move = 0; pmoves; move++) {
             if ((pmoves & (1ull << move)) == 0)
@@ -108,7 +112,7 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
             if (child->value > max)
                 max = child->value;
             n_nodes++;
-            grew = 1;
+            grew = true;
         }
         if (node->first_child)
             node->value = -max;
@@ -116,14 +120,14 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
             if (pass) {
                if (node->n_visited == 1) {
                    node->value = -eval_endgame(b);
-                   grew = 1;
+                   grew = true;
                }
             } else {
                 node_t *child = alloc_node();
                 node->pass = child;
                 child->value = -node->value;
                 n_nodes++;
-                grew = 1;
+                grew = true;
             }
         }
     }
@@ -131,19 +135,28 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass)
 
 static node_t *find_best_child(node_t *node)
 {
-    node_t *best = NULL;
-    for (node_t *child = node->first_child; child; child = child->sibling) {
-        if (!best || child->n_visited > best->n_visited ||
+    node_t *best = node->first_child;
+    for (node_t *child = best->sibling; child; child = child->sibling) {
+        if (child->n_visited > best->n_visited ||
              (child->n_visited == best->n_visited &&
                   child->value > best->value))
-            best = child ;
+            best = child;
     }
     return best;
 }
 
-static node_t *find_stochastic_child(node_t *node, double randomness)
+static node_t *find_best_child_by_value(node_t *node)
 {
-    double i_rand = 1 / randomness;
+    node_t *best = node->first_child;
+    for (node_t *child = best->sibling; child; child = child->sibling)
+        if (child->value > best->value)
+            best = child;
+    return best;
+}
+
+static node_t *find_stochastic_child(node_t *node)
+{
+    double inv_rand = 1 / randomness;
     double avg = 0;
     int n = 0;
     for (node_t *child = node->first_child; child; child = child->sibling) {
@@ -154,30 +167,35 @@ static node_t *find_stochastic_child(node_t *node, double randomness)
     bb_debug("avg=%g\n", avg);
 
     double sum = 0;
-    for (node_t *child = node->first_child; child; child = child->sibling) {
-        bb_debug("n=%d norm=%g pow=%g\n",
-                child->n_visited,
-                child->n_visited / avg,
-                pow(child->n_visited / avg, i_rand));
-        sum += pow(child->n_visited / avg, i_rand);
-    }
-    bb_debug("sum=%g\n", sum);
+    for (node_t *child = node->first_child; child; child = child->sibling)
+        sum += pow(child->n_visited / avg, inv_rand);
 
     double r = ((double) rand() / RAND_MAX) * sum;
-    bb_debug("r=%g\n", r);
 
     double s = 0;
     for (node_t *child = node->first_child; child; child = child->sibling) {
-        s += pow(child->n_visited / avg, i_rand);
-        bb_debug("n=%d s=%g\n", child->n_visited, s);
+        s += pow(child->n_visited / avg, inv_rand);
         if (s >= r)
             return child;
     }
     return NULL;
 }
 
-int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
-        double randomness, int tenacious)
+void bb_uct_set_options(
+        int _n_search,
+        double _scope,
+        double _randomness,
+        bool _tenacious,
+        bool _by_value)
+{
+    n_search = _n_search;
+    orig_scope = _scope;
+    randomness = _randomness;
+    tenacious = _tenacious;
+    by_value = _by_value;
+}
+
+int bb_uct_search(bboard b, int *move_ptr, u64 mask)
 {
     int n_discs = bm_count_bits(b.black | b.white);
     node_t *root = alloc_node();
@@ -186,8 +204,8 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
     max_discs = 0;
     n_nodes = 1;
     for (int i = 0; i < n_search; i++) {
-        grew = 0;
-        uct_search(b, root, n_discs, 0);
+        grew = false;
+        uct_search(b, root, n_discs, 0, mask);
         if (!grew) {
             if (!tenacious)
                 break;
@@ -199,15 +217,16 @@ int bb_uct_search(bboard b, int n_search, int *move_ptr, int orig_scope,
     bb_debug("max depth %d\n", max_discs - n_discs);
     bb_debug("%d nodes\n", n_nodes);
 
-    node_t *best = randomness ?
-        find_stochastic_child(root, randomness) :
-        find_best_child(root);
-
-    if (!best) {
+    if (!root->first_child) {
         if (move_ptr)
             *move_ptr = -1;
         return 0;
     }
+
+    node_t *best =
+        randomness? find_stochastic_child(root) :
+        by_value? find_best_child_by_value(root) :
+        find_best_child(root);
 
     int retval = best->value;
     if (move_ptr)

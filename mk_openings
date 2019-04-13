@@ -22,7 +22,7 @@ argv = require 'yargs'
     m:
       alias: 'min_visits'
       desc: 'Minimum number of visits to nodes'
-      default: 1000
+      default: 100
       type: 'number'
       requiresArg: true
     o:
