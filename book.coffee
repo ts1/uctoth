@@ -245,7 +245,7 @@ module.exports = class Book
     unique
 
   extend: (scope, opening=DEFAULT_OPENING) ->
-    #@db.run 'begin immediate'
+    @db.run 'begin'
     {moves, value} = @find_opening(scope, opening)
     board = new PatternBoard
     history = []
@@ -283,7 +283,7 @@ module.exports = class Book
       @put_op_node board, data
 
     @add_to_tree board, history, true
-    #@db.run 'commit'
+    @db.run 'commit'
 
   add_to_tree: (board, history) ->
     while history.length
@@ -304,6 +304,8 @@ module.exports = class Book
           if pub > max_pub
             max_pub = pub
           if data.is_leaf
+            if have_leaf
+              console.log 'MULTI LEAF' if @verbose
             have_leaf = true
         else
           unevaled.push m
@@ -312,6 +314,7 @@ module.exports = class Book
         ev = @evaluate(board, turn, unevaled)
         flips = board.move turn, ev.move
         throw new Error 'invalid move' unless flips.length
+        throw new Error 'move not in unevaled' unless ev.move in unevaled
         data = @get_op_node(board) or {n_visited:0}
         value = ev.value * turn
         if ev.solved
@@ -326,8 +329,13 @@ module.exports = class Book
         data.is_leaf = true
         data.solved = ev.solved
         @put_op_node board, data
-        if @verbose
-          console.log 'leaf', pos_to_str(ev.move, turn), data.pri_value
+        console.log(
+          'leaf'
+          pos_to_str(move, turn)
+          '-'
+          pos_to_str(ev.move, turn)
+          data.pri_value
+        ) if @verbose
         board.undo turn, ev.move, flips
         pri = data.pri_value * turn
         if pri > max_pri

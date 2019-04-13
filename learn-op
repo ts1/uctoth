@@ -39,7 +39,7 @@ argv = require 'yargs'
     S:
       alias: 'scope'
       desc: 'UCT constant to find opening'
-      default: 0.6
+      default: .7
       type: 'number'
       requiresArg: true
     B:

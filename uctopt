@@ -7,12 +7,14 @@ match = require './match.coffee'
 
 argv = require 'yargs'
   .options
-    min:
+    m:
+      alias: 'min'
       desc: 'Minimum value to search'
       default: 0
       type: 'number'
       requiresArg: true
-    max:
+    M:
+      alias: 'max'
       desc: 'Maximum value to search'
       default: 4
       type: 'number'
@@ -35,6 +37,14 @@ argv = require 'yargs'
       alias: 'full'
       desc: 'Full search depth'
       default: match.defaults.full
+    d:
+      alias: 'depth'
+      desc: 'Minimax maximum search depth'
+      default: match.defaults.depth
+    l:
+      alias: 'leafs'
+      desc: 'Minimax maximum search nodes'
+      default: match.defaults.leafs
     weights:
       desc: 'Weights file'
       default: 'weights.json'
@@ -58,6 +68,8 @@ try_value = (value, max) ->
     full: argv.full
     quiet: true
     minimax: true
+    depth: argv.depth
+    leafs: argv.leafs
 
   score = winrate + avg * 0.0001
   process.stdout.write "score=#{Math.round(score*10000)/10000}"

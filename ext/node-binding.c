@@ -94,7 +94,7 @@ FUNCTION(uct_search)
     if (turn == -1)
         bb = bb_swap(bb);
 
-    u64 mask = (((u64) mask_upper) << 32) | mask_lower;
+    u64 mask = (((u64) mask_upper) << 32) | (u32) mask_lower;
 
     int move = -1;
     int value = bb_uct_search(bb, &move, mask);
@@ -155,7 +155,7 @@ FUNCTION(minimax)
     if (turn == -1)
         bb = bb_swap(bb);
 
-    u64 mask = (((u64) mask_upper) << 32) | mask_lower;
+    u64 mask = (((u64) mask_upper) << 32) | (u32) mask_lower;
 
     int move;
     int value = bb_minimax(bb, depth, nodes, &move, mask);
