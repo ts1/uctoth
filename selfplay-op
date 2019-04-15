@@ -11,6 +11,7 @@ Book = require './book'
 { watch_file } = require './util'
 minmax = require './minmax'
 Player = require './player'
+op_eval = require './op_eval'
 
 argv = require 'yargs'
   .usage "Usage: #{process.argv[1]} [options...]"
@@ -43,11 +44,6 @@ argv = require 'yargs'
       type: 'number'
       default: .5
       requiresArg: true
-    d:
-      alias: 'depth'
-      desc: 'Depth of minimax evaluation of leafs'
-      default: 10
-      requiresArg: true
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw endgame search'
@@ -57,6 +53,31 @@ argv = require 'yargs'
       alias: 'full'
       desc: 'Depth of full endgame search'
       default: make_player.defaults.solve_full
+      requiresArg: true
+    u:
+      alias: 'uct'
+      desc: 'Use UCT to evaluate leafs'
+      default: false
+      type: 'boolean'
+    U:
+      desc: 'Number of evaluation UCT search'
+      type: 'number'
+      default: op_eval.defaults.max_search
+      requiresArg: true
+    D:
+      alias: 'depth'
+      desc: 'Depth of minimax evaluation of leafs'
+      default: op_eval.defaults.depth
+      requiresArg: true
+    W:
+      desc: 'Depth of evaluation win-loss-draw solve'
+      type: 'number'
+      default: op_eval.defaults.wld
+      requiresArg: true
+    F:
+      desc: 'Depth of evaluation full solve'
+      type: 'number'
+      default: op_eval.defaults.full
       requiresArg: true
     a:
       alias: 'auto_opening'
@@ -88,39 +109,12 @@ player = make_player
   solve_full: argv.f
   endgame_eval: pattern_eval
 
-evaluator0 = Player
-  book: null
-  strategy: minmax
-    verbose: false
-    max_depth: argv.depth
-    evaluate: pattern_eval
-  solve_wld: argv.wld
-  solve_full: argv.full
-  verbose: false
-  endgame_eval: pattern_eval
-
-evaluator1 = Player
-  book: null
-  strategy: minmax
-    verbose: false
-    max_depth: argv.depth - 1
-    evaluate: pattern_eval
-  solve_wld: argv.wld
-  solve_full: argv.full
-  verbose: false
-  endgame_eval: pattern_eval
-
-evaluate = (board, me, moves) ->
-  { value, move, solved } = evaluator0(board, me, moves)
-  value = 0 unless isFinite(value)
-  value0 = value
-
-  unless solved
-    { value } = evaluator1(board, me, [move])
-    value = 0 unless isFinite(value)
-    value = Math.round((value0 + value) / 2)
-
-  { value, move, solved }
+evaluate = op_eval
+  uct: argv.uct
+  max_search: argv.U
+  depth: argv.depth
+  wld: argv.W
+  full: argv.F
 
 play = (player, opening) ->
   board = new Board

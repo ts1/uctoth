@@ -26,25 +26,25 @@ argv = require 'yargs'
     s:
       desc: 'Number of evaluation UCT search'
       type: 'number'
-      default: 3000
+      default: op_eval.defaults.max_search
       requiresArg: true
     d:
       alias: 'depth'
       desc: 'Minimax search depth'
       type: 'number'
-      default: 15
+      default: op_eval.defaults.depth
       requiresArg: true
     w:
       alias: 'wld'
       desc: 'Depth of win-loss-draw solve'
       type: 'number'
-      default: 22
+      default: op_eval.defaults.wld
       requiresArg: true
     f:
       alias: 'full'
       desc: 'Depth of full solve'
       type: 'number'
-      default: 20
+      default: op_eval.defaults.full
       requiresArg: true
     S:
       alias: 'scope'

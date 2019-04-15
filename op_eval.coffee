@@ -3,7 +3,7 @@ Player = require './player'
 defaults =
   uct: false
   max_search: 3000
-  depth: 15
+  depth: 13
   wld: 22
   full: 20
 
