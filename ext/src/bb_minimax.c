@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <assert.h>
 #include "bitboard.h"
 #include "bb_minimax.h"
@@ -32,6 +33,40 @@ typedef struct {
     char move;
     char type;
 } entry_t;
+
+#define SHALLOW_SEARCH_MAX 2
+
+#define WIN_2 2000
+#define WIN_4 3000
+#define WIN_6 4000
+#define WIN_8 5000
+#define WIN_10 6000
+#define WIN_12 7000
+#define WIN_14 8000
+
+static const struct {
+    int depth;
+    int window;
+} selective_tbl[60][SHALLOW_SEARCH_MAX] = {
+    [3] = {{ 1, WIN_2 }},
+    [4] = {{ 2, WIN_2 }},
+    [5] = {{ 1, WIN_4 }},
+    [6] = {{ 2, WIN_4 }},
+    [7] = {{ 3, WIN_4 }},
+    [8] = {{ 2, WIN_6 }, { 4, WIN_4 }},
+    [9] = {{ 3, WIN_6 }, { 5, WIN_4 }},
+    [10] = {{ 2, WIN_8 }, { 4, WIN_6 }},
+    [11] = {{ 3, WIN_8 }, { 5, WIN_6 }},
+    [12] = {{ 2, WIN_10 }, { 4, WIN_8 }},
+    [13] = {{ 3, WIN_10 }, { 5, WIN_8 }},
+    [14] = {{ 2, WIN_12 }, { 6, WIN_8 }},
+    [15] = {{ 3, WIN_12 }, { 7, WIN_8 }},
+    [16] = {{ 2, WIN_14 }, { 6, WIN_10 }},
+    [17] = {{ 3, WIN_14 }, { 7, WIN_10 }},
+    [18] = {{ 4, WIN_14 }, { 8, WIN_10 }},
+    [19] = {{ 5, WIN_14 }, { 9, WIN_10 }},
+    [20] = {{ 6, WIN_14 }, { 10, WIN_10 }},
+};
 
 static cache_t cache;
 
@@ -102,7 +137,7 @@ static void sort_moves(move_t *moves[], int n_moves)
 }
 
 static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
-        int lbound, int ubound, int pass)
+        int lbound, int ubound, bool pass, bool selective)
 {
     if (depth < SORT_DEPTH)
         return minimax(b, depth, move_ptr, n_discs, lbound, ubound, pass);
@@ -119,6 +154,34 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
                 if (move_ptr)
                     *move_ptr = entry->move;
                 return entry->value;
+            }
+        }
+    }
+
+    int max = -BB_INF;
+
+    if (selective) {
+        for (int i = 0; i < SHALLOW_SEARCH_MAX; i++) {
+            int shallow_depth = selective_tbl[depth][i].depth;
+            if (!shallow_depth)
+                break;
+            if (lbound > -BB_INF) {
+                int bound = lbound - selective_tbl[depth][i].window;
+                int eval = sorted_minimax(b, shallow_depth, move_ptr, n_discs,
+                        bound-1, bound, pass, false);
+                if (eval < bound) {
+                    max = lbound;
+                    goto save_cache;
+                }
+            }
+            if (ubound < BB_INF) {
+                int bound = ubound + selective_tbl[depth][i].window;
+                int eval = sorted_minimax(b, shallow_depth, move_ptr, n_discs,
+                        bound, bound+1, pass, false);
+                if (eval > bound) {
+                    max = ubound;
+                    goto save_cache;
+                }
             }
         }
     }
@@ -146,7 +209,7 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
             return endgame(b);
         else
             return -sorted_minimax(bb_swap(b), depth, move_ptr, n_discs,
-                    -ubound, -lbound, 1);
+                    -ubound, -lbound, 1, selective);
     }
 
     for (int i = 0; i < n_moves; i++) {
@@ -171,18 +234,17 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
 
     int orig_lbound = lbound;
     int best_move = -1;
-    int max = -BB_INF;
     for (int i = 0; i < n_moves; i++) {
         int eval;
         if (lbound > -BB_INF && ubound - lbound > 1) {
             eval = -sorted_minimax(moves[i]->b, depth-1, NULL, n_discs+1,
-                    -(lbound+1), -lbound, 0);
+                    -(lbound+1), -lbound, false, true);
             if (eval > lbound)
                 eval = -sorted_minimax(moves[i]->b, depth-1, NULL, n_discs+1,
-                        -ubound, -eval, 0);
+                        -ubound, -eval, false, true);
         } else
             eval = -sorted_minimax(moves[i]->b, depth-1, NULL, n_discs+1,
-                    -ubound, -lbound, 0);
+                    -ubound, -lbound, false, true);
         if (eval > max) {
             max = eval;
             best_move = moves[i]->move;
@@ -194,6 +256,10 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
         }
     }
 
+    if (move_ptr)
+        *move_ptr = best_move;
+
+save_cache:
     if (depth >= CACHE_DEPTH) {
         entry = cache_put(cache, b);
         entry->value = max;
@@ -206,9 +272,6 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
         else
             entry->type = cache_exact;
     }
-
-    if (move_ptr)
-        *move_ptr = best_move;
     return max;
 }
 
@@ -253,15 +316,15 @@ deepening(bboard b, int max_depth, int max_nodes, int *move_ptr, int n_discs,
             int value;
             if (max > -BB_INF) {
                 value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                    -(max+1), -max, 0);
+                    -(max+1), -max, false, true);
                 if (value > max) {
                     bb_debug(">\b");
                     value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                        -BB_INF, -value, 0);
+                        -BB_INF, -value, false, true);
                 }
             } else {
                 value = -sorted_minimax(moves[i]->b, depth, 0, n_discs + 1,
-                    -BB_INF, -max, 0);
+                    -BB_INF, -max, false, true);
             }
             if (value > max) {
                 moves[i]->value = value;
