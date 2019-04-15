@@ -44,7 +44,7 @@ argv = require 'yargs'
       alias: 'r'
       desc: 'Randomness of opening book'
       type: 'number'
-      default: 1
+      default: .7
       requiresArg: true
     random:
       alias: 'R'

@@ -60,7 +60,7 @@ module.exports = (options={}) ->
   else
     minmax = require './minmax'
 
-    evaluator0 = Player
+    evaluator = Player
       book: null
       strategy: minmax
         verbose: false
@@ -71,27 +71,9 @@ module.exports = (options={}) ->
       verbose: false
       endgame_eval: pattern_eval
 
-    evaluator1 = Player
-      book: null
-      strategy: minmax
-        verbose: false
-        max_depth: opt.depth - 1
-        evaluate: pattern_eval
-      solve_wld: opt.wld
-      solve_full: opt.full
-      verbose: false
-      endgame_eval: pattern_eval
-
     (board, me, moves) ->
-      { value, move, solved } = evaluator0(board, me, moves)
+      { value, move, solved } = evaluator(board, me, moves)
       value = 0 unless isFinite(value)
-      value0 = value
-
-      unless solved
-        { value } = evaluator1(board, me, [move])
-        value = 0 unless isFinite(value)
-        value = Math.round((value0 + value) / 2)
-
       { value, move, solved }
 
 module.exports.defaults = defaults

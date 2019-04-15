@@ -53,3 +53,5 @@ module.exports = (options={}) ->
 
     console.log 'book', best.n if opt.verbose
     best
+
+module.exports.defaults = defaults

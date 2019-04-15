@@ -45,7 +45,7 @@ He is the god of computer Othello for me.
 ### Machine learning
 
 Simple linear regression of ~57,000 sparse features per game position.
-Optionally supports logistic regression, which predicts winning rate instead
+Optionally supports logistic regression, which predicts probability to win instead
 of final score.
 Now using mini-batch with AdaGrad for faster convergence.
 Also written from scratch in CoffeeScript/C.
@@ -135,7 +135,7 @@ and invoked again by shell script.
 
 `watch` script is useful for watching to see if everything is working well.
 
-### Tuning L2 regularization parameter
+### Automatic tuning of L2 regularization parameter
 
 `learn` (and its CoffeeScript counter part `reg`/`minibatch`) uses
 *L2 regularization* to avoid over-fitting.

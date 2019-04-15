@@ -4,6 +4,7 @@ fs = require 'fs'
 Book = require './book'
 { Board, BLACK, WHITE, pos_from_str, pos_to_str } = require './board'
 { unique_moves } = require './util'
+{ defaults } = require './db_book_player'
 
 argv = require 'yargs'
   .options
@@ -22,7 +23,7 @@ argv = require 'yargs'
     m:
       alias: 'min_visits'
       desc: 'Minimum number of visits to nodes'
-      default: 100
+      default: defaults.min_visits
       type: 'number'
       requiresArg: true
     o:
