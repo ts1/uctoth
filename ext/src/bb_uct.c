@@ -8,15 +8,17 @@
 
 typedef struct node node_t;
 struct node {
-    int move, value, n_visited;
-    node_t *first_child, *sibling, *pass;
+    node_t *first_child, *sibling;
+    int value, n_visited;
+    u8 move;
+    bool pass;
 };
 
 static int max_discs, n_nodes, n_search;
 static bool grew, outcome_mode, tenacious, by_value;
 static double orig_scope, scope, randomness;
 
-#define PER_POOL 1000
+#define PER_POOL 10000
 
 typedef struct node_pool node_pool_t;
 struct node_pool {
@@ -61,8 +63,8 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass, u64 mask)
         max_discs = n_discs;
 
     if (node->pass) {
-        uct_search(bb_swap(b), node->pass, n_discs, 1, 0);
-        node->value = -node->pass->value;
+        uct_search(bb_swap(b), node->first_child, n_discs, 1, 0);
+        node->value = -node->first_child->value;
     } else if (node->first_child) {
         double max = -INFINITY;
         node_t *best = NULL;
@@ -124,7 +126,8 @@ static void uct_search(bboard b, node_t *node, int n_discs, int pass, u64 mask)
                }
             } else {
                 node_t *child = alloc_node();
-                node->pass = child;
+                node->pass = true;
+                node->first_child = child;
                 child->value = -node->value;
                 n_nodes++;
                 grew = true;
@@ -217,7 +220,7 @@ int bb_uct_search(bboard b, int *move_ptr, u64 mask)
     bb_debug("max depth %d\n", max_discs - n_discs);
     bb_debug("%d nodes\n", n_nodes);
 
-    if (!root->first_child) {
+    if (root->pass || !root->first_child) {
         if (move_ptr)
             *move_ptr = -1;
         return 0;
