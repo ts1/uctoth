@@ -3,8 +3,7 @@ require './rejection_handler'
 { pos_array_from_str } = require './board'
 { watch_file } = require './util'
 Book = require './book'
-Player = require './player'
-uct = require './uct'
+op_eval = require './op_eval'
 
 argv = require 'yargs'
   .options
@@ -19,10 +18,21 @@ argv = require 'yargs'
       type: 'number'
       default: Infinity
       requiresArg: true
+    u:
+      alias: 'uct'
+      desc: 'Use UCT to evaluate leafs (default is minimax)'
+      type: 'boolean'
+      default: false
     s:
-      desc: 'Number of UCT search'
+      desc: 'Number of evaluation UCT search'
       type: 'number'
-      default: 10000
+      default: 3000
+      requiresArg: true
+    d:
+      alias: 'depth'
+      desc: 'Minimax search depth'
+      type: 'number'
+      default: 15
       requiresArg: true
     w:
       alias: 'wld'
@@ -39,7 +49,7 @@ argv = require 'yargs'
     S:
       alias: 'scope'
       desc: 'UCT constant to find opening'
-      default: .5
+      default: .6
       type: 'number'
       requiresArg: true
     B:
@@ -62,53 +72,12 @@ argv = require 'yargs'
   .version false
   .argv
 
-pattern_eval = require('./pattern_eval')('weights.json')
-
-do_evaluate = Player
-  book: null
-  strategy: uct
-    verbose: false
-    max_search: argv.s
-    evaluate: pattern_eval
-    by_value: true
-  solve_wld: argv.wld
-  solve_full: argv.full
-  verbose: false
-  endgame_eval: pattern_eval
-
-evaluate = (board, turn, moves) ->
-  max = -Infinity
-  for pos in moves or board.list_moves(turn)
-    flips = board.move(turn, pos)
-    throw new Error unless flips.length
-    if board.any_moves(-turn)
-      { value, move, solved } = do_evaluate(board, -turn)
-      value = 0 unless value?
-      value = -value
-    else
-      { value, move, solved } = do_evaluate(board, turn)
-      value = 0 unless value?
-    board.undo turn, pos, flips
-    if value > max
-      max = value
-      best = pos
-      best_move = move
-
-  if not solved and best_move > 0
-    flips = board.move(turn, best)
-    throw new Error unless flips.length
-    if board.any_moves(-turn)
-      { value } = do_evaluate(board, -turn, [best_move])
-      value = 0 unless value?
-      value = -value
-    else
-      { value } = do_evaluate(board, turn, [best_move])
-      value = 0 unless value?
-    #console.log max, value
-    board.undo turn, best, flips
-    max = Math.round((max + value) / 2)
-
-  { value: max, move: best, solved }
+evaluate = op_eval
+  uct: argv.uct
+  max_search: argv.s
+  depth: argv.depth
+  wld: argv.wld
+  full: argv.full
 
 do ->
   book = new Book argv.book, evaluate: evaluate, verbose: argv.verbose
