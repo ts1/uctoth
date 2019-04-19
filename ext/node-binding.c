@@ -142,6 +142,27 @@ FUNCTION(reset_hash)
     return 0;
 }
 
+static void delete_cache(napi_env env, void *data, void *_)
+{
+    bb_minimax_delete_cache(data);
+}
+
+FUNCTION(minimax_create_cache)
+{
+    cache_t cache = bb_minimax_create_cache();
+    napi_value retval;
+    CHECK(napi_create_external(env, cache, delete_cache, cache, &retval));
+    return retval;
+}
+
+FUNCTION(minimax_set_cache)
+{
+    ARGC(1)
+    ARG_EXTERNAL(0, data)
+    bb_minimax_set_cache(data);
+    return 0;
+}
+
 FUNCTION(minimax)
 {
     ARGC(6)
@@ -184,6 +205,8 @@ MODULE_INIT(init)
         EXPORT(uct_search),
         EXPORT(reset_hash),
         EXPORT(solve),
+        EXPORT(minimax_create_cache),
+        EXPORT(minimax_set_cache),
         EXPORT(minimax),
     };
     CHECK(napi_define_properties(env, exports, sizeof(pd)/sizeof(pd[0]), pd));

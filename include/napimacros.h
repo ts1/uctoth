@@ -52,6 +52,18 @@ static napi_value name##_binding(napi_env env, napi_callback_info info)
         CHECK(napi_get_value_bool(env, tmp, &name)); \
     }
 
+#define ARG_EXTERNAL(i, name) \
+    void *name; \
+    { \
+        napi_valuetype type = 0; \
+        napi_typeof(env, _argv[i], &type); \
+        if (type != napi_external) { \
+            napi_throw_error(env, 0, "Argument " #i " must be a cache"); \
+            return 0; \
+        } \
+        CHECK(napi_get_value_external(env, _argv[i], &name)); \
+    }
+
 #define ARG_FUNC(i, name) \
     napi_value name; \
     { \

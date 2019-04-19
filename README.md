@@ -32,7 +32,7 @@ Included `weights.json` file is a result of learning ~100,000 self-played games.
 
 ### Game tree search
 
-Employs modified *UCT search*.
+Employs modified *UCT search* with static evaluation.
 Searches 15-25 plies deep maximum on modern JavaScript engines.
 C version searches 30+ plies deep.
 Beats my implementation of minimax with NegaScout by 70-80% winning rate.

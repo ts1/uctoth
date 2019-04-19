@@ -61,11 +61,11 @@ static const struct {
     [13] = {{ 3, WIN_10 }, { 5, WIN_8 }},
     [14] = {{ 2, WIN_12 }, { 6, WIN_8 }},
     [15] = {{ 3, WIN_12 }, { 7, WIN_8 }},
-    [16] = {{ 2, WIN_14 }, { 6, WIN_10 }},
-    [17] = {{ 3, WIN_14 }, { 7, WIN_10 }},
-    [18] = {{ 4, WIN_14 }, { 8, WIN_10 }},
-    [19] = {{ 5, WIN_14 }, { 9, WIN_10 }},
-    [20] = {{ 6, WIN_14 }, { 10, WIN_10 }},
+    [16] = {{ 4, WIN_12 }, { 8, WIN_8 }},
+    [17] = {{ 5, WIN_12 }, { 9, WIN_8 }},
+    [18] = {{ 6, WIN_12 }, { 10, WIN_8 }},
+    [19] = {{ 5, WIN_14 }, { 11, WIN_8 }},
+    [20] = {{ 6, WIN_14 }, { 12, WIN_8 }},
 };
 
 static cache_t cache;
@@ -145,7 +145,7 @@ static int sorted_minimax(bboard b, int depth, int *move_ptr, int n_discs,
     entry_t *entry = 0;
     if (depth >= CACHE_DEPTH) {
         if (!cache)
-            cache = cache_create(22, sizeof(entry_t));
+            cache = bb_minimax_create_cache();
         entry = cache_get(cache, b);
         if (entry && entry->depth >= depth) {
             if (entry->type == cache_exact ||
@@ -361,4 +361,21 @@ bb_minimax(bboard b, int max_depth, int max_nodes, int *move_ptr, u64 mask)
         return minimax(b, max_depth, move_ptr, n_discs, -BB_INF, BB_INF, 0);
     } else
         return deepening(b, max_depth, max_nodes, move_ptr, n_discs, mask);
+}
+
+cache_t bb_minimax_create_cache(void)
+{
+    return cache_create(22, sizeof(entry_t));
+}
+
+void bb_minimax_set_cache(cache_t _cache)
+{
+    cache = _cache;
+}
+
+void bb_minimax_delete_cache(cache_t _cache)
+{
+    if (cache == _cache)
+        cache = 0;
+    cache_delete(_cache);
 }

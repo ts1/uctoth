@@ -4,10 +4,12 @@ convert_weights = require './convert-weights'
 
 module.exports = (opt) ->
   weights = convert_weights(opt.weights)
+  cache = ext.minimax_create_cache()
 
   (board, turn, moves=null) ->
     ext.set_verbose opt.verbose
     ext.set_weights weights, opt.inverted
+    ext.minimax_set_cache cache
 
     { mask_lower, mask_upper } = moves_to_mask(moves)
 
