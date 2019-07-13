@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "precache-manifest.459561b86a89a1b40b2d5df3aeab5ce5.js"
+  "precache-manifest.a1dddfe10f601b2ccb196379ed35c1b4.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "uctoth-web"});
