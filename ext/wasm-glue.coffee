@@ -2,10 +2,12 @@
 # inside try-catch.
 # Otherwise, if we bundle it, the entire JS is aborted on environments where
 # WebAssembly is not available.
-try
-  importScripts 'ext.js'
-  ext_loaded = true
-catch
+if 0 # XXX WASM is currently broken
+  try
+    importScripts 'ext.js'
+    ext_loaded = true
+  catch
+else
   ext_loaded = false
   self.Module = cwrap: -> # dummy
 
@@ -16,11 +18,17 @@ export is_enabled = false
 
 export set_verbose = Module.cwrap 'set_verbose', null, ['boolean']
 
+_set_uct_options = Module.cwrap 'set_uct_options', null,
+  ['number', 'number', 'number', 'boolean',  'boolean']
+
+export set_uct_options = (n_search, scope, randomness, tenacious, by_value) ->
+  _set_uct_options n_search, scope, randomness, tenacious, by_value
+
 _uct_search = Module.cwrap 'uct_search', 'number',
   ['string', 'number', 'number', 'number']
 
-export uct_search = (board, turn, n_search, scope) ->
-  retval = _uct_search(board, turn, n_search, int(scope))
+export uct_search = (board, turn, mask_upper, mask_lower) ->
+  retval = _uct_search(board, turn, mask_upper, mask_lower)
   value = retval >> 8
   move = retval & 0xff
   { move, value }
