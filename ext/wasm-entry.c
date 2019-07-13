@@ -42,14 +42,22 @@ s32 eval(const char *board, int turn, int n_search, int scope)
 }
 
 EMSCRIPTEN_KEEPALIVE
-s32 uct_search(const char *board, int turn, int n_search, int scope)
+void set_uct_options(int n_search, double scope, double randomness, bool tenacious, bool by_value)
+{
+    bb_uct_set_options(n_search, scope, randomness, tenacious, by_value);
+}
+
+EMSCRIPTEN_KEEPALIVE
+s32 uct_search(const char *board, int turn, int mask_upper, int mask_lower)
 {
     bboard bb = bb_from_ascii(board, 0);
     if (turn == -1)
         bb = bb_swap(bb);
 
+    u64 mask = (((u64) mask_upper) << 32) | (u32) mask_lower;
+
     int move;
-    int value = bb_uct_search(bb, n_search, &move, scope, 0., 1);
+    int value = bb_uct_search(bb, &move, mask);
     return value << 8 | move;
 }
 
